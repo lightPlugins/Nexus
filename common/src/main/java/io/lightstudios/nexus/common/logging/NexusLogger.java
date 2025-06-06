@@ -1,6 +1,7 @@
 package io.lightstudios.nexus.common.logging;
 
 import lombok.Getter;
+import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -8,11 +9,12 @@ import org.bukkit.Bukkit;
 import java.util.List;
 
 @Getter
+@Setter
 public class NexusLogger {
 
     private final String prefix;
-    private final boolean isDebugEnabled;
-    private final int debugLevel;
+    private boolean isDebugEnabled;
+    private int debugLevel;
     private final String themeColor;
     private final MiniMessage miniMessage;
 

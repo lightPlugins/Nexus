@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -176,5 +177,90 @@ public class NexusFile {
                 saveConfig();
             }
         }
+    }
+
+    public String getString(String path) {
+        return getConfig().getString(path);
+    }
+
+    public String getString(String path, String defaultValue) {
+        String value = getConfig().getString(path);
+        if (value == null || value.isEmpty()) {
+            logger.debug("No value found for path: " + path + ", returning default value: " + defaultValue, 3);
+            return defaultValue;
+        }
+        return value;
+    }
+
+    public int getInt(String path) {
+        return getConfig().getInt(path);
+    }
+
+    public int getInt(String path, int defaultValue) {
+        int value = getConfig().getInt(path);
+        if (value == 0) {
+            logger.debug("No value found for path: " + path + ", returning default value: " + defaultValue, 3);
+            return defaultValue;
+        }
+        return value;
+    }
+
+    public boolean getBoolean(String path) {
+        return getConfig().getBoolean(path);
+    }
+
+    public boolean getBoolean(String path, boolean defaultValue) {
+        boolean value = getConfig().getBoolean(path);
+        if (!value) {
+            logger.debug("No value found for path: " + path + ", returning default value: " + defaultValue, 3);
+            return defaultValue;
+        }
+        return true;
+    }
+
+    public List<String> getStringList(String path) {
+        return getConfig().getStringList(path);
+    }
+
+    public List<String> getStringList(String path, List<String> defaultValue) {
+        List<String> value = getConfig().getStringList(path);
+        if (value.isEmpty()) {
+            logger.debug("No value found for path: " + path + ", returning default value: " + defaultValue, 3);
+            return defaultValue;
+        }
+        return value;
+    }
+
+    public double getDouble(String path) {
+        return getConfig().getDouble(path);
+    }
+
+    public double getDouble(String path, double defaultValue) {
+        double value = getConfig().getDouble(path);
+        if (value == 0.0) {
+            logger.debug("No value found for path: " + path + ", returning default value: " + defaultValue, 3);
+            return defaultValue;
+        }
+        return value;
+    }
+
+    @Nullable
+    public ConfigurationSection getConfigurationSection(String path) {
+        ConfigurationSection section = getConfig().getConfigurationSection(path);
+        if (section == null) {
+            logger.error("No configuration section found at path: " + path);
+            return null;
+        }
+        return section;
+    }
+
+    public boolean set(String path, Object value) {
+        if (value == null) {
+            logger.error("Cannot set null value for path: " + path);
+            return false;
+        }
+        getConfig().set(path, value);
+        saveConfig();
+        return true;
     }
 }
