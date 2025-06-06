@@ -1,0 +1,11 @@
+name: ${name}
+version: ${version}
+main: io.lightstudios.nexus.bukkit.Nexus
+api-version: '1.21.4'
+libraries:
+  - redis.clients:jedis:5.2.0
+  - com.zaxxer:HikariCP:6.3.0
+  - org.mariadb.jdbc:mariadb-java-client:3.5.3
+  - commons-lang:commons-lang:2.6
+  - org.spongepowered:configurate-yaml:4.1.2
+  - org.bstats:bstats-bukkit:3.0.2

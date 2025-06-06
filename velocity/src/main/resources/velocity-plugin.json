@@ -1,0 +1,17 @@
+{
+  "id": "${name}",
+  "name": "Nexus Proxy",
+  "version": "${version}",
+  "authors": ["LightStudios"],
+  "main": "io.lightstudios.nexus.velocity.Nexus",
+  "dependencies": [
+    {
+      "id": "velocity",
+      "optional": true
+    },
+    {
+      "id": "luckperms",
+      "optional": true
+    }
+  ]
+}
