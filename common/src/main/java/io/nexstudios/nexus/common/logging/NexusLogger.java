@@ -1,4 +1,4 @@
-package io.lightstudios.nexus.common.logging;
+package io.nexstudios.nexus.common.logging;
 
 import lombok.Getter;
 import lombok.Setter;

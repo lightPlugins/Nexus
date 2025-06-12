@@ -1,6 +1,6 @@
-package io.lightstudios.nexus.common.logging.files;
+package io.nexstudios.nexus.common.logging.files;
 
-import io.lightstudios.nexus.common.logging.NexusLogger;
+import io.nexstudios.nexus.common.logging.NexusLogger;
 import lombok.Getter;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;

@@ -1,4 +1,4 @@
-package io.lightstudios.nexus.velocity.util;
+package io.nexstudios.nexus.velocity.util;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;

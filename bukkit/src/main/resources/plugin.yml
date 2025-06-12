@@ -1,6 +1,6 @@
 name: ${name}
 version: ${version}
-main: io.lightstudios.nexus.bukkit.Nexus
+main: io.nexstudios.nexus.bukkit.Nexus
 api-version: '1.21.4'
 libraries:
   - redis.clients:jedis:5.2.0

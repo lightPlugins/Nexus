@@ -2,3 +2,35 @@ logging:
   debug:
     enable: false
     level: 3
+# ######################################################  #
+#                     STORAGE SYSTEM                      #
+# ######################################################  #
+# The Storage system for all my plugins
+# All sub plugins will use this storage system
+storage:
+  # possible values:
+  # - sqlite -> using SQLite (recommended for most users) (single server setup)
+  # - mysql -> for a MySQL database (multi-server setup)
+  # - mariadb -> for a MariaDB database (recommended over MySQL) (multi-server setup)
+  type: sqlite
+  host: 127.0.0.1
+  port: 3306
+  database: databaseName
+  username: username
+  password: YourSecretPassword
+  advanced:
+    # Don't change any values here if you don't know what you're doing.
+    connection-timeout: 60000
+    idle-timeout: 600000
+    keep-alive-time: 0
+    max-life-time: 1800000
+    minimum-idle: 10
+    # The maximum pool size of the connection pool for the database.
+    # Bigger pool size = more performance, but more RAM/CPU usage.
+    # If you installed more than 3 plugins from me, you should increase this value.
+    # For example: 3 plugins -> 15, 4 plugins -> 20, 5 plugins -> 25
+    # Default value is 10.
+    maximum-pool-size: 10
+    leak-detection-threshold: 0
+    connection-test-query: "SELECT 1"
+    character-encoding: "utf8"

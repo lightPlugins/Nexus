@@ -1,0 +1,3 @@
+general:
+  prefix: '<yellow>[<gold>NEXUS<yellow>]</yellow>'
+  no-permission: '<red>You do not have permission to perform this command.</red>'

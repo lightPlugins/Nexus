@@ -107,10 +107,10 @@ tasks {
         archiveClassifier.set("")
         archiveBaseName.set("Nexus-bukkit")
         destinationDirectory.set(rootProject.layout.buildDirectory.dir("libs"))
-        relocate("com.zaxxer.hikari", "io.lightstudios.nexus.libs.hikari")
-        relocate("org.mariadb.jdbc", "io.lightstudios.nexus.libs.mariadb")
-        relocate("redis.clients.jedis", "io.lightstudios.nexus.libs.jedis")
-        relocate("org.bstats", "io.lightstudios.nexus.libs.bstats")
+        relocate("com.zaxxer.hikari", "io.nexstudios.nexus.libs.hikari")
+        relocate("org.mariadb.jdbc", "io.nexstudios.nexus.libs.mariadb")
+        relocate("redis.clients.jedis", "io.nexstudios.nexus.libs.jedis")
+        relocate("org.bstats", "io.nexstudios.nexus.libs.bstats")
     }
 }
 

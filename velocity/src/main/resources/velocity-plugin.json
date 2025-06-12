@@ -3,7 +3,7 @@
   "name": "Nexus Proxy",
   "version": "${version}",
   "authors": ["LightStudios"],
-  "main": "io.lightstudios.nexus.velocity.Nexus",
+  "main": "io.nexstudios.nexus.velocity.Nexus",
   "dependencies": [
     {
       "id": "velocity",
