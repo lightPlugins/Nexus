@@ -17,11 +17,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public abstract class SQLDatabase {
+public abstract class AbstractDatabase {
 
     protected final Nexus plugin;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    SQLDatabase(Nexus plugin) {
+    AbstractDatabase(Nexus plugin) {
         this.plugin = plugin;
         startMonitoring();
     }
@@ -186,7 +186,7 @@ public abstract class SQLDatabase {
                             "Database connection is inactive.",
                             "Attempting to reconnect..."
                     ));
-                    Nexus.getInstance().getSqlDatabase().connect();
+                    Nexus.getInstance().getAbstractDatabase().connect();
                     if(!connection.isClosed()) {
                         plugin.getNexusLogger().info(List.of("Database connection has been re-established."));
                     }
@@ -196,7 +196,7 @@ public abstract class SQLDatabase {
                         "Error while checking database connection: " + e.getMessage(),
                         "Attempting to reconnect..."
                 ));
-                Nexus.getInstance().getSqlDatabase().connect();
+                Nexus.getInstance().getAbstractDatabase().connect();
                 if(getConnection() != null) {
                     plugin.getNexusLogger().info("Database connection has been re-established.");
                 }

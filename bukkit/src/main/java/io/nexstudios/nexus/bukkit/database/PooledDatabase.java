@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class PooledDatabase extends SQLDatabase {
+public abstract class PooledDatabase extends AbstractDatabase {
 
     protected static final AtomicInteger POOL_COUNTER = new AtomicInteger(0);
     protected HikariDataSource hikari;

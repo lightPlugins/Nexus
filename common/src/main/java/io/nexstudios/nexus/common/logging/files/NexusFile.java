@@ -210,12 +210,11 @@ public class NexusFile {
     }
 
     public boolean getBoolean(String path, boolean defaultValue) {
-        boolean value = getConfig().getBoolean(path);
-        if (!value) {
+        if(!getConfig().contains(path)) {
             logger.debug("No value found for path: " + path + ", returning default value: " + defaultValue, 3);
             return defaultValue;
         }
-        return true;
+        return getConfig().getBoolean(path);
     }
 
     public List<String> getStringList(String path) {

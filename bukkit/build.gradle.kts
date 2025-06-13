@@ -68,11 +68,11 @@ dependencies {
     compileOnly("io.lumine:MythicLib-dist:1.7.1-SNAPSHOT")
     compileOnly("net.Indyuce:MMOItems-API:6.10-SNAPSHOT")
 
-    implementation("redis.clients:jedis:5.2.0")
-    implementation("com.zaxxer:HikariCP:6.3.0")
-    implementation ("org.mariadb.jdbc:mariadb-java-client:3.5.3")
-    implementation("commons-lang:commons-lang:2.6")
-    implementation("org.bstats:bstats-bukkit:3.0.2")
+    compileOnly("redis.clients:jedis:5.2.0")
+    compileOnly("com.zaxxer:HikariCP:6.3.0")
+    compileOnly ("org.mariadb.jdbc:mariadb-java-client:3.5.3")
+    compileOnly("commons-lang:commons-lang:2.6")
+    compileOnly("org.bstats:bstats-bukkit:3.0.2")
 
     implementation(project(":common"))
 }
@@ -107,10 +107,7 @@ tasks {
         archiveClassifier.set("")
         archiveBaseName.set("Nexus-bukkit")
         destinationDirectory.set(rootProject.layout.buildDirectory.dir("libs"))
-        relocate("com.zaxxer.hikari", "io.nexstudios.nexus.libs.hikari")
-        relocate("org.mariadb.jdbc", "io.nexstudios.nexus.libs.mariadb")
-        relocate("redis.clients.jedis", "io.nexstudios.nexus.libs.jedis")
-        relocate("org.bstats", "io.nexstudios.nexus.libs.bstats")
+        // relocate("org.bstats", "io.nexstudios.nexus.libs.bstats")
     }
 }
 

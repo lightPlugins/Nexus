@@ -1,7 +1,7 @@
 package io.nexstudios.nexus.bukkit;
 
 import com.zaxxer.hikari.HikariDataSource;
-import io.nexstudios.nexus.bukkit.database.SQLDatabase;
+import io.nexstudios.nexus.bukkit.database.AbstractDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.MariaDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.MySQLDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.SQLiteDatabase;
@@ -22,7 +22,7 @@ public final class Nexus extends JavaPlugin {
     public static NexusLogger nexusLogger;
     public NexusFile settingsFile;
 
-    private SQLDatabase sqlDatabase;
+    private AbstractDatabase abstractDatabase;
     public HikariDataSource hikariDataSource;
 
     @Override
@@ -30,14 +30,15 @@ public final class Nexus extends JavaPlugin {
         // Plugin startup logic
         instance = this;
         nexusLogger = new NexusLogger("<reset>[<yellow>Nexus<reset>]", true, 99, "<yellow>");
-        nexusLogger.info("Nexus plugin is loading...");
+        nexusLogger.info("Nexus is loading...");
         onReload();
+        initDatabase();
     }
 
     @Override
     public void onEnable() {
 
-        nexusLogger.info("Nexus plugin enabled");
+        nexusLogger.info("Nexus is enabled");
     }
 
     public NexusLogger getNexusLogger() {
@@ -47,13 +48,11 @@ public final class Nexus extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        nexusLogger.info("Nexus plugin has been disabled!");
+        nexusLogger.info("Nexus has been disabled!");
     }
 
     public void onReload() {
-        nexusLogger.info("Reloading Nexus plugin...");
         loadNexusFiles();
-        nexusLogger.info("Nexus plugin reloaded successfully.");
     }
 
     private void loadNexusFiles() {
@@ -73,41 +72,41 @@ public final class Nexus extends JavaPlugin {
                 this.getNexusLogger().error(List.of(
                         "Database type not specified in config. Disabling plugin.",
                         "Please specify the database type in the config file.",
-                        "Valid database types are: SQLite, MySQL.",
-                        "Disabling all core related plugins."));
+                        "Valid database types are: SQLite, MySQL, MariaDB.",
+                        "Disabling all nexus related plugins."));
                 onDisable();
                 return;
             }
 
             switch (databaseType.toLowerCase()) {
                 case "sqlite":
-                    this.sqlDatabase = new SQLiteDatabase(this, connectionProperties);
+                    this.abstractDatabase = new SQLiteDatabase(this, connectionProperties);
                     this.getNexusLogger().info("Using SQLite (local) database.");
                     break;
                 case "mysql":
-                    this.sqlDatabase = new MySQLDatabase(this, credentials, connectionProperties);
+                    this.abstractDatabase = new MySQLDatabase(this, credentials, connectionProperties);
                     this.getNexusLogger().info("Using MySQL (remote) database.");
                     break;
                 case "mariadb":
-                    this.sqlDatabase = new MariaDatabase(this, credentials, connectionProperties);
+                    this.abstractDatabase = new MariaDatabase(this, credentials, connectionProperties);
                     this.getNexusLogger().info("Using MariaDB (remote) database.");
                     break;
                 default:
                     this.getNexusLogger().error(List.of(
                             "Database type not specified in config. Disabling plugin.",
                             "Please specify the database type in the config file.",
-                            "Valid database types are: SQLite, MySQL.",
-                            "Disabling all core related plugins."));
+                            "Valid database types are: SQLite, MySQL, MariaDB.",
+                            "Disabling all nexus related plugins."));
                     return;
             }
 
-            this.sqlDatabase.connect();
+            this.abstractDatabase.connect();
 
         } catch (Exception e) {
             getNexusLogger().error(List.of(
-                    "Could not maintain Database Connection. Disabling third party plugins.",
+                    "Could not maintain Database Connection.",
                     "Please check your database connection & settings in the config file.",
-                    "Disabling all core related plugins."));
+                    "Disabling nexus related plugins."));
             throw new RuntimeException("Could not maintain Database Connection.", e);
         }
     }
