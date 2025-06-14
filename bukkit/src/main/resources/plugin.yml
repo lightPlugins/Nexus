@@ -2,6 +2,8 @@ name: ${name}
 version: ${version}
 main: io.nexstudios.nexus.bukkit.Nexus
 api-version: '1.21.4'
+softdepend:
+  - PlaceholderAPI
 libraries:
   - redis.clients:jedis:5.2.0
   - com.zaxxer:HikariCP:6.3.0

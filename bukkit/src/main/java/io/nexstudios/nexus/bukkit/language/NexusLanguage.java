@@ -1,8 +1,8 @@
 package io.nexstudios.nexus.bukkit.language;
 
 import io.nexstudios.nexus.bukkit.Nexus;
-import io.nexstudios.nexus.common.logging.files.NexusFile;
-import io.nexstudios.nexus.common.logging.files.NexusFileReader;
+import io.nexstudios.nexus.common.logging.NexusLogger;
+import io.nexstudios.nexus.common.files.NexusFileReader;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -17,66 +17,90 @@ public class NexusLanguage {
 
     private final Map<UUID, String> userLanguage = new HashMap<>();
     private final Map<String, File> availableLanguages = new HashMap<>();
+    private final Map<String, FileConfiguration> loadedLanguages = new HashMap<>();
     private final NexusFileReader rawLanguageFiles;
+    // The UUID of the console, used for logging and default language selection
+    public UUID consoleUUID = UUID.fromString("c860b2fe-cdd1-4e76-9ce5-874a83c44bc7");
 
-    public NexusLanguage(NexusFileReader rawLanguageFiles) {
+    public NexusLanguage(NexusFileReader rawLanguageFiles, NexusLogger nexusLogger) {
         this.rawLanguageFiles = rawLanguageFiles;
 
         rawLanguageFiles.getFiles().forEach(file -> {
-           String languageName = file.getName().replace(".yml", "");
-           availableLanguages.put(languageName, file);
+            String languageName = file.getName().replace(".yml", "");
+            availableLanguages.put(languageName, file);
+            loadedLanguages.put(languageName, YamlConfiguration.loadConfiguration(file));
         });
+
+        nexusLogger.info("Loaded " + availableLanguages.size() + " languages.");
     }
 
     public String getSelectedLanguage(UUID uuid) {
         return userLanguage.getOrDefault(uuid, "english");
     }
 
+    public String getPrefix(UUID uuid) {
+        String lang = getSelectedLanguage(uuid);
+        FileConfiguration languageConfig = loadedLanguages.get(lang);
+
+        if (languageConfig == null) {
+            Nexus.nexusLogger.error(List.of(
+                    "Language configuration for " + lang + " not found.",
+                    "Using default language: english"
+            ));
+            languageConfig = loadedLanguages.get("english");
+        }
+
+        if (languageConfig != null && languageConfig.contains("general.prefix")) {
+            return languageConfig.getString("general.prefix", "NotFound");
+        }
+
+        return "<red>Null";
+    }
+
     public Component getTranslation(UUID uuid, String path) {
         String lang = getSelectedLanguage(uuid);
 
-        if(lang == null) {
-            Nexus.nexusLogger.error(List.of(
+        if (lang == null) {
+            Nexus.nexusLogger.debug(List.of(
                     "Language for UUID " + uuid + " not found.",
                     "Using default language: english"
-            ));
+            ), 3);
             selectLanguage(uuid, "english");
+            lang = "english";
         }
 
-        File languageFile = availableLanguages.get(lang);
+        FileConfiguration languageConfig = loadedLanguages.get(lang);
 
-        if(languageFile == null) {
+        if (languageConfig == null) {
             Nexus.nexusLogger.error(List.of(
-                    "Language file for " + lang + " not found.",
+                    "Language configuration for " + lang + " not found.",
                     "Using default language: english"
             ));
-            languageFile = availableLanguages.get("english");
+            languageConfig = loadedLanguages.get("english");
 
-            if(languageFile == null) {
+            if (languageConfig == null) {
                 Nexus.nexusLogger.error(List.of(
-                        "Default language file english.yml not found.",
+                        "Default language configuration english.yml not found.",
                         "This is a critical problem and should be reported",
                         "to the developer: NexStudios"
                 ));
-                throw new IllegalArgumentException("english.yml -> language/file not found");
+                throw new IllegalArgumentException("english.yml -> language/configuration not found");
             }
         }
 
-        FileConfiguration languageConfig = YamlConfiguration.loadConfiguration(languageFile);
-
-        if(languageConfig.contains(path)) {
+        if (languageConfig.contains(path)) {
             String translation = languageConfig.getString(path);
-            if(translation == null) {
+            if (translation == null) {
                 Nexus.nexusLogger.error(List.of(
                         "Translation for path '" + path + "' in language '" + lang + "' is null.",
-                        "Using default translation: " + path
+                        "Using default translation: english.yml"
                 ));
                 return Component.text(path);
             }
-            return MiniMessage.miniMessage().deserialize(translation);
+            return MiniMessage.miniMessage().deserialize(getPrefix(uuid) + " " + translation);
         }
 
-        return Component.text(path);
+        return Component.text(getPrefix(uuid) + " " + path);
     }
 
     public void selectLanguage(UUID uuid, String language) {
@@ -98,10 +122,4 @@ public class NexusLanguage {
 
         userLanguage.put(uuid, language);
     }
-
-
-
-
-
-
 }

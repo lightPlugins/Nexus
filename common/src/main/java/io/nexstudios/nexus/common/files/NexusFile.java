@@ -1,4 +1,4 @@
-package io.nexstudios.nexus.common.logging.files;
+package io.nexstudios.nexus.common.files;
 
 import io.nexstudios.nexus.common.logging.NexusLogger;
 import lombok.Getter;

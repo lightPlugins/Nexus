@@ -17,6 +17,10 @@ repositories {
         url = uri("https://repo.papermc.io/repository/maven-public/")
     }
     maven {
+        name = "aikar"
+        url = uri("https://repo.aikar.co/content/groups/aikar/")
+    }
+    maven {
         name = "jitpack"
         url = uri("https://jitpack.io")
     }
@@ -33,16 +37,8 @@ repositories {
         url = uri("https://maven.enginehub.org/repo/")
     }
     maven {
-        name = "towny"
-        url = uri("https://repo.glaremasters.me/repository/towny/")
-    }
-    maven {
         name = "nexo"
         url = uri("https://repo.nexomc.com/releases")
-    }
-    maven {
-        name = "fancyholograms"
-        url = uri("https://repo.fancyplugins.de/releases")
     }
     maven {
         name = "mythicmobs"
@@ -74,6 +70,7 @@ dependencies {
     compileOnly("commons-lang:commons-lang:2.6")
     compileOnly("org.bstats:bstats-bukkit:3.0.2")
 
+    implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
     implementation(project(":common"))
 }
 
@@ -108,6 +105,8 @@ tasks {
         archiveBaseName.set("Nexus-bukkit")
         destinationDirectory.set(rootProject.layout.buildDirectory.dir("libs"))
         // relocate("org.bstats", "io.nexstudios.nexus.libs.bstats")
+        relocate("co.aikar.commands", "io.nexstudios.nexus.libs.commands")
+        relocate("co.aikar.locales", "io.nexstudios.nexus.libs.locales")
     }
 }
 

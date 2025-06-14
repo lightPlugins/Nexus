@@ -1,4 +1,4 @@
-package io.nexstudios.nexus.common.logging.files;
+package io.nexstudios.nexus.common.files;
 
 import lombok.Getter;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -30,7 +30,7 @@ public class NexusFileReader {
      */
     public NexusFileReader(String directoryPath, JavaPlugin plugin) {
         this.plugin = plugin;
-        this.directoryPath = "plugins/" + plugin.getName() + "/" +directoryPath;
+        this.directoryPath = "plugins/" + plugin.getName() + "/" + directoryPath;
         this.bukkitFileMap = new HashMap<>();
         this.bukkitFiles = new ArrayList<>();
         loadYmlFiles();
