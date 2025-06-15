@@ -4,6 +4,7 @@ import io.nexstudios.nexus.bukkit.Nexus;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -87,5 +88,25 @@ public class MessageSender {
 
             Nexus.nexusLogger.info(MiniMessage.miniMessage().serialize(component));
         }
+    }
+
+    public Component stringToComponent(Player player, String legacyText) {
+        String text = legacyText;
+        if (Nexus.getInstance().papiHook != null) {
+            text = PlaceholderAPI.setPlaceholders(player, legacyText);
+        }
+        return MiniMessage.miniMessage()
+                .deserialize(text)
+                .decoration(TextDecoration.ITALIC, false);
+    }
+
+    public Component stringToComponent(Player player, String legacyText, TagResolver resolver) {
+        String text = legacyText;
+        if (Nexus.getInstance().papiHook != null) {
+            text = PlaceholderAPI.setPlaceholders(player, legacyText).replace("\\", "");
+        }
+        return MiniMessage.miniMessage()
+                .deserialize(text, resolver)
+                .decoration(TextDecoration.ITALIC, false);
     }
 }

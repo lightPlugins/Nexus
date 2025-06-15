@@ -99,7 +99,6 @@ public class NexusLanguage {
             }
             return MiniMessage.miniMessage().deserialize(getPrefix(uuid) + " " + translation);
         }
-
         return Component.text(getPrefix(uuid) + " " + path);
     }
 

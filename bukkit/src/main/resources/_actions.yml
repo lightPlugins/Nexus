@@ -1,0 +1,42 @@
+action:
+  '0':
+    id: message
+    args:
+      message: "This is a default message. You can change it in the settings.yml file."
+  '1':
+    id: title
+    args:
+      upper: "This is a default title."
+      lower: "This is a default subtitle."
+      fade-in: 20
+      stay: 60
+      fade-out: 20
+  '2':
+    id: sound
+    args:
+      sound: "minecraft:entity.player.levelup"
+      volume: 1.0
+      pitch: 1.0
+  '3':
+    id: custom-sound
+    args:
+      namespace: "myNamespace"
+      key: "myCustomSoundName"
+      volume: 1.0
+      pitch: 1.0
+  '4':
+   id: player-command
+   args:
+      command: "say Hello, this is a player command!"
+  '5':
+    id: console-command
+    args:
+      command: "say Hello, this is a player command!"
+  '6':
+    id: actionbar
+    args:
+      actionbar: "Some actionbar message."
+  '7':
+    id: vault
+    args:
+      amount: 1000
