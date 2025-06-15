@@ -1,0 +1,25 @@
+component-type: vanilla
+args:
+  material: "diamond_sword"
+  amount: 1
+  display-name: "Nexus Sword"
+  model-data:
+    namespace: "custom_namespace"
+    key: "super_sword"
+  lore:
+    design: "custom_design"
+    lines:
+      - "This is a custom sword"
+      - "It has special powers"
+  unbreakable: true
+  durability: 1561
+  stack-size: 1 # The maximum stack size is 99 -> 1.21.4+
+  enchants:
+    '0':
+      id: "sharpness"
+      level: 5
+      unsafe: true
+  flags:
+    - "hide_enchants"
+    - "hide_unbreakable"
+    - "hide_attributes"

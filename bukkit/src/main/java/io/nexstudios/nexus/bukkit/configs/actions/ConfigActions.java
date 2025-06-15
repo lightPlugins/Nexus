@@ -1,4 +1,4 @@
-package io.nexstudios.nexus.bukkit.actions;
+package io.nexstudios.nexus.bukkit.configs.actions;
 
 import io.nexstudios.nexus.bukkit.Nexus;
 import net.kyori.adventure.key.Key;
