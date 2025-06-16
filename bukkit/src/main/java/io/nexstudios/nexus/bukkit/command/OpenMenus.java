@@ -1,10 +1,7 @@
 package io.nexstudios.nexus.bukkit.command;
 
 import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.CommandPermission;
-import co.aikar.commands.annotation.Description;
-import co.aikar.commands.annotation.Subcommand;
+import co.aikar.commands.annotation.*;
 import io.nexstudios.nexus.bukkit.Nexus;
 import io.nexstudios.nexus.bukkit.inventory.NexusInventory;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
@@ -12,6 +9,7 @@ import io.nexstudios.nexus.bukkit.inventory.models.MenuItem;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -26,18 +24,19 @@ public class OpenMenus extends BaseCommand {
     @Subcommand("open")
     @CommandPermission("nexus.command.admin.open")
     @Description("Opens a found inventory menu.")
-    public void onReload(CommandSender sender, String inventoryName) {
+    @CommandCompletion("@inventories")
+    public void onOpen(CommandSender sender, String inventoryName) {
 
         Player player = (Player) sender;
         UUID uuid = player.getUniqueId();
-        InventoryData inventoryData = Nexus.getInstance().getNexusInventoryData().get(inventoryName);
-        boolean isDefaultLanguage = Nexus.getInstance().getNexusLanguage().hasPlayerDefaultLanguage(uuid);
-        if(!isDefaultLanguage) {
-            // update the language for the player if they have a custom language set
-            Nexus.nexusLogger.debug("Updating inventory language for player " + player.getName() + " with UUID: " + uuid, 3);
-            inventoryData.updateLanguage(uuid);
+        FileConfiguration config = Nexus.getInstance().getInventoryFileByName(inventoryName);
+        if(config == null) {
+            sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Inventory '" + inventoryName + "' not found!</red>"));
+            return;
         }
-        NexusInventory nexusInventory = getNexusInventory(inventoryData);
+        InventoryData inv = new InventoryData(config, Nexus.getInstance().getNexusLanguage(), inventoryName);
+        inv.updateLanguage(uuid);
+        NexusInventory nexusInventory = getNexusInventory(inv);
         nexusInventory.open((Player) sender);
 
     }

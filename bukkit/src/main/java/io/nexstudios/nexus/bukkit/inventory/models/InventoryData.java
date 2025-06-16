@@ -2,32 +2,24 @@ package io.nexstudios.nexus.bukkit.inventory.models;
 
 import io.nexstudios.nexus.bukkit.Nexus;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
-import io.papermc.paper.adventure.DisplayNames;
 import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.CustomModelData;
-import io.papermc.paper.datacomponent.item.Enchantable;
 import io.papermc.paper.datacomponent.item.ItemLore;
-import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.world.item.enchantment.Enchantment;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
 
 @Getter
 @Setter
-public class InventoryData {
+public class InventoryData implements Cloneable {
 
     private Component title;
     private NexusLanguage nexusLanguage;
@@ -35,11 +27,39 @@ public class InventoryData {
     private final int size;
     private final int updateInterval;
     private final ItemStack decorationItem;
-    private final Map<String, InventoryItem> navigationItems;
-    private final Map<String, InventoryItem> staticItems;
-    private final Map<String, InventoryItem> customItems;
+    private Map<String, InventoryItem> navigationItems;
+    private Map<String, InventoryItem> staticItems;
+    private Map<String, InventoryItem> customItems;
     private final ConfigurationSection extraSettings;
     private final String inventoryID;
+
+    @Override
+    public InventoryData clone() {
+        try {
+            InventoryData cloned = (InventoryData) super.clone();
+
+            // Tiefe Kopie der Maps erstellen
+            cloned.navigationItems = new HashMap<>();
+            for (Map.Entry<String, InventoryItem> entry : this.navigationItems.entrySet()) {
+                cloned.navigationItems.put(entry.getKey(), entry.getValue().clone());
+            }
+
+            cloned.staticItems = new HashMap<>();
+            for (Map.Entry<String, InventoryItem> entry : this.staticItems.entrySet()) {
+                cloned.staticItems.put(entry.getKey(), entry.getValue().clone());
+            }
+
+            cloned.customItems = new HashMap<>();
+            for (Map.Entry<String, InventoryItem> entry : this.customItems.entrySet()) {
+                cloned.customItems.put(entry.getKey(), entry.getValue().clone());
+            }
+
+            // Andere Felder, die nicht geklont werden müssen, können direkt übernommen werden
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("Cloning not supported", e);
+        }
+    }
 
     public InventoryData(FileConfiguration config, NexusLanguage nexusLanguage, String inventoryID) {
         // Basiswerte aus der Konfiguration laden
@@ -177,12 +197,22 @@ public class InventoryData {
     @Getter
     // @API.Status(Experimental) for Item DataComponents
     @SuppressWarnings("UnstableApiUsage")
-    public static class InventoryItem {
+    public static class InventoryItem implements Cloneable {
         private final List<Integer> slots;
         private final int page;
         private final boolean usePageAsAmount;
         private final ItemStack itemStack;
         private final String key;
+
+        @Override
+        public InventoryItem clone() {
+            try {
+                // Falls `ItemStack` tiefer geklont werden muss, hier anpassen
+                return (InventoryItem) super.clone();
+            } catch (CloneNotSupportedException e) {
+                throw new AssertionError("Cloning not supported", e);
+            }
+        }
 
         public InventoryItem(FileConfiguration config, String path, String key, NexusLanguage nexusLanguage, String inventoryID) {
             // Slots auslesen

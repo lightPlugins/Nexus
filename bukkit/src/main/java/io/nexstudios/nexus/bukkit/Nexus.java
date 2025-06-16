@@ -181,6 +181,18 @@ public final class Nexus extends JavaPlugin {
         }
     }
 
+    public FileConfiguration getInventoryFileByName(String name) {
+        File file = inventoryFiles.getFiles().stream()
+                .filter(f -> f.getName().equalsIgnoreCase(name + ".yml"))
+                .findFirst()
+                .orElse(null);
+        if (file == null) {
+            nexusLogger.debug(List.of("Inventory file not found: " + name), 2);
+            return null;
+        }
+        return YamlConfiguration.loadConfiguration(file);
+    }
+
     private void registerCommands() {
         // Register commands using the command manager
         commandCompletions();
