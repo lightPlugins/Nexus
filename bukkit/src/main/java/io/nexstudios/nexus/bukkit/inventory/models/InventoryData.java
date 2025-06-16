@@ -1,13 +1,20 @@
 package io.nexstudios.nexus.bukkit.inventory.models;
 
 import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.language.NexusLanguage;
+import io.papermc.paper.adventure.DisplayNames;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
+import io.papermc.paper.datacomponent.item.Enchantable;
+import io.papermc.paper.datacomponent.item.ItemLore;
+import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import lombok.Getter;
+import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.world.item.enchantment.Enchantment;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,14 +23,14 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+@Getter
+@Setter
 public class InventoryData {
 
     private Component title;
+    private NexusLanguage nexusLanguage;
     private final FileConfiguration fileConfiguration;
     private final int size;
     private final int updateInterval;
@@ -32,11 +39,14 @@ public class InventoryData {
     private final Map<String, InventoryItem> staticItems;
     private final Map<String, InventoryItem> customItems;
     private final ConfigurationSection extraSettings;
+    private final String inventoryID;
 
-    public InventoryData(FileConfiguration config) {
+    public InventoryData(FileConfiguration config, NexusLanguage nexusLanguage, String inventoryID) {
         // Basiswerte aus der Konfiguration laden
         this.title = colorize(config.getString("title", "Default Title"));
         this.fileConfiguration = config;
+        this.inventoryID = inventoryID;
+        this.nexusLanguage = nexusLanguage;
         this.size = config.getInt("size", 6);
         this.updateInterval = config.getInt("update-intervall", 2);
 
@@ -61,6 +71,43 @@ public class InventoryData {
         this.extraSettings = config.getConfigurationSection("content.extra-settings");
     }
 
+    @SuppressWarnings("UnstableApiUsage")
+    public void updateLanguage(UUID uuid) {
+        // Aktualisiert die Titelkomponente basierend auf der aktuellen Sprache
+        this.title = nexusLanguage.getTranslation(uuid,
+                "inventories." + inventoryID + ".title", false);
+
+        // Aktualisiert die Navigations-Items
+        for (InventoryItem item : navigationItems.values()) {
+            Component displayName = nexusLanguage.getTranslation(uuid,
+                    "inventories." + inventoryID + ".content." + item.getKey() + ".display-name", false);
+            item.getItemStack().setData(DataComponentTypes.ITEM_NAME, displayName);
+            List<Component> lore = nexusLanguage.getTranslationList(uuid,
+                    "inventories." + inventoryID + ".content." + item.getKey() + ".lore", false);
+            item.getItemStack().setData(DataComponentTypes.LORE, ItemLore.lore(lore));
+        }
+
+        // Aktualisiert die statischen Items
+        for (InventoryItem item : staticItems.values()) {
+            Component displayName = nexusLanguage.getTranslation(uuid,
+                    "inventories." + inventoryID + ".content." + item.getKey() + ".display-name", false);
+            item.getItemStack().setData(DataComponentTypes.ITEM_NAME, displayName);
+            List<Component> lore = nexusLanguage.getTranslationList(uuid,
+                    "inventories." + inventoryID + ".content." + item.getKey() + ".lore", false);
+            item.getItemStack().setData(DataComponentTypes.LORE, ItemLore.lore(lore));
+        }
+
+        // Aktualisiert die benutzerdefinierten Items
+        for (InventoryItem item : customItems.values()) {
+            Component displayName = nexusLanguage.getTranslation(uuid,
+                    "inventories." + inventoryID + ".content." + item.getKey() + ".display-name", false);
+            item.getItemStack().setData(DataComponentTypes.ITEM_NAME, displayName);
+            List<Component> lore = nexusLanguage.getTranslationList(uuid,
+                    "inventories." + inventoryID + ".content." + item.getKey() + ".lore", false);
+            item.getItemStack().setData(DataComponentTypes.LORE, ItemLore.lore(lore));
+        }
+    }
+
     /**
      * Lädt Items basierend auf einem Konfigurationspfad.
      *
@@ -72,7 +119,7 @@ public class InventoryData {
         Map<String, InventoryItem> items = new HashMap<>();
         if (config.contains(path)) {
             for (String key : config.getConfigurationSection(path).getKeys(false)) {
-                InventoryItem item = new InventoryItem(config, path + "." + key);
+                InventoryItem item = new InventoryItem(config, path + "." + key, key, nexusLanguage, inventoryID);
                 items.put(key, item);
             }
         }
@@ -104,16 +151,14 @@ public class InventoryData {
      * @param material Das Material für den ItemStack.
      * @return Der erstellte ItemStack.
      */
+    @SuppressWarnings("UnstableApiUsage")
     private ItemStack createSimpleItem(Material material) {
         if (material == null) material = Material.STONE; // Fallback-Material
-        ItemStack itemStack = new ItemStack(material);
-        ItemMeta meta = itemStack.getItemMeta();
-        if (meta != null) {
-            meta.displayName(Component.text(" "));
-            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-            itemStack.setItemMeta(meta);
-        }
-        return itemStack;
+
+        ItemStack stack = new ItemStack(material);
+        // stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(true).build());
+        stack.setData(DataComponentTypes.ITEM_NAME, Component.text(""));
+        return stack;
     }
 
     /**
@@ -131,19 +176,21 @@ public class InventoryData {
 
     @Getter
     // @API.Status(Experimental) for Item DataComponents
-    // @SuppressWarnings("UnstableApiUsage")
+    @SuppressWarnings("UnstableApiUsage")
     public static class InventoryItem {
         private final List<Integer> slots;
         private final int page;
         private final boolean usePageAsAmount;
         private final ItemStack itemStack;
+        private final String key;
 
-        public InventoryItem(FileConfiguration config, String path) {
+        public InventoryItem(FileConfiguration config, String path, String key, NexusLanguage nexusLanguage, String inventoryID) {
             // Slots auslesen
             this.slots = config.getIntegerList(path + ".slots").stream()
                     .map(slot -> slot - 1)
                     .toList();
             this.page = config.getInt(path + ".page", 1);
+            this.key = key;
             this.usePageAsAmount = config.getBoolean(path + ".use-page-number-as-amount", false);
 
             // Material laden
@@ -161,40 +208,16 @@ public class InventoryData {
             // ItemStack erstellen
             this.itemStack = new ItemStack(material);
 
-            // Meta-Daten setzen
-            ItemMeta meta = this.itemStack.getItemMeta();
-            if (meta != null) {
-                // Displayname
-                String displayName = config.getString(path + ".display-name");
-                if (displayName != null) {
-                    Component displayNameComponent = MiniMessage.miniMessage().deserialize(displayName)
-                            .decoration(TextDecoration.ITALIC, false);
-                    meta.displayName(displayNameComponent);
-                }
+            // Displayname
+            Component displayNameComponent = nexusLanguage.getTranslation(nexusLanguage.getConsoleUUID(),
+                    "inventories." + inventoryID + ".content." + key + ".display-name", false);
+            this.itemStack.setData(DataComponentTypes.ITEM_NAME, displayNameComponent);
 
-                // Lore
-                List<String> lore = config.getStringList(path + ".lore");
-                if (!lore.isEmpty()) {
-                    List<Component> loreComponents = new ArrayList<>();
-                    for (String line : lore) {
-                        loreComponents.add(MiniMessage.miniMessage().deserialize(line)
-                                .decoration(TextDecoration.ITALIC, false));
-                    }
-                    meta.lore(loreComponents);
-                }
-
-                // TODO: Reword the new custom model data system ItemStack#setData(DataComponentType, DataComponent)
-//                if (config.contains(path + ".custom-model-data")) {
-//                    // meta.setCustomModelData(config.getInt(path + ".custom-model-data"));
-//                    meta.setItemModel();
-//                    itemStack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData()
-//                            .addString(0.5f)
-//                            .addFlag(true)
-//                            .build());
-//                }
-
-                this.itemStack.setItemMeta(meta);
-            }
+            // Lore
+            List<Component> loreComponents = nexusLanguage.getTranslationList(nexusLanguage.getConsoleUUID(),
+                    "inventories." + inventoryID + ".content." + key + ".lore",
+                    false);
+            itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(loreComponents));
         }
     }
 }

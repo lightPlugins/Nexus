@@ -1,6 +1,7 @@
-package io.nexstudios.nexus.bukkit.configs.actions;
+package io.nexstudios.nexus.bukkit.configs;
 
 import io.nexstudios.nexus.bukkit.Nexus;
+import lombok.Getter;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;

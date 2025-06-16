@@ -1,10 +1,7 @@
 package io.nexstudios.nexus.bukkit.command;
 
 import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.CommandPermission;
-import co.aikar.commands.annotation.Description;
-import co.aikar.commands.annotation.Subcommand;
+import co.aikar.commands.annotation.*;
 import io.nexstudios.nexus.bukkit.Nexus;
 import org.bukkit.command.CommandSender;
 
@@ -12,6 +9,7 @@ import org.bukkit.command.CommandSender;
 public class ReloadCommand extends BaseCommand {
 
     @Subcommand("reload")
+    @CommandCompletion("@inventories")
     @CommandPermission("nexus.command.admin.reload")
     @Description("Reloads the plugin configuration and settings.")
     public void onReload(CommandSender sender) {

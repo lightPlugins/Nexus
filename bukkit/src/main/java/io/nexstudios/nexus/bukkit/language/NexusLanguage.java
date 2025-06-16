@@ -5,6 +5,7 @@ import io.nexstudios.nexus.common.logging.NexusLogger;
 import io.nexstudios.nexus.common.files.NexusFileReader;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -38,6 +39,10 @@ public class NexusLanguage {
         return userLanguage.getOrDefault(uuid, "english");
     }
 
+    public boolean hasPlayerDefaultLanguage(UUID uuid) {
+        return userLanguage.containsKey(uuid) && userLanguage.get(uuid).equals("english");
+    }
+
     public String getPrefix(UUID uuid) {
         String lang = getSelectedLanguage(uuid);
         FileConfiguration languageConfig = loadedLanguages.get(lang);
@@ -57,7 +62,44 @@ public class NexusLanguage {
         return "<red>Null";
     }
 
-    public Component getTranslation(UUID uuid, String path) {
+    public List<Component> getTranslationList(UUID uuid, String path, boolean withPrefix) {
+        String lang = getSelectedLanguage(uuid);
+        FileConfiguration languageConfig = loadedLanguages.get(lang);
+
+        if (languageConfig == null) {
+            Nexus.nexusLogger.error(List.of(
+                    "Language configuration for " + lang + " not found.",
+                    "Using default language: english"
+            ));
+            languageConfig = loadedLanguages.get("english");
+        }
+
+        List<Component> components = new ArrayList<>();
+        if (languageConfig != null && languageConfig.contains(path)) {
+            List<String> translations = languageConfig.getStringList(path);
+            for (String translation : translations) {
+                if(withPrefix) {
+                    components.add(MiniMessage.miniMessage().deserialize(getPrefix(uuid) + " " + translation)
+                            .decoration(TextDecoration.ITALIC, false));
+                } else {
+                    components.add(MiniMessage.miniMessage().deserialize(translation)
+                            .decoration(TextDecoration.ITALIC, false));
+                }
+            }
+        } else {
+            if(withPrefix) {
+                components.add(Component.text(getPrefix(uuid) + " " + path)
+                        .decoration(TextDecoration.ITALIC, false));
+            } else {
+                components.add(Component.text(path)
+                        .decoration(TextDecoration.ITALIC, false));
+            }
+
+        }
+        return components;
+    }
+
+    public Component getTranslation(UUID uuid, String path, boolean withPrefix) {
         String lang = getSelectedLanguage(uuid);
 
         if (lang == null) {
@@ -97,9 +139,22 @@ public class NexusLanguage {
                 ));
                 return Component.text(path);
             }
-            return MiniMessage.miniMessage().deserialize(getPrefix(uuid) + " " + translation);
+            if(withPrefix) {
+                return MiniMessage.miniMessage().deserialize(getPrefix(uuid) + " " + translation)
+                        .decoration(TextDecoration.ITALIC, false);
+            } else {
+                return MiniMessage.miniMessage().deserialize(translation)
+                        .decoration(TextDecoration.ITALIC, false);
+            }
         }
-        return Component.text(getPrefix(uuid) + " " + path);
+        if(withPrefix) {
+            return Component.text(getPrefix(uuid) + " " + path)
+                    .decoration(TextDecoration.ITALIC, false);
+        } else {
+            return Component.text(path)
+                    .decoration(TextDecoration.ITALIC, false);
+        }
+
     }
 
     public void selectLanguage(UUID uuid, String language) {

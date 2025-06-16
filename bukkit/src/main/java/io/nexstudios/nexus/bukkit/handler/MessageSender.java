@@ -34,7 +34,7 @@ public class MessageSender {
         }
 
         if (sender instanceof Player player) {
-            component = language.getTranslation(player.getUniqueId(), path);
+            component = language.getTranslation(player.getUniqueId(), path, true);
             if(Nexus.getInstance().papiHook != null) {
                 String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
                 component = Nexus.getInstance().papiHook.translate(player, legacyText);
@@ -42,7 +42,7 @@ public class MessageSender {
             player.sendMessage(component);
         } else {
             UUID consoleUUID = Nexus.getInstance().getNexusLanguage().getConsoleUUID();
-            component = language.getTranslation(consoleUUID, path);
+            component = language.getTranslation(consoleUUID, path, true);
             String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
             Nexus.nexusLogger.info(legacyText);
         }
@@ -59,7 +59,7 @@ public class MessageSender {
         Component component;
 
         if (sender instanceof Player player) {
-            component = language.getTranslation(player.getUniqueId(), path);
+            component = language.getTranslation(player.getUniqueId(), path, true);
 
             if (Nexus.getInstance().papiHook != null) {
                 String miniMessageText = MiniMessage.miniMessage().serialize(component);
@@ -77,7 +77,7 @@ public class MessageSender {
             player.sendMessage(component);
         } else {
             UUID consoleUUID = language.getConsoleUUID();
-            component = language.getTranslation(consoleUUID, path);
+            component = language.getTranslation(consoleUUID, path, true);
 
             if (tagResolver != null) {
                 component = MiniMessage.miniMessage().deserialize(

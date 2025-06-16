@@ -33,7 +33,6 @@ public class NexusItems {
 
     }
 
-
     private void readItems(File file) {
 
         FileConfiguration config = YamlConfiguration.loadConfiguration(file);

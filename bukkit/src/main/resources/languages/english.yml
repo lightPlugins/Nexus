@@ -3,3 +3,19 @@ general:
   no-permission: '<red>You do not have permission to perform this command.</red>'
   reload: '<gray>Configuration reloaded <yellow>successfully<gray>!'#
   switch-language: '<gray>Language switched to <yellow><nex_language><gray>!'
+inventories:
+  test:
+    title: '<dark_purple>Test Inventory'
+    content:
+      close:
+        display-name: '<red>Close Inventory'
+        lore:
+          - 'Close Inventory'
+      previous-page:
+        display-name: '<yellow>Previous Page'
+        lore:
+            - 'Previous page'
+      next-page:
+        display-name: '<yellow>Next Page'
+        lore:
+            - 'Next page'

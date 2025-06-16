@@ -2,11 +2,8 @@ package io.nexstudios.nexus.bukkit;
 
 import co.aikar.commands.PaperCommandManager;
 import com.google.common.collect.ImmutableList;
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.zaxxer.hikari.HikariDataSource;
+import io.nexstudios.nexus.bukkit.command.OpenMenus;
 import io.nexstudios.nexus.bukkit.command.ReloadCommand;
 import io.nexstudios.nexus.bukkit.command.SwitchLanguage;
 import io.nexstudios.nexus.bukkit.database.AbstractDatabase;
@@ -17,21 +14,23 @@ import io.nexstudios.nexus.bukkit.database.model.ConnectionProperties;
 import io.nexstudios.nexus.bukkit.database.model.DatabaseCredentials;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hooks.PapiHook;
+import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
+import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import io.nexstudios.nexus.common.logging.NexusLogger;
 import io.nexstudios.nexus.common.files.NexusFile;
 import io.nexstudios.nexus.common.files.NexusFileReader;
-import io.papermc.paper.command.brigadier.Commands;
 import lombok.Getter;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @Getter
 public final class Nexus extends JavaPlugin {
@@ -42,6 +41,7 @@ public final class Nexus extends JavaPlugin {
     public static NexusLogger nexusLogger;
     public NexusFile settingsFile;
     public NexusFileReader languageFiles;
+    public NexusFileReader inventoryFiles;
     public NexusLanguage nexusLanguage;
 
     // API Services
@@ -56,6 +56,9 @@ public final class Nexus extends JavaPlugin {
     // Database related fields
     private AbstractDatabase abstractDatabase;
     public HikariDataSource hikariDataSource;
+
+    // test inventories
+    private final Map<String, InventoryData> nexusInventoryData = new HashMap<>();
 
     @Override
     public void onLoad() {
@@ -75,7 +78,8 @@ public final class Nexus extends JavaPlugin {
         nexusLogger.info("Register Nexus commands...");
         commandManager = new PaperCommandManager(this);
         registerCommands();
-
+        nexusLogger.info("Register Nexus events...");
+        registerEvents();
         nexusLogger.info("Nexus is enabled");
     }
 
@@ -91,12 +95,17 @@ public final class Nexus extends JavaPlugin {
     public void onReload() {
         loadNexusFiles();
         messageSender = new MessageSender(nexusLanguage);
+        loadInventories();
     }
 
     private void commandCompletions() {
         // Register command completions for various types
         commandManager.getCommandCompletions().registerCompletion("languages", c -> {
             List<String> completions = nexusLanguage.getAvailableLanguages().keySet().stream().toList();
+            return ImmutableList.copyOf(completions);
+        });
+        commandManager.getCommandCompletions().registerCompletion("inventories", c -> {
+            List<String> completions = nexusInventoryData.keySet().stream().toList();
             return ImmutableList.copyOf(completions);
         });
     }
@@ -111,6 +120,7 @@ public final class Nexus extends JavaPlugin {
         languageFiles = new NexusFileReader("languages", this);
         // Load all language files as FileConfigurations.
         nexusLanguage = new NexusLanguage(languageFiles, nexusLogger);
+        inventoryFiles = new NexusFileReader("inventories", this);
         nexusLogger.info("All Nexus files have been (re)loaded successfully.");
     }
 
@@ -176,7 +186,43 @@ public final class Nexus extends JavaPlugin {
         commandCompletions();
         commandManager.registerCommand(new ReloadCommand());
         commandManager.registerCommand(new SwitchLanguage());
+        commandManager.registerCommand(new OpenMenus());
         int size = commandManager.getRegisteredRootCommands().size();
         nexusLogger.info("Successfully registered " + size  + " command(s).");
+    }
+    public void registerEvents() {
+        Bukkit.getPluginManager().registerEvents(new NexusMenuEvent(), this);
+    }
+
+    public void loadInventories() {
+
+        getNexusLogger().info("Loading inventories ...");
+        this.nexusInventoryData.clear();
+
+        // create InventoryData from inventoryfiles
+        List<File> files = inventoryFiles.getFiles();
+        if (files.isEmpty()) {
+            // If no inventory files are found, log a warning and skip loading inventories
+            getNexusLogger().warning("No inventory files found. Skipping inventory loading.");
+            return;
+        }
+
+        files.forEach(file -> {
+            try {
+                FileConfiguration config = YamlConfiguration.loadConfiguration(file);
+                String id = file.getName().replace(".yml", "");
+                InventoryData inventoryData = new InventoryData(config, nexusLanguage, id);
+                this.nexusInventoryData.put(id, inventoryData);
+                getNexusLogger().info("Loaded inventory: " + id);
+            } catch (Exception e) {
+                getNexusLogger().error(List.of(
+                        "Failed to load inventory from file: " + file.getName(),
+                        "Error: " + e.getMessage()
+                ));
+                e.printStackTrace();
+            }
+        });
+
+        getNexusLogger().info("Successfully loaded " + this.nexusInventoryData.size() + " inventories.");
     }
 }

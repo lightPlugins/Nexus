@@ -248,7 +248,7 @@ public abstract class NexusMenu implements InventoryHolder {
     }
 
 
-    public void previousPage(Player player) {
+    public void previousPage() {
         if (currentPage > 1) {
             currentPage--;
             loadPage(currentPage);
@@ -286,7 +286,7 @@ public abstract class NexusMenu implements InventoryHolder {
         if(currentPage > 1) {
             // Add next page item
             setItems(List.of(currentPage), slotPrevious, new MenuItem(previousPageItem, (event, item) -> {
-                previousPage((Player) event.getWhoClicked());
+                previousPage();
             }));
         }
     }

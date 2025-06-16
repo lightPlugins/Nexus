@@ -1,0 +1,33 @@
+title: '<dark_purple><b>SLAYER</b> <dark_gray>| <gray>Main Menu'
+size: 4
+update-intervall: 2
+content:
+  decoration:
+    enable: true
+    item: black_stained_glass_pane
+  navigation:
+    close:
+      slots: [31]
+      use-page-number-as-amount: false
+      item: redstone
+      custom-model-data: 1337
+    previous-page:
+      slots: [29]
+      use-page-number-as-amount: true
+      item: arrow
+      custom-model-data: 1337
+    next-page:
+      slots: [33]
+      use-page-number-as-amount: true
+      item: arrow
+      custom-model-data: 1337
+  # In this Static subsection will be necessary items be populated
+  # given by a plugin, that is required.
+  # Namespaces such as 'teleport' cannot be renamed!
+  static:
+    ongoing:
+      slots: [34]
+      item: barrier
+  # In this Custom subsection can the user add their own items
+  custom: { }
+  extra-settings: { }
