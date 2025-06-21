@@ -38,6 +38,8 @@ public class InventoryData implements Cloneable {
         try {
             InventoryData cloned = (InventoryData) super.clone();
 
+            // cloned = this;
+
             // Tiefe Kopie der Maps erstellen
             cloned.navigationItems = new HashMap<>();
             for (Map.Entry<String, InventoryItem> entry : this.navigationItems.entrySet()) {
