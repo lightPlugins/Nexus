@@ -19,7 +19,7 @@ import java.util.*;
 
 @Getter
 @Setter
-public class InventoryData implements Cloneable {
+public class InventoryData {
 
     private Component title;
     private NexusLanguage nexusLanguage;
@@ -32,36 +32,6 @@ public class InventoryData implements Cloneable {
     private Map<String, InventoryItem> customItems;
     private final ConfigurationSection extraSettings;
     private final String inventoryID;
-
-    @Override
-    public InventoryData clone() {
-        try {
-            InventoryData cloned = (InventoryData) super.clone();
-
-            // cloned = this;
-
-            // Tiefe Kopie der Maps erstellen
-            cloned.navigationItems = new HashMap<>();
-            for (Map.Entry<String, InventoryItem> entry : this.navigationItems.entrySet()) {
-                cloned.navigationItems.put(entry.getKey(), entry.getValue().clone());
-            }
-
-            cloned.staticItems = new HashMap<>();
-            for (Map.Entry<String, InventoryItem> entry : this.staticItems.entrySet()) {
-                cloned.staticItems.put(entry.getKey(), entry.getValue().clone());
-            }
-
-            cloned.customItems = new HashMap<>();
-            for (Map.Entry<String, InventoryItem> entry : this.customItems.entrySet()) {
-                cloned.customItems.put(entry.getKey(), entry.getValue().clone());
-            }
-
-            // Andere Felder, die nicht geklont werden müssen, können direkt übernommen werden
-            return cloned;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError("Cloning not supported", e);
-        }
-    }
 
     public InventoryData(FileConfiguration config, NexusLanguage nexusLanguage, String inventoryID) {
         // Basiswerte aus der Konfiguration laden
@@ -140,7 +110,15 @@ public class InventoryData implements Cloneable {
     private Map<String, InventoryItem> loadItems(FileConfiguration config, String path) {
         Map<String, InventoryItem> items = new HashMap<>();
         if (config.contains(path)) {
-            for (String key : config.getConfigurationSection(path).getKeys(false)) {
+            ConfigurationSection section = config.getConfigurationSection(path);
+            if(section == null) {
+                Nexus.nexusLogger.error(List.of(
+                        "Error loading items from path: " + path,
+                        "Configuration section is null. Please check the configuration file."
+                ));
+                return items; // Return empty map if section is null
+            }
+            for (String key : section.getKeys(false)) {
                 InventoryItem item = new InventoryItem(config, path + "." + key, key, nexusLanguage, inventoryID);
                 items.put(key, item);
             }

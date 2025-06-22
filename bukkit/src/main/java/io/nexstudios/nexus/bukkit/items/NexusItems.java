@@ -57,7 +57,7 @@ public class NexusItems {
             case "mmoitems": nexusLogger.info("MMOItems are not supported yet. Skipping item loading for <yellow>" + itemID + "<reset>."); break;
             default: {
                 nexusLogger.warning("Unknown item type <yellow>" + itemType + "<reset> in file <yellow>" + itemID + "<reset>. Skipping item loading.");
-                return;
+                break;
             }
         }
     }

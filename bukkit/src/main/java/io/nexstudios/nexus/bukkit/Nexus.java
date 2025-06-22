@@ -14,6 +14,7 @@ import io.nexstudios.nexus.bukkit.database.model.ConnectionProperties;
 import io.nexstudios.nexus.bukkit.database.model.DatabaseCredentials;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hooks.PapiHook;
+import io.nexstudios.nexus.bukkit.hooks.VaultHook;
 import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
@@ -52,6 +53,7 @@ public final class Nexus extends JavaPlugin {
 
     // Third party hooks
     public PapiHook papiHook;
+    public VaultHook vaultHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -178,6 +180,17 @@ public final class Nexus extends JavaPlugin {
         if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
             papiHook = new PapiHook();
             nexusLogger.info("<yellow>PlaceholderAPI<reset> hook registered successfully.");
+        }
+        // Check if Vault is installed and register the hook
+        if (getServer().getPluginManager().isPluginEnabled("Vault")) {
+            vaultHook = new VaultHook(this, nexusLogger);
+            if (vaultHook.getEconomy() != null) {
+                nexusLogger.info("<yellow>Vault Economy<reset> hook registered successfully.");
+            } else {
+                nexusLogger.warning("Vault Economy hook could not be registered. Economy provider is null.");
+            }
+        } else {
+            nexusLogger.warning("Vault is not installed or enabled. Vault hook will not be available.");
         }
     }
 

@@ -9,6 +9,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
@@ -76,6 +77,7 @@ public class ConfigActions {
                 case "player-command": executePlayerCommand(arguments);
                 case "console-command": executeConsoleCommand(arguments);
                 case "actionbar": sendActionBar(arguments);
+                case "vault": addMoney(arguments);
                 default: {
                     Nexus.nexusLogger.error(List.of(
                             "Unknown action ID: " + id,
@@ -92,6 +94,36 @@ public class ConfigActions {
         // based on the provided section.
         // It could involve updating the player's balance in a database or economy plugin.
 
+        if(!section.contains("amount")) {
+            Nexus.nexusLogger.error(List.of(
+                    "'amount' is missing for action type 'vault'",
+                    "In file: " + fileName,
+                    "Please check if the action is configured correctly."
+            ));
+            return;
+        }
+
+        double amount = section.getDouble("amount");
+
+        if(amount <= 0) {
+            Nexus.nexusLogger.error(List.of(
+                    "'amount' must be greater than 0 for action type 'vault'",
+                    "In file: " + fileName,
+                    "Please check your action configuration."
+            ));
+            return;
+        }
+
+        EconomyResponse response = Nexus.getInstance().getVaultHook().getEconomy().depositPlayer(player, amount);
+
+        if(!response.transactionSuccess()) {
+            Nexus.nexusLogger.error(List.of(
+                    "Config action for 'vault' failed with following error:",
+                    "Failed to add money to player: " + player.getName(),
+                    "In file: " + fileName,
+                    "Reason: " + response.errorMessage
+            ));
+        }
     }
 
     public void sendActionBar(ConfigurationSection section) {
@@ -336,6 +368,7 @@ public class ConfigActions {
             ));
             return;
         }
+
         Component componentCommand = Nexus.getInstance().getMessageSender().stringToComponent(player, command);
         String stringCommand = PlainTextComponentSerializer.plainText().serialize(componentCommand);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), stringCommand);
