@@ -190,7 +190,7 @@ public final class Nexus extends JavaPlugin {
                 nexusLogger.warning("Vault Economy hook could not be registered. Economy provider is null.");
             }
         } else {
-            nexusLogger.warning("Vault is not installed or enabled. Vault hook will not be available.");
+            nexusLogger.warning("Vault is not installed or enabled. Vault hook is not be available.");
         }
     }
 

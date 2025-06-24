@@ -3,12 +3,25 @@ general:
   no-permission: '<red>You do not have permission to perform this command.</red>'
   reload: '<gray>Configuration reloaded <yellow>successfully<gray>!'#
   switch-language: '<gray>Language switched to <yellow><nex_language><gray>!'
+# ######################################################  #
+#                   INVENTORY Translations                #
+# ######################################################  #
+# Here you can localize the inventory titles and content.
+# (lore and display names)
 inventories:
+  # the Inventory name is the namespace of the inventory
+  # In this case the inventory namespace is 'test'
   test:
+    # The title of the inventory
     title: '<dark_purple>Test Inventory'
+    # Here you can localize the inventory content.
     content:
+      # the content name is the namespace of the content
+      # In this case the content namespace is 'close'
       close:
+        # The display name of the close item for example
         display-name: '<red>Close Inventory'
+        # The lore of the close item for example
         lore:
           - 'Close Inventory'
       previous-page:
