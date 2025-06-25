@@ -1,0 +1,54 @@
+machine:
+  name: 'Small refinery'
+  description:
+    - "A small refinery that processes"
+    - "raw materials into usable resources."
+  visuals:
+    machine-block: 'minecraft:furnace' # Also supports Nexo blocks/furniture
+    hologram:
+      enabled: true
+      billboard: FIXED
+      shadowed: true
+      offset:
+        x: 0
+        y: 1.5
+        z: 0
+      text:
+        - '<green>Small Refinery'
+        - '<gray>Processing speed: <yellow><speed>'
+speed-modifier:
+  name: 'Speed modifier'
+  description:
+    - "Increases the processing speed"
+    - "of the refinery."
+  levels:
+    '2':
+      upgrade-cost: 100
+      speed-decrease: 5
+    '3':
+      upgrade-cost: 200
+      speed-decrease: 5
+    '4':
+      upgrade-cost: 300
+      speed-decrease: 5
+    '5':
+      upgrade-cost: 400
+      speed-decrease: 5
+    '6':
+      upgrade-cost: 500
+      speed-decrease: 5
+process:
+  '0':
+    name: 'minecraft:raw_iron'
+    description:
+      - "If you smelt 1x raw iron, you receive"
+      - "1x Iron Ingot."
+    ingredients:
+      '0':
+        item: 'minecraft:raw_iron'
+        amount: 1
+    outputs:
+      '0':
+        item: 'minecraft:raw_iron'
+        amount: 1
+    speed: 5
