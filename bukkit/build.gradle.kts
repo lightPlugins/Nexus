@@ -41,7 +41,7 @@ repositories {
         url = uri("https://repo.nexomc.com/releases")
     }
     maven {
-        name = "mythicmobs"
+        name = "mythicmob"
         url = uri("https://mvn.lumine.io/repository/maven-public/")
     }
     maven {
@@ -51,7 +51,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.21.5-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.7-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
         exclude(group = "org.bukkit", module = "bukkit")
     }
