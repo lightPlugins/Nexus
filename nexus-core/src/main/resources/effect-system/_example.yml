@@ -1,0 +1,50 @@
+# This is the Nexus effect system
+placeholders:
+  # Here you can define placeholders that can be used in this drop configuration.
+  # Placeholder look: '#playerlevel#'
+  # Math expressions can be used to calculate the value of the placeholder.
+  # example %player_level% is a placeholder from PlaceholderAPI.
+  # So all value fields have PlaceholderAPI support.
+  - id: 'playerlevel'
+    value: '%player_level% / 10'
+  - id: 'chance'
+    value: '1'
+  - id: 'multiplier'
+    value: '1'
+# The triggers, what Bukkit Event will trigger
+triggers:
+  - id: kill
+    filters:
+      - id: entity
+        entities:
+          - 'zombie'
+          - 'skeleton'
+          - 'creeper'
+          - 'mythicmobs:custom_mob' # Example for MythicMobs custom mobs
+    effects:
+      - id: drop-item
+        item: diamond
+        amount: 1
+        chance: '#chance#'
+        multiplier: '#multiplier#'
+        # will be executed if the drop is successful
+        # optional, if not defined, no actions will be executed
+        actions: [ ]
+      - id: drop-item
+        item: emerald
+        amount: 2
+        chance: '#chance#'
+        multiplier: '#multiplier#'
+        # will be executed if the drop is successful
+        # optional, if not defined, no actions will be executed
+        actions: [ ]
+      - id: drop-experience
+        trigger: player-entity-kill
+        amount: 5
+        chance: '#chance#'
+        multiplier: '#multiplier#'
+        # will be executed if the drop is successful
+        # optional, if not defined, no actions will be executed
+        actions:
+          - id: send-message
+            message: "You have killed #mob-name#!"

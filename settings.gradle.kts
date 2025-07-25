@@ -1,4 +1,9 @@
+pluginManagement {
+    repositories {
+        maven("https://repo.papermc.io/repository/maven-public/")
+        gradlePluginPortal()
+    }
+}
 rootProject.name = "Nexus"
-include("bukkit")
-include("common")
-include("velocity")
+// core
+include(":nexus-core")
