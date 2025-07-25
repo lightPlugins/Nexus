@@ -2,7 +2,7 @@ package io.nexstudios.nexus.bukkit.database.impl;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.database.PooledDatabase;
 import io.nexstudios.nexus.bukkit.database.model.ConnectionProperties;
 import io.nexstudios.nexus.bukkit.database.model.DatabaseTypes;
@@ -18,7 +18,7 @@ public class SQLiteDatabase extends PooledDatabase {
     private final String filePath;
     private final ConnectionProperties connectionProperties;
 
-    public SQLiteDatabase(Nexus plugin, ConnectionProperties connectionProperties) {
+    public SQLiteDatabase(NexusPlugin plugin, ConnectionProperties connectionProperties) {
         super(plugin);
         this.connectionProperties = connectionProperties;
         this.filePath = this.plugin.getDataFolder().getPath() + File.separator + FILE_NAME;
@@ -63,7 +63,7 @@ public class SQLiteDatabase extends PooledDatabase {
         try {
             dbFile.createNewFile();
         } catch (IOException e) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Failed to create SQLite database file",
                     "File path: " + this.filePath,
                     "Error: " + e.getMessage()

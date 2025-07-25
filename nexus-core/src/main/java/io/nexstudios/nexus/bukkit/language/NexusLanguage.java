@@ -1,6 +1,6 @@
 package io.nexstudios.nexus.bukkit.language;
 
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.utils.NexusLogger;
 import io.nexstudios.nexus.bukkit.files.NexusFileReader;
 import lombok.Getter;
@@ -48,7 +48,7 @@ public class NexusLanguage {
         FileConfiguration languageConfig = loadedLanguages.get(lang);
 
         if (languageConfig == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Language configuration for " + lang + " not found.",
                     "Using default language: english"
             ));
@@ -67,7 +67,7 @@ public class NexusLanguage {
         FileConfiguration languageConfig = loadedLanguages.get(lang);
 
         if (languageConfig == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Language configuration for " + lang + " not found.",
                     "Using default language: english"
             ));
@@ -103,7 +103,7 @@ public class NexusLanguage {
         String lang = getSelectedLanguage(uuid);
 
         if (lang == null) {
-            Nexus.nexusLogger.debug(List.of(
+            NexusPlugin.nexusLogger.debug(List.of(
                     "Language for UUID " + uuid + " not found.",
                     "Using default language: english"
             ), 3);
@@ -114,14 +114,14 @@ public class NexusLanguage {
         FileConfiguration languageConfig = loadedLanguages.get(lang);
 
         if (languageConfig == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Language configuration for " + lang + " not found.",
                     "Using default language: english"
             ));
             languageConfig = loadedLanguages.get("english");
 
             if (languageConfig == null) {
-                Nexus.nexusLogger.error(List.of(
+                NexusPlugin.nexusLogger.error(List.of(
                         "Default language configuration english.yml not found.",
                         "This is a critical problem and should be reported",
                         "to the developer: NexStudios"
@@ -133,7 +133,7 @@ public class NexusLanguage {
         if (languageConfig.contains(path)) {
             String translation = languageConfig.getString(path);
             if (translation == null) {
-                Nexus.nexusLogger.error(List.of(
+                NexusPlugin.nexusLogger.error(List.of(
                         "Translation for path '" + path + "' in language '" + lang + "' is null.",
                         "Using default translation: english.yml"
                 ));
@@ -160,14 +160,14 @@ public class NexusLanguage {
     public void selectLanguage(UUID uuid, String language) {
         if(!availableLanguages.containsKey(language)) {
             if(language.equals("english")) {
-                Nexus.nexusLogger.error(List.of(
+                NexusPlugin.nexusLogger.error(List.of(
                         "Could not find the default english file.",
                         "This is a critical problem and should be reported",
                         "to the developer: NexStudios"
                 ));
                 throw new IllegalArgumentException("english.yml -> language/file not found");
             }
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Provided language file " + language + " does not exist.",
                     "Selecting Fallback language: english"
             ));

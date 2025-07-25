@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
-public final class Nexus extends JavaPlugin {
+public final class NexusPlugin extends JavaPlugin {
 
     // Nexus fields
     @Getter
-    private static Nexus instance;
+    private static NexusPlugin instance;
     public static NexusLogger nexusLogger;
     public NexusFile settingsFile;
     public NexusFileReader languageFiles;

@@ -1,6 +1,6 @@
 name: ${name}
 version: ${version}
-main: io.nexstudios.nexus.bukkit.Nexus
+main: io.nexstudios.nexus.bukkit.NexusPlugin
 api-version: '1.21'
 softdepend:
   - PlaceholderAPI

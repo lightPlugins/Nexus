@@ -1,7 +1,7 @@
 package io.nexstudios.nexus.bukkit.database;
 
 import com.zaxxer.hikari.HikariDataSource;
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,13 +13,13 @@ public abstract class PooledDatabase extends AbstractDatabase {
     protected static final AtomicInteger POOL_COUNTER = new AtomicInteger(0);
     protected HikariDataSource hikari;
 
-    public PooledDatabase(Nexus plugin) {
+    public PooledDatabase(NexusPlugin plugin) {
         super(plugin);
     }
 
     @Override
     public void close() {
-        Nexus.nexusLogger.error("Attempting to close HikariCP connection pool...");
+        NexusPlugin.nexusLogger.error("Attempting to close HikariCP connection pool...");
         if (this.hikari != null) {
             this.hikari.close();
         }
@@ -30,7 +30,7 @@ public abstract class PooledDatabase extends AbstractDatabase {
         try {
             return this.hikari.getConnection();
         } catch (SQLException e) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Failed to get connection from HikariCP",
                     "Error: " + e.getMessage()
             ));

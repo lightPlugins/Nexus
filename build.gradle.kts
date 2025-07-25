@@ -4,10 +4,14 @@ plugins {
     id("com.gradleup.shadow") version "8.3.5"
     id("maven-publish")
     id("java")
+    id("io.papermc.paperweight.userdev") apply false
+
 }
 
 dependencies {
     implementation(project(":nexus-core"))
+    implementation(project(":nexus-nms:v1_21_R7"))
+    implementation(project(":nexus-nms:v1_21_R8"))
 
 }
 

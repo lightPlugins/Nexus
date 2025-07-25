@@ -2,16 +2,17 @@ group = "io.nexstudios"
 version = "1.0-SNAPSHOT"
 
 plugins {
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.17"
+    id("io.papermc.paperweight.userdev")
     id("io.freefair.lombok") version "8.11"
 }
 
 repositories {
     mavenCentral()
-
+    maven("https://repo.papermc.io/repository/maven-public/")
 }
 
 dependencies {
+    compileOnly(project(":nexus-nms"))
     paperweight.paperDevBundle("1.21.7-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
         exclude(group = "org.bukkit", module = "bukkit")

@@ -1,6 +1,6 @@
 package io.nexstudios.nexus.bukkit.inventory;
 
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.inventory.models.MenuItem;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -120,7 +120,7 @@ public class NexusInventory extends NexusMenu {
                 return;
             }
             String rawDisplayName = PlainTextComponentSerializer.plainText().serialize(displayName);
-            Component comp = Nexus.getInstance().messageSender.stringToComponent(player, rawDisplayName);
+            Component comp = NexusPlugin.getInstance().messageSender.stringToComponent(player, rawDisplayName);
             itemStack.setData(DataComponentTypes.ITEM_NAME, comp);
 
             // Placeholder für Lore anwenden
@@ -130,7 +130,7 @@ public class NexusInventory extends NexusMenu {
                 if(itemLore != null) {
                     for (Component line : itemLore.lines()) {
                         String rawLoreLine = PlainTextComponentSerializer.plainText().serialize(line);
-                        Component loreLine = Nexus.getInstance().messageSender.stringToComponent(player, rawLoreLine);
+                        Component loreLine = NexusPlugin.getInstance().messageSender.stringToComponent(player, rawLoreLine);
                         newLore.add(loreLine);
                     }
                     itemStack.setData(DataComponentTypes.LORE, ItemLore.lore(newLore));

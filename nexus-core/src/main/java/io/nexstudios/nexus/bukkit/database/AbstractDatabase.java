@@ -1,6 +1,6 @@
 package io.nexstudios.nexus.bukkit.database;
 
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.database.model.DatabaseTypes;
 
 import java.sql.Connection;
@@ -19,9 +19,9 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractDatabase {
 
-    protected final Nexus plugin;
+    protected final NexusPlugin plugin;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    AbstractDatabase(Nexus plugin) {
+    AbstractDatabase(NexusPlugin plugin) {
         this.plugin = plugin;
         startMonitoring();
     }
@@ -186,7 +186,7 @@ public abstract class AbstractDatabase {
                             "Database connection is inactive.",
                             "Attempting to reconnect..."
                     ));
-                    Nexus.getInstance().getAbstractDatabase().connect();
+                    NexusPlugin.getInstance().getAbstractDatabase().connect();
                     if(!connection.isClosed()) {
                         plugin.getNexusLogger().info(List.of("Database connection has been re-established."));
                     }
@@ -196,7 +196,7 @@ public abstract class AbstractDatabase {
                         "Error while checking database connection: " + e.getMessage(),
                         "Attempting to reconnect..."
                 ));
-                Nexus.getInstance().getAbstractDatabase().connect();
+                NexusPlugin.getInstance().getAbstractDatabase().connect();
                 if(getConnection() != null) {
                     plugin.getNexusLogger().info("Database connection has been re-established.");
                 }

@@ -1,6 +1,6 @@
 package io.nexstudios.nexus.bukkit.inventory.models;
 
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemLore;
@@ -112,7 +112,7 @@ public class InventoryData {
         if (config.contains(path)) {
             ConfigurationSection section = config.getConfigurationSection(path);
             if(section == null) {
-                Nexus.nexusLogger.error(List.of(
+                NexusPlugin.nexusLogger.error(List.of(
                         "Error loading items from path: " + path,
                         "Configuration section is null. Please check the configuration file."
                 ));
@@ -207,7 +207,7 @@ public class InventoryData {
             String materialName = config.getString(path + ".item", "STONE");
             Material material = Material.matchMaterial(materialName);
             if (material == null) {
-                Nexus.nexusLogger.error(List.of(
+                NexusPlugin.nexusLogger.error(List.of(
                         "Material " + materialName + " in "
                                 + config.getName().replace(".yml", " ") + " - " + path,
                         "could not be found! Please use a valid material name!"

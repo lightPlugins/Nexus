@@ -2,7 +2,7 @@ package io.nexstudios.nexus.bukkit.database.impl;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.database.PooledDatabase;
 import io.nexstudios.nexus.bukkit.database.model.ConnectionProperties;
 import io.nexstudios.nexus.bukkit.database.model.DatabaseCredentials;
@@ -14,7 +14,7 @@ public class MySQLDatabase extends PooledDatabase {
     private final ConnectionProperties connectionProperties;
     private final String poolName = "nexus-mysql-";
 
-    public MySQLDatabase(Nexus parent, DatabaseCredentials credentials, ConnectionProperties connectionProperties) {
+    public MySQLDatabase(NexusPlugin parent, DatabaseCredentials credentials, ConnectionProperties connectionProperties) {
         super(parent);
         this.connectionProperties = connectionProperties;
         this.credentials = credentials;

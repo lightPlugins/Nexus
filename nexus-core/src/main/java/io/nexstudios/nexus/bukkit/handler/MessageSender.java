@@ -1,6 +1,6 @@
 package io.nexstudios.nexus.bukkit.handler;
 
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
@@ -27,7 +27,7 @@ public class MessageSender {
         Component component;
 
         if(sender == null) {
-            Nexus.nexusLogger.warning(List.of(
+            NexusPlugin.nexusLogger.warning(List.of(
                     "Cannot send message: CommandSender or Component is null."
             ));
             return;
@@ -35,22 +35,22 @@ public class MessageSender {
 
         if (sender instanceof Player player) {
             component = language.getTranslation(player.getUniqueId(), path, true);
-            if(Nexus.getInstance().papiHook != null) {
+            if(NexusPlugin.getInstance().papiHook != null) {
                 String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
-                component = Nexus.getInstance().papiHook.translate(player, legacyText);
+                component = NexusPlugin.getInstance().papiHook.translate(player, legacyText);
             }
             player.sendMessage(component);
         } else {
-            UUID consoleUUID = Nexus.getInstance().getNexusLanguage().getConsoleUUID();
+            UUID consoleUUID = NexusPlugin.getInstance().getNexusLanguage().getConsoleUUID();
             component = language.getTranslation(consoleUUID, path, true);
             String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
-            Nexus.nexusLogger.info(legacyText);
+            NexusPlugin.nexusLogger.info(legacyText);
         }
     }
 
     public void send(CommandSender sender, String path, TagResolver tagResolver) {
         if (sender == null) {
-            Nexus.nexusLogger.warning(List.of(
+            NexusPlugin.nexusLogger.warning(List.of(
                     "Cannot send message: CommandSender is null."
             ));
             return;
@@ -61,7 +61,7 @@ public class MessageSender {
         if (sender instanceof Player player) {
             component = language.getTranslation(player.getUniqueId(), path, true);
 
-            if (Nexus.getInstance().papiHook != null) {
+            if (NexusPlugin.getInstance().papiHook != null) {
                 String miniMessageText = MiniMessage.miniMessage().serialize(component);
                 String translatedText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
                 component = MiniMessage.miniMessage().deserialize(translatedText, tagResolver);
@@ -86,13 +86,13 @@ public class MessageSender {
                 );
             }
 
-            Nexus.nexusLogger.info(MiniMessage.miniMessage().serialize(component));
+            NexusPlugin.nexusLogger.info(MiniMessage.miniMessage().serialize(component));
         }
     }
 
     public Component stringToComponent(Player player, String legacyText) {
         String text = legacyText;
-        if (Nexus.getInstance().papiHook != null) {
+        if (NexusPlugin.getInstance().papiHook != null) {
             text = PlaceholderAPI.setPlaceholders(player, legacyText);
         }
         return MiniMessage.miniMessage()
@@ -102,7 +102,7 @@ public class MessageSender {
 
     public Component stringToComponent(Player player, String legacyText, TagResolver resolver) {
         String text = legacyText;
-        if (Nexus.getInstance().papiHook != null) {
+        if (NexusPlugin.getInstance().papiHook != null) {
             text = PlaceholderAPI.setPlaceholders(player, legacyText).replace("\\", "");
         }
         return MiniMessage.miniMessage()

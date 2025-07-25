@@ -1,6 +1,6 @@
 package io.nexstudios.nexus.bukkit.inventory.event;
 
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.inventory.NexusMenu;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -18,7 +18,7 @@ public class NexusMenuEvent implements Listener {
                     return;
                 }
                 event.setCancelled(true);
-                Nexus.nexusLogger.debug("Clicked slot id: " + event.getSlot(), 3);
+                NexusPlugin.nexusLogger.debug("Clicked slot id: " + event.getSlot(), 3);
                 ((NexusMenu) event.getInventory().getHolder()).handleMenuClick(event);
             }
         }

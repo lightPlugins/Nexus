@@ -1,7 +1,6 @@
 package io.nexstudios.nexus.bukkit.configs;
 
-import io.nexstudios.nexus.bukkit.Nexus;
-import lombok.Getter;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -49,7 +48,7 @@ public class ConfigActions {
 
             if(id == null) {
                 // Handle missing action ID
-                Nexus.nexusLogger.error(List.of(
+                NexusPlugin.nexusLogger.error(List.of(
                         "Action ID is missing for key: " + key,
                         "In file: " + fileName,
                         "Please check your action configuration."
@@ -61,7 +60,7 @@ public class ConfigActions {
 
             if(arguments == null) {
                 // Handle missing action section
-                Nexus.nexusLogger.error(List.of(
+                NexusPlugin.nexusLogger.error(List.of(
                         "Action arguments are missing for key: " + key,
                         "In file: " + fileName,
                         "Please check your action configuration."
@@ -79,7 +78,7 @@ public class ConfigActions {
                 case "actionbar": sendActionBar(arguments);
                 case "vault": addMoney(arguments);
                 default: {
-                    Nexus.nexusLogger.error(List.of(
+                    NexusPlugin.nexusLogger.error(List.of(
                             "Unknown action ID: " + id,
                             "In file: " + fileName,
                             "Please check if this actions is available."
@@ -95,7 +94,7 @@ public class ConfigActions {
         // It could involve updating the player's balance in a database or economy plugin.
 
         if(!section.contains("amount")) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "'amount' is missing for action type 'vault'",
                     "In file: " + fileName,
                     "Please check if the action is configured correctly."
@@ -106,7 +105,7 @@ public class ConfigActions {
         double amount = section.getDouble("amount");
 
         if(amount <= 0) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "'amount' must be greater than 0 for action type 'vault'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -114,10 +113,10 @@ public class ConfigActions {
             return;
         }
 
-        EconomyResponse response = Nexus.getInstance().getVaultHook().getEconomy().depositPlayer(player, amount);
+        EconomyResponse response = NexusPlugin.getInstance().getVaultHook().getEconomy().depositPlayer(player, amount);
 
         if(!response.transactionSuccess()) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Config action for 'vault' failed with following error:",
                     "Failed to add money to player: " + player.getName(),
                     "In file: " + fileName,
@@ -131,7 +130,7 @@ public class ConfigActions {
         // based on the provided section.
         // It could involve sending a message to a player, console, etc.
         if(!section.contains("message")) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Input is missing for action type 'action-bar'",
                     "In file: " + fileName,
                     "Please check if the action is configured correctly."
@@ -140,14 +139,14 @@ public class ConfigActions {
         }
         String message = section.getString("message");
         if(message == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Input is missing for action type 'action-bar'",
                     "In file: " + fileName,
                     "Please check your action configuration."
             ));
             return;
         }
-        player.sendActionBar(Nexus.getInstance().messageSender.stringToComponent(player, message));
+        player.sendActionBar(NexusPlugin.getInstance().messageSender.stringToComponent(player, message));
     }
 
     private void sendMessage(ConfigurationSection section) {
@@ -155,7 +154,7 @@ public class ConfigActions {
         // based on the provided messageSection.
         // It could involve sending a message to a player, console, etc.
         if(!section.contains("message")) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Input is missing for action type 'message'",
                     "In file: " + fileName,
                     "Please check if the action is configured correctly."
@@ -164,14 +163,14 @@ public class ConfigActions {
         }
         String message = section.getString("message");
         if(message == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Input is missing for action type 'message'",
                     "In file: " + fileName,
                     "Please check your action configuration."
             ));
             return;
         }
-        player.sendMessage(Nexus.getInstance().messageSender.stringToComponent(player, message));
+        player.sendMessage(NexusPlugin.getInstance().messageSender.stringToComponent(player, message));
 
     }
 
@@ -180,7 +179,7 @@ public class ConfigActions {
         // based on the provided messageSection.
         // It could involve sending a message to a player, console, etc.
         if(!section.contains("message")) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Input is missing for action type 'title'",
                     "In file: " + fileName,
                     "Please check if the action is configured correctly."
@@ -189,7 +188,7 @@ public class ConfigActions {
         }
         String upperTitle = section.getString("upper");
         if(upperTitle == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "'upper' is missing for action type 'title'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -198,7 +197,7 @@ public class ConfigActions {
         }
         String lowerTitle = section.getString("lower");
         if(lowerTitle == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "'lower' is missing for action type 'title'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -218,8 +217,8 @@ public class ConfigActions {
         );
         // Create Title renderer
         Title title = Title.title(
-                Nexus.getInstance().messageSender.stringToComponent(player, upperTitle),
-                Nexus.getInstance().messageSender.stringToComponent(player, lowerTitle),
+                NexusPlugin.getInstance().messageSender.stringToComponent(player, upperTitle),
+                NexusPlugin.getInstance().messageSender.stringToComponent(player, lowerTitle),
                 titleTimes
         );
         // Send the title to the player
@@ -233,7 +232,7 @@ public class ConfigActions {
 
         @Subst(".") String soundKey = section.getString("sound");
         if(soundKey == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Sound key is missing for action type 'sound'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -243,7 +242,7 @@ public class ConfigActions {
 
         NamespacedKey key = NamespacedKey.fromString(soundKey);
         if(key == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Invalid sound key: " + soundKey,
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -251,7 +250,7 @@ public class ConfigActions {
             return;
         }
         if(Registry.SOUNDS.get(key) == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Sound not found: " + soundKey,
                     "In file: " + fileName,
                     "Please check if the sound exists in the server's resources."
@@ -277,7 +276,7 @@ public class ConfigActions {
         @Subst(".") String soundKey = section.getString("key");
 
         if (soundKey == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Sound key is missing for action type 'custom_sound'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -286,7 +285,7 @@ public class ConfigActions {
         }
 
         if (soundNamespace == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Sound namespace is missing for action type 'custom_sound'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -296,7 +295,7 @@ public class ConfigActions {
 
         NamespacedKey key = NamespacedKey.fromString(soundNamespace + ":" + soundKey);
         if (key == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Invalid sound key: " + soundNamespace + ":" + soundKey,
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -304,7 +303,7 @@ public class ConfigActions {
             return;
         }
         if (Registry.SOUNDS.get(key) == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Sound not found: " + soundNamespace + ":" + soundKey,
                     "In file: " + fileName,
                     "Please check if the sound exists in the server's resources."
@@ -324,7 +323,7 @@ public class ConfigActions {
         // based on the provided commandSection.
         // It could involve executing a command as the player or console.
         if(!section.contains("command")) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Command is missing for action type 'command'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -333,7 +332,7 @@ public class ConfigActions {
         }
         String command = section.getString("command");
         if(command == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Command is missing for action type 'command'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -341,9 +340,9 @@ public class ConfigActions {
             return;
         }
         TagResolver resolver = Placeholder.unparsed("name", player.getName());
-        Component componentCommand = Nexus.getInstance().getMessageSender().stringToComponent(player, command, resolver);
+        Component componentCommand = NexusPlugin.getInstance().getMessageSender().stringToComponent(player, command, resolver);
         String stringCommand = PlainTextComponentSerializer.plainText().serialize(componentCommand);
-        Nexus.nexusLogger.debug("Executing command: " + stringCommand + " for player " + player.getName(), 1);
+        NexusPlugin.nexusLogger.debug("Executing command: " + stringCommand + " for player " + player.getName(), 1);
         player.performCommand(stringCommand);
     }
 
@@ -352,7 +351,7 @@ public class ConfigActions {
         // based on the provided commandSection.
         // It could involve executing a command as the player or console.
         if(!section.contains("command")) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Command is missing for action type 'command'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -361,7 +360,7 @@ public class ConfigActions {
         }
         String command = section.getString("command");
         if(command == null) {
-            Nexus.nexusLogger.error(List.of(
+            NexusPlugin.nexusLogger.error(List.of(
                     "Command is missing for action type 'command'",
                     "In file: " + fileName,
                     "Please check your action configuration."
@@ -369,7 +368,7 @@ public class ConfigActions {
             return;
         }
 
-        Component componentCommand = Nexus.getInstance().getMessageSender().stringToComponent(player, command);
+        Component componentCommand = NexusPlugin.getInstance().getMessageSender().stringToComponent(player, command);
         String stringCommand = PlainTextComponentSerializer.plainText().serialize(componentCommand);
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), stringCommand);
     }

@@ -2,7 +2,7 @@ package io.nexstudios.nexus.bukkit.command;
 
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.*;
-import io.nexstudios.nexus.bukkit.Nexus;
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import org.bukkit.command.CommandSender;
 
 @CommandAlias("nexus")
@@ -14,8 +14,8 @@ public class ReloadCommand extends BaseCommand {
     @Description("Reloads the plugin configuration and settings.")
     public void onReload(CommandSender sender) {
 
-        Nexus.getInstance().onReload();
-        Nexus.getInstance().messageSender.send(sender, "general.reload");
+        NexusPlugin.getInstance().onReload();
+        NexusPlugin.getInstance().messageSender.send(sender, "general.reload");
 
     }
 
