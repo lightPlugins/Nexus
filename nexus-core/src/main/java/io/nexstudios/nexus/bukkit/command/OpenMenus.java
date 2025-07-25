@@ -51,7 +51,8 @@ public class OpenMenus extends BaseCommand {
         for(int i = 0; i < 54; i++) {
             int finalI = i;
             ItemBuilder itemBuilder = ItemBuilderFactory.getItemBuilder(Material.ACACIA_LEAVES)
-                    .setDisplayName(Component.text("<red>Test Item " + finalI + "</red>"))
+                    .setDisplayName(MiniMessage.miniMessage().deserialize("<red>Test Item " + finalI + "</green>"))
+                    .addLoreLine(MiniMessage.miniMessage().deserialize("<green>Example Lore Line"))
                     .addEnchantment(Enchantment.EFFICIENCY, 20)
                     .build();
             MenuItem item = new MenuItem(itemBuilder.getItemStack(), (event, menuItem) -> {
@@ -59,7 +60,7 @@ public class OpenMenus extends BaseCommand {
             });
             testItems.add(item);
         }
-        nexusInventory.setItemList(testItems, 10, 16);
+        nexusInventory.setItemList(testItems, 10, 22);
         return nexusInventory;
     }
 }
