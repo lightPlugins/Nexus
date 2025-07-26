@@ -1,0 +1,29 @@
+# The drop conditions, when the drop table should drop
+# example: -id: kill <- if the players kill an entity
+# example: -id: mine <- if the players breaks a block/crop
+drop-conditions:
+  - id: kill
+    types:
+      - 'mythicmobs:guard'
+drop-style:
+  id: fancy-drop
+  velocity:
+    in-x:
+      min: 0.2
+      max: 0.5
+    in-y:
+      min: 0.5
+      max: 0.9
+    in-z:
+      min: 0.2
+      max: 0.5
+drop-items:
+  - item: iron_ingot
+    amount: 1
+    chance: 100
+    settings:
+      pick-up-only-owner: true
+      visible-only-owner: true
+      glow-color: RED
+      fancy-drop-color: '#ffdc73'
+      item-name: '<gold>Legend Iron Ingot'

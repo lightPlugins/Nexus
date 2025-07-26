@@ -8,7 +8,6 @@ import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.inventory.models.MenuItem;
 import io.nexstudios.nexus.bukkit.items.ItemBuilder;
 import io.nexstudios.nexus.bukkit.items.ItemBuilderFactory;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;

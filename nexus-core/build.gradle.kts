@@ -29,6 +29,9 @@ dependencies {
     compileOnly ("org.mariadb.jdbc:mariadb-java-client:3.5.3")
     compileOnly("commons-lang:commons-lang:2.6")
 
+    compileOnly("com.willfp:EcoItems:5.63.1")
+    compileOnly("com.willfp:eco:6.76.2")
+
     implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
 }
 

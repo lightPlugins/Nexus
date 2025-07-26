@@ -12,6 +12,9 @@ import io.nexstudios.nexus.bukkit.database.impl.MySQLDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.SQLiteDatabase;
 import io.nexstudios.nexus.bukkit.database.model.ConnectionProperties;
 import io.nexstudios.nexus.bukkit.database.model.DatabaseCredentials;
+import io.nexstudios.nexus.bukkit.droptable.DropTableReader;
+import io.nexstudios.nexus.bukkit.droptable.events.CheckDeathEntity;
+import io.nexstudios.nexus.bukkit.droptable.fanydrop.FancyDrop;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hooks.PapiHook;
 import io.nexstudios.nexus.bukkit.hooks.VaultHook;
@@ -42,10 +45,12 @@ public final class NexusPlugin extends JavaPlugin {
     public NexusFile settingsFile;
     public NexusFileReader languageFiles;
     public NexusFileReader inventoryFiles;
+    public NexusFileReader dropTableFiles;
     public NexusLanguage nexusLanguage;
 
     // API Services
     public MessageSender messageSender;
+    public DropTableReader dropTableReader;
 
     // Command Manager
     public PaperCommandManager commandManager;
@@ -97,6 +102,7 @@ public final class NexusPlugin extends JavaPlugin {
         loadNexusFiles();
         messageSender = new MessageSender(nexusLanguage);
         loadInventories();
+        readDropTables();
     }
 
     private void commandCompletions() {
@@ -122,6 +128,7 @@ public final class NexusPlugin extends JavaPlugin {
         // Load all language files as FileConfigurations.
         nexusLanguage = new NexusLanguage(languageFiles, nexusLogger);
         inventoryFiles = new NexusFileReader("inventories", this);
+        dropTableFiles = new NexusFileReader("droptables", this);
         nexusLogger.info("All Nexus files have been (re)loaded successfully.");
     }
 
@@ -193,6 +200,11 @@ public final class NexusPlugin extends JavaPlugin {
         }
     }
 
+    private void readDropTables() {
+        dropTableReader = new DropTableReader(this.dropTableFiles.getFiles());
+        dropTableReader.read();
+    }
+
     public FileConfiguration getInventoryFileByName(String name) {
         File file = inventoryFiles.getFiles().stream()
                 .filter(f -> f.getName().equalsIgnoreCase(name + ".yml"))
@@ -216,6 +228,8 @@ public final class NexusPlugin extends JavaPlugin {
     }
     public void registerEvents() {
         Bukkit.getPluginManager().registerEvents(new NexusMenuEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new FancyDrop(), this);
+        Bukkit.getPluginManager().registerEvents(new CheckDeathEntity(), this);
     }
 
     public void loadInventories() {

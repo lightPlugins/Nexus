@@ -42,6 +42,8 @@ allprojects {
         maven("https://repo.aikar.co/content/groups/aikar/")
         // MMOItems
         maven("https://nexus.phoenixdevt.fr/repository/maven-public/")
+        //Eco Series
+        maven("https://repo.auxilor.io/repository/maven-public/")
     }
 
     dependencies {

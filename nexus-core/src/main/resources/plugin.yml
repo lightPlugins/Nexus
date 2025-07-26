@@ -6,7 +6,8 @@ softdepend:
   - PlaceholderAPI
   - Vault
   - Nexo
-  - Eco
+  - eco
+  - EcoItems
   - MythicMobs
   - MMOItems
   - WorldGuard
