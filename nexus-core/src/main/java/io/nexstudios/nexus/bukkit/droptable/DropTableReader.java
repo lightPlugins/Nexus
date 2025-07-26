@@ -2,8 +2,6 @@ package io.nexstudios.nexus.bukkit.droptable;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.droptable.models.DropTable;
-import io.nexstudios.nexus.bukkit.language.NexusLanguage;
-import io.nexstudios.nexus.bukkit.utils.NexusLogger;
 import lombok.Getter;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
