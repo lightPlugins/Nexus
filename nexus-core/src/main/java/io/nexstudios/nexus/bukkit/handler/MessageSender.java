@@ -36,7 +36,7 @@ public class MessageSender {
         if (sender instanceof Player player) {
             component = language.getTranslation(player.getUniqueId(), path, true);
             if(NexusPlugin.getInstance().papiHook != null) {
-                String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
+                String legacyText = MiniMessage.miniMessage().serialize(component);
                 component = NexusPlugin.getInstance().papiHook.translate(player, legacyText);
             }
             player.sendMessage(component);

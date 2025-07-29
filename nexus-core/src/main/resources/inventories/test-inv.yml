@@ -1,0 +1,66 @@
+# The title of the Inventory (PlaceholderAPI support)
+title: 'Example Title'
+# The size of the Inventory
+size: 6
+# How many pages you want
+max-pages: 1
+# The update intervall, how often the inventory refreshes his content
+update-intervall: 2
+# The main section for the inventory content
+content:
+  # The Decoration subsection for the fill items
+  decoration:
+    # Populate empty slots with this item
+    # has no lore and no displayname and uses hide_attribute
+    enable: true
+    item: black_stained_glass_pane
+  # The Inventory Navigation subsection
+  # namespaces such as 'close' cannot be renamed!
+  navigation:
+    close:
+      slots: [51,52]
+      use-page-number-as-amount: false
+      item: redstone
+      display-name: '<red>Close Inventory'
+      custom-model-data: 1337
+      lore:
+        - 'Close Inventory'
+    previous-page:
+      slots: [47]
+      use-page-number-as-amount: false
+      item: arrow
+      display-name: '<yellow>Previous Page'
+      custom-model-data: 1337
+      lore:
+        - 'Previous page'
+    next-page:
+      slots: [48]
+      use-page-number-as-amount: false
+      item: arrow
+      display-name: '<yellow>Next Page'
+      custom-model-data: 1337
+      lore:
+        - 'Next page'
+  static: [ ]
+  custom: [ ]
+  extra-settings:
+    lore-format:
+      requirements: '#status# <gray>#requirement#'
+      ingredients: '#status# <gray>#ingredients#'
+    craft:
+      displayname: '<#ffdc73>ᴄʀᴀꜰᴛ <reset>#item#'
+      lore:
+        - ' '
+        - 'ʀᴇǫᴜɪʀᴇᴅ:'
+        - '#requirements#'
+        - ' '
+        - 'ɪɴɢʀᴇᴅɪᴇɴᴛꜱ:'
+        - '#ingredients#'
+        - ' '
+        - 'ᴄʀᴀꜰᴛɪɴɢ ᴛɪᴍᴇ: <red>#time#<gray>ꜱ'
+        - ' '
+        - '<#ffdc73>Left-Click to craft'
+        - '<#ffdc73>Right-Click to preview'
+    queue-lore:
+      - ' '
+      - '<gray>ᴛɪᴍᴇ ʟᴇꜰᴛ: <red>#time#'

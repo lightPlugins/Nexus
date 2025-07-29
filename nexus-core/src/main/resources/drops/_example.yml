@@ -19,11 +19,32 @@ drop-style:
       max: 0.5
 drop-items:
   - item: iron_ingot
+    amount: 1-3
+    chance: 100
+    settings:
+      multiply-drops-expression: 'ecoskills:mining_fortune / 100'
+      pick-up-only-owner: true
+      visible-only-owner: true
+      virtual-item: false
+      glow-color: RED
+      fancy-drop-color: '#ffdc73'
+      item-name: '<gold>Legend Iron Ingot'
+    actions:
+      - id: message
+        message: <red>This is a test message
+      - id: vault-add
+        amount: 50-100
+        multiplier: '1'
+  - item: iron_ingot
     amount: 1
     chance: 100
     settings:
+      multiply-drops-expression: 'ecoskills:mining_fortune / 100'
       pick-up-only-owner: true
       visible-only-owner: true
       glow-color: RED
       fancy-drop-color: '#ffdc73'
       item-name: '<gold>Legend Iron Ingot'
+    actions:
+      - id: message
+        message: <red>This is a test message

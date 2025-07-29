@@ -2,6 +2,7 @@ package io.nexstudios.nexus.bukkit.droptable;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.droptable.models.DropTable;
+import io.nexstudios.nexus.bukkit.utils.NexusStringMath;
 import lombok.Getter;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -67,17 +68,41 @@ public class DropTableReader {
         List<DropTable.Drop> drops = new ArrayList<>();
 
         for (Map<?, ?> dropDataRaw : dropsConfig) {
-            Map<String, Object> dropData = (Map<String, Object>) dropDataRaw;
+            if (dropDataRaw == null) {
+                NexusPlugin.nexusLogger.error("Invalid drop data format for droptable " + dropTable.getId() + ". Skipping entry.");
+                continue;
+            }
 
+            Map<String, Object> dropData = (Map<String, Object>) dropDataRaw;
             DropTable.Drop drop = new DropTable.Drop();
+
             try {
-                String item = (String) dropData.getOrDefault("item", "stone"); // Sicherer Zugriff
-                int amount = ((Number) dropData.getOrDefault("amount", 1)).intValue(); // Wert wird als Number interpretiert
-                double chance = ((Number) dropData.getOrDefault("chance", 100.0)).doubleValue(); // Wert wird ebenfalls als Number interpretiert
+                String item = (String) dropData.getOrDefault("item", "stone");
+                Object amountObject = dropData.getOrDefault("amount", "1");
+                double chance = ((Number) dropData.getOrDefault("chance", 100.0)).doubleValue();
 
                 drop.setItem(item);
-                drop.setAmount(amount);
+                drop.setAmount(amountObject);
                 drop.setChance(String.valueOf(chance));
+
+                // Actions lesen
+                List<Map<String, Object>> actionConfigs = (List<Map<String, Object>>) dropData.get("actions");
+                if (actionConfigs != null) {
+                    List<Map<String, Object>> validActions = new ArrayList<>();
+
+                    for (Map<String, Object> actionConfig : actionConfigs) {
+                        // Prüfen, ob es sich um eine gültige Aktion (mit "id") handelt
+                        if (actionConfig.containsKey("id")) {
+                            validActions.add(actionConfig);
+                        } else {
+                            NexusPlugin.nexusLogger.warning("Action skipped in DropTable " + dropTable.getId() + ". Missing 'id'.");
+                        }
+                    }
+
+                    drop.setActions(validActions);
+                } else {
+                    NexusPlugin.nexusLogger.warning("actions section is null in DropTable " + dropTable.getId() + ". Skipping actions.");
+                }
 
                 if (dropData.containsKey("settings")) {
                     ConfigurationSection settingsSection = config.createSection("settings", (Map<?, ?>) dropData.get("settings"));
@@ -88,11 +113,13 @@ public class DropTableReader {
 
             } catch (Exception e) {
                 NexusPlugin.nexusLogger.error("Failed to parse drop for DropTable: " + dropTable.getId() + " Error: " + e.getMessage());
+                e.printStackTrace();
             }
         }
 
         return drops;
     }
+
 
 
     private DropTable.Drop.DropSettings readDropSettings(ConfigurationSection section, DropTable dropTable) {
@@ -105,6 +132,8 @@ public class DropTableReader {
 
         dropSettings.setPickUpOwner(section.getBoolean("pick-up-only-owner", false));
         dropSettings.setVisibleOwner(section.getBoolean("visible-only-owner", false));
+        dropSettings.setVirtualItem(section.getBoolean("virtual-item", false));
+        dropSettings.setDropMultiplierExpression(section.getString("multiply-drops-expression", "1"));
         dropSettings.setItemName(MiniMessage.miniMessage().deserialize(section.getString("item-name", "<red>Name not found")));
 
         TextColor textColor = TextColor.fromHexString(section.getString("glow-color", "RED"));

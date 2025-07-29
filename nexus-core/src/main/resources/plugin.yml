@@ -4,14 +4,16 @@ main: io.nexstudios.nexus.bukkit.NexusPlugin
 api-version: '1.21'
 softdepend:
   - PlaceholderAPI
-  - Vault
   - Nexo
   - eco
   - EcoItems
+  - EcoSkills
   - MythicMobs
   - MMOItems
   - WorldGuard
   - Luckperms
+depend:
+  - Vault
 libraries:
   - redis.clients:jedis:5.2.0
   - com.zaxxer:HikariCP:6.3.0

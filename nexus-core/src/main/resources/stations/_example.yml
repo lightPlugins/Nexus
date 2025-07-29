@@ -1,0 +1,41 @@
+name: 'Mining Tool Station'
+time-reduction:
+  permission: 'nexus.station.mining.vip'
+  multiplier: 0.85 # 1.0 -> original time. 0.85 -> 85% of time
+crafting-finish-actions:
+  - id: message
+    message: '<gray>Your crafting in station <#ffdc73>Mining Tool Station <gray>is ready to claim'
+  - id: sound
+    data: 'minecraft:entity_villager_trade'
+    volume: 1.0
+    pitch: 1.0
+cant-craft-actions:
+  - id: sound
+    data: 'minecraft:villager_no'
+    volume: 1.0
+    pitch: 1.0
+queue-is-full-actions:
+  - id: sound
+    data: 'minecraft:villager_no'
+    volume: 1.0
+    pitch: 0.7
+content:
+  - item: vanilla:diamond_pickaxe
+    amount: 1
+    display-name: '<white>ᴍɪɴᴇʀꜱ ᴅɪᴀᴍᴏɴᴅ ᴘɪᴄᴋᴀxᴇ'
+    time-to-craft: 15
+    inventory-slot: 10
+    requirements:
+      - id: ecoskills
+        skill: mining
+        level: 5
+        lore: '<gray>ʀᴇǫᴜɪʀᴇꜱ ᴍɪɴɪɴɢ ʟᴇᴠᴇʟ <red>𝟧'
+    ingredients:
+      - id: item
+        item: 'vanilla:diamond'
+        amount: 6
+        lore: '<#ffdc73>𝟨<gray>x ᴅɪᴀᴍᴏɴᴅ'
+      - id: item
+        item: 'vanilla:coal'
+        amount: 6
+        lore: '<#ffdc73>𝟨<gray>x ᴄᴏᴀʟ'

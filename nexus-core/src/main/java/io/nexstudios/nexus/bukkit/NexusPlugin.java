@@ -3,6 +3,7 @@ package io.nexstudios.nexus.bukkit;
 import co.aikar.commands.PaperCommandManager;
 import com.google.common.collect.ImmutableList;
 import com.zaxxer.hikari.HikariDataSource;
+import io.nexstudios.nexus.bukkit.actions.ActionFactory;
 import io.nexstudios.nexus.bukkit.command.OpenMenus;
 import io.nexstudios.nexus.bukkit.command.ReloadCommand;
 import io.nexstudios.nexus.bukkit.command.SwitchLanguage;
@@ -16,6 +17,7 @@ import io.nexstudios.nexus.bukkit.droptable.DropTableReader;
 import io.nexstudios.nexus.bukkit.droptable.events.CheckDeathEntity;
 import io.nexstudios.nexus.bukkit.droptable.fanydrop.FancyDrop;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
+import io.nexstudios.nexus.bukkit.hooks.EcoSkillsHook;
 import io.nexstudios.nexus.bukkit.hooks.PapiHook;
 import io.nexstudios.nexus.bukkit.hooks.VaultHook;
 import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
@@ -51,6 +53,7 @@ public final class NexusPlugin extends JavaPlugin {
     // API Services
     public MessageSender messageSender;
     public DropTableReader dropTableReader;
+    public ActionFactory actionFactory;
 
     // Command Manager
     public PaperCommandManager commandManager;
@@ -58,6 +61,7 @@ public final class NexusPlugin extends JavaPlugin {
     // Third party hooks
     public PapiHook papiHook;
     public VaultHook vaultHook;
+    public EcoSkillsHook ecoSkillsHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -74,7 +78,6 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger.info("Nexus is loading...");
         onReload();
         nexusLogger.info("Check for compatibility with other plugins...");
-        checkForHooks();
         nexusLogger.info("Initializing database connection...");
         initDatabase();
     }
@@ -82,7 +85,9 @@ public final class NexusPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         nexusLogger.info("Register Nexus commands...");
+        checkForHooks();
         commandManager = new PaperCommandManager(this);
+        actionFactory = new ActionFactory();
         registerCommands();
         nexusLogger.info("Register Nexus events...");
         registerEvents();
@@ -183,12 +188,17 @@ public final class NexusPlugin extends JavaPlugin {
 
     private void checkForHooks() {
         // Check if PlaceholderAPI is installed and register the hook
-        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+        if(getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             papiHook = new PapiHook();
             nexusLogger.info("<yellow>PlaceholderAPI<reset> hook registered successfully.");
         }
+
+        if(getServer().getPluginManager().getPlugin("EcoSkills") != null) {
+            ecoSkillsHook = new EcoSkillsHook();
+            nexusLogger.info("<yellow>EcoSkills<reset> hook registered successfully.");
+        }
         // Check if Vault is installed and register the hook
-        if (getServer().getPluginManager().isPluginEnabled("Vault")) {
+        if(getServer().getPluginManager().getPlugin("Vault") != null) {
             vaultHook = new VaultHook(this, nexusLogger);
             if (vaultHook.getEconomy() != null) {
                 nexusLogger.info("<yellow>Vault Economy<reset> hook registered successfully.");

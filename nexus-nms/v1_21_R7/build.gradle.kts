@@ -5,11 +5,6 @@ plugins {
 group = "io.nexstudios"
 version = rootProject.version
 
-repositories {
-
-}
-
-
 dependencies {
     paperweight.paperDevBundle("1.21.7-R0.1-SNAPSHOT")
 
@@ -18,11 +13,5 @@ dependencies {
             strictly("4.23.0")
         }
         exclude(group = "net.kyori", module = "adventure-api")
-    }
-}
-
-tasks {
-    compileJava {
-        options.release.set(21)
     }
 }

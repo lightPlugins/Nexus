@@ -15,6 +15,6 @@ plugins {
 rootProject.name = "Nexus"
 // core
 include(":nexus-core")
-include("nexus-nms")
-include("nexus-nms:v1_21_R8")
-include("nexus-nms:v1_21_R7")
+include(":nexus-nms")
+include(":nexus-nms:v1_21_R8")
+include(":nexus-nms:v1_21_R7")
