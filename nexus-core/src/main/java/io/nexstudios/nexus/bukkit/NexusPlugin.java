@@ -13,13 +13,9 @@ import io.nexstudios.nexus.bukkit.database.impl.MySQLDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.SQLiteDatabase;
 import io.nexstudios.nexus.bukkit.database.model.ConnectionProperties;
 import io.nexstudios.nexus.bukkit.database.model.DatabaseCredentials;
-import io.nexstudios.nexus.bukkit.droptable.DropTableReader;
-import io.nexstudios.nexus.bukkit.droptable.events.CheckDeathEntity;
-import io.nexstudios.nexus.bukkit.droptable.fanydrop.FancyDrop;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
-import io.nexstudios.nexus.bukkit.hooks.EcoSkillsHook;
-import io.nexstudios.nexus.bukkit.hooks.PapiHook;
-import io.nexstudios.nexus.bukkit.hooks.VaultHook;
+import io.nexstudios.nexus.bukkit.hooks.*;
+import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
 import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
@@ -52,7 +48,6 @@ public final class NexusPlugin extends JavaPlugin {
 
     // API Services
     public MessageSender messageSender;
-    public DropTableReader dropTableReader;
     public ActionFactory actionFactory;
 
     // Command Manager
@@ -62,6 +57,8 @@ public final class NexusPlugin extends JavaPlugin {
     public PapiHook papiHook;
     public VaultHook vaultHook;
     public EcoSkillsHook ecoSkillsHook;
+    public EcoItemsHook ecoItemsHook;
+    public MythicMobsHook mythicMobsHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -107,7 +104,6 @@ public final class NexusPlugin extends JavaPlugin {
         loadNexusFiles();
         messageSender = new MessageSender(nexusLanguage);
         loadInventories();
-        readDropTables();
     }
 
     private void commandCompletions() {
@@ -187,17 +183,25 @@ public final class NexusPlugin extends JavaPlugin {
     }
 
     private void checkForHooks() {
-        // Check if PlaceholderAPI is installed and register the hook
+
         if(getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             papiHook = new PapiHook();
             nexusLogger.info("<yellow>PlaceholderAPI<reset> hook registered successfully.");
         }
-
         if(getServer().getPluginManager().getPlugin("EcoSkills") != null) {
             ecoSkillsHook = new EcoSkillsHook();
             nexusLogger.info("<yellow>EcoSkills<reset> hook registered successfully.");
         }
-        // Check if Vault is installed and register the hook
+        if(getServer().getPluginManager().getPlugin("EcoItems") != null) {
+            ecoItemsHook = new EcoItemsHook();
+            nexusLogger.info("<yellow>EcoItems<reset> hook registered successfully.");
+        }
+        if(getServer().getPluginManager().getPlugin("MythicMobs") != null) {
+            mythicMobsHook = new MythicMobsHook(Bukkit.getPluginManager());
+            nexusLogger.info("<yellow>MythicMobs<reset> hook registered successfully.");
+        }
+
+        // Check if Vault is installed and register the hook mythicMobsHook
         if(getServer().getPluginManager().getPlugin("Vault") != null) {
             vaultHook = new VaultHook(this, nexusLogger);
             if (vaultHook.getEconomy() != null) {
@@ -208,11 +212,6 @@ public final class NexusPlugin extends JavaPlugin {
         } else {
             nexusLogger.warning("Vault is not installed or enabled. Vault hook is not be available.");
         }
-    }
-
-    private void readDropTables() {
-        dropTableReader = new DropTableReader(this.dropTableFiles.getFiles());
-        dropTableReader.read();
     }
 
     public FileConfiguration getInventoryFileByName(String name) {
@@ -238,8 +237,6 @@ public final class NexusPlugin extends JavaPlugin {
     }
     public void registerEvents() {
         Bukkit.getPluginManager().registerEvents(new NexusMenuEvent(), this);
-        Bukkit.getPluginManager().registerEvents(new FancyDrop(), this);
-        Bukkit.getPluginManager().registerEvents(new CheckDeathEntity(), this);
     }
 
     public void loadInventories() {

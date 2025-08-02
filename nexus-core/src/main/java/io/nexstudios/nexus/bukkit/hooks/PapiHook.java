@@ -11,4 +11,8 @@ public class PapiHook {
         return MiniMessage.miniMessage().deserialize(PlaceholderAPI.setPlaceholders(offlinePlayer, key));
     }
 
+    public String translateIntoString(OfflinePlayer offlinePlayer, String key ) {
+        return PlaceholderAPI.setPlaceholders(offlinePlayer, key);
+    }
+
 }
