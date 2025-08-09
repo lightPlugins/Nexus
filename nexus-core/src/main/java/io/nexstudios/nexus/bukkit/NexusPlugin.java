@@ -59,6 +59,7 @@ public final class NexusPlugin extends JavaPlugin {
     public EcoSkillsHook ecoSkillsHook;
     public EcoItemsHook ecoItemsHook;
     public MythicMobsHook mythicMobsHook;
+    public MMOItemsHook mmoItemsHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -199,6 +200,10 @@ public final class NexusPlugin extends JavaPlugin {
         if(getServer().getPluginManager().getPlugin("MythicMobs") != null) {
             mythicMobsHook = new MythicMobsHook(Bukkit.getPluginManager());
             nexusLogger.info("<yellow>MythicMobs<reset> hook registered successfully.");
+        }
+        if(getServer().getPluginManager().getPlugin("MMOItems") != null) {
+            mmoItemsHook = new MMOItemsHook();
+            nexusLogger.info("<yellow>MMOItems<reset> hook registered successfully.");
         }
 
         // Check if Vault is installed and register the hook mythicMobsHook
