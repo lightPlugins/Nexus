@@ -262,4 +262,8 @@ public class NexusFile {
         saveConfig();
         return true;
     }
+
+    public float getFloat(String path) {
+        return (float) getConfig().getDouble(path);
+    }
 }

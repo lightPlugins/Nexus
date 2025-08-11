@@ -5,9 +5,12 @@ import io.nexstudios.nexus.bukkit.actions.handler.ActionCommand;
 import io.nexstudios.nexus.bukkit.actions.handler.ActionSendMessage;
 import io.nexstudios.nexus.bukkit.actions.handler.ActionVaultAdd;
 import lombok.Getter;
+import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 public class ActionFactory {
@@ -40,5 +43,38 @@ public class ActionFactory {
     @Nullable
     public NexusAction getAction(String actionID) {
         return this.availableActions.get(actionID);
+    }
+
+    public void executeActions(Player player, List<Map<String, Object>> actions) {
+
+        if (actions == null || actions.isEmpty()) {
+            return;
+        }
+
+        // Hole die ActionFactory vom Plugin
+        ActionFactory actionFactory = NexusPlugin.getInstance().getActionFactory();
+
+        for (Map<String, Object> actionDataMap : actions) {
+            String actionId = (String) actionDataMap.get("id");
+            NexusAction action = actionFactory.getAction(actionId);
+
+            // Überprüfen, ob die Aktion registriert ist
+            if (action == null) {
+                NexusPlugin.nexusLogger.warning("Unknown action: " + actionId + " in Drop.");
+                continue;
+            }
+
+            // Erstelle ein ActionData-Objekt basierend auf den YAML-Daten
+            ActionData actionData = new ActionData();
+            actionData.getData().putAll(actionDataMap);
+
+            try {
+                // Führe die Aktion aus
+                action.execute(player, actionData);
+            } catch (Exception e) {
+                // Fehler beim Ausführen der Aktion abfangen und protokollieren
+                NexusPlugin.nexusLogger.error("Failed to execute action " + actionId);
+            }
+        }
     }
 }
