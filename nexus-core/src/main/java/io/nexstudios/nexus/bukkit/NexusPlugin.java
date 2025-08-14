@@ -307,7 +307,6 @@ public final class NexusPlugin extends JavaPlugin {
     private void registerBuiltInTriggerAndFilterTypes() {
         // Trigger-Typen, die dein Core nutzt
         NexusEffectsApi.registerTriggerType("entity-damage");
-        // Optional: nur, wenn du bereits einen Kill-Trigger im Core verwendest
         // NexusEffectsApi.registerTriggerType("kill-entity");
 
         // Filter-Typen, die dein Core nutzt
