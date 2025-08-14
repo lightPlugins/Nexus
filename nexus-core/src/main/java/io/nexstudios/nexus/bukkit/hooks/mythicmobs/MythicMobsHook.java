@@ -7,6 +7,8 @@ import io.lumine.mythic.bukkit.events.MythicMobDeathEvent;
 import io.lumine.mythic.bukkit.events.MythicMobInteractEvent;
 import io.lumine.mythic.core.mobs.ActiveMob;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -21,6 +23,14 @@ public class MythicMobsHook implements Listener {
 
     public MythicMobsHook(PluginManager pluginManager) {
         pluginManager.registerEvents(this, NexusPlugin.getInstance());
+    }
+
+    public boolean isMythicMob(Entity entity, String id) {
+        ActiveMob activeMob = MythicBukkit.inst().getAPIHelper().getMythicMobInstance(entity);
+        if (activeMob == null) {
+            return false;
+        }
+        return activeMob.getType().getInternalName().equals(id);
     }
 
     public static void registerMythicDeathEvent(IMythicDeathEvent event) {

@@ -1,0 +1,10 @@
+stats:
+  nexus/mining:
+    enabled: true
+    traits:
+      nexus/dodge_chance:
+        modifier: 0.5 # Overrides the value passed in with CustomStatBuilder#trait
+traits:
+  nexus/dodge_chance:
+    enabled: true
+    # Add configurable options here accessed using Trait#option... methods

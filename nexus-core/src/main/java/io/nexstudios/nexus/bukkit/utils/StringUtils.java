@@ -43,6 +43,7 @@ public class StringUtils {
                 } else {
                     NexusPlugin.nexusLogger.error("Could not find item with id: " + item);
                     NexusPlugin.nexusLogger.error("MMOItems is not installed on your Server!");
+                    return ItemStack.of(Material.DEEPSLATE);
                 }
             }
 
@@ -59,19 +60,10 @@ public class StringUtils {
                 } else {
                     NexusPlugin.nexusLogger.error("Could not find item with id: " + item);
                     NexusPlugin.nexusLogger.error("EcoItems is not installed on your Server!");
-                }
-            }
-            case "minecraft": {
-
-                if(itemSplit.length != 2) {
-                    NexusPlugin.nexusLogger.error("Could not find item with id: " + item);
-                    NexusPlugin.nexusLogger.error("Please use the format: vanilla:id or minecraft:id");
                     return ItemStack.of(Material.DEEPSLATE);
                 }
-
-                return ItemStack.of(Material.valueOf(itemSplit[1].toUpperCase()));
             }
-            case "vanilla": {
+            case "minecraft", "vanilla": {
 
                 if(itemSplit.length != 2) {
                     NexusPlugin.nexusLogger.error("Could not find item with id: " + item);
@@ -108,7 +100,13 @@ public class StringUtils {
         }
 
         String[] materialParts = parts[0].split(":");
-        Material material = Material.valueOf(materialParts[0].toUpperCase());
+        Material material;
+        // prevents IllegalArgumentException if material is not valid or not found
+        try {
+            material = Material.valueOf(materialParts[0].toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
 
         if(!material.isItem()) { return null; }
 

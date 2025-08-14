@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.nexstudios.nexus.bukkit.actions.ActionFactory;
 import io.nexstudios.nexus.bukkit.command.OpenMenus;
 import io.nexstudios.nexus.bukkit.command.ReloadCommand;
+import io.nexstudios.nexus.bukkit.command.StatCommand;
 import io.nexstudios.nexus.bukkit.command.SwitchLanguage;
 import io.nexstudios.nexus.bukkit.database.AbstractDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.MariaDatabase;
@@ -13,8 +14,15 @@ import io.nexstudios.nexus.bukkit.database.impl.MySQLDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.SQLiteDatabase;
 import io.nexstudios.nexus.bukkit.database.model.ConnectionProperties;
 import io.nexstudios.nexus.bukkit.database.model.DatabaseCredentials;
+import io.nexstudios.nexus.bukkit.effects.EffectBinding;
+import io.nexstudios.nexus.bukkit.effects.EffectFactory;
+import io.nexstudios.nexus.bukkit.effects.NexusEffectsApi;
+import io.nexstudios.nexus.bukkit.effects.cache.DamageValueCache;
+import io.nexstudios.nexus.bukkit.effects.runtime.EffectBindingRegistry;
+import io.nexstudios.nexus.bukkit.effects.trigger.EntityDamageTriggerListener;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hooks.*;
+import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
 import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
 import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
@@ -45,6 +53,8 @@ public final class NexusPlugin extends JavaPlugin {
     public NexusFileReader inventoryFiles;
     public NexusFileReader dropTableFiles;
     public NexusLanguage nexusLanguage;
+    public EffectFactory effectFactory;
+    public EffectBindingRegistry bindingRegistry;
 
     // API Services
     public MessageSender messageSender;
@@ -60,6 +70,7 @@ public final class NexusPlugin extends JavaPlugin {
     public EcoItemsHook ecoItemsHook;
     public MythicMobsHook mythicMobsHook;
     public MMOItemsHook mmoItemsHook;
+    public AuraSkillsHook auraSkillsHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -86,9 +97,17 @@ public final class NexusPlugin extends JavaPlugin {
         checkForHooks();
         commandManager = new PaperCommandManager(this);
         actionFactory = new ActionFactory();
+        effectFactory = new EffectFactory();
+        bindingRegistry = new EffectBindingRegistry();
         registerCommands();
         nexusLogger.info("Register Nexus events...");
         registerEvents();
+        nexusLogger.info("Initiate Nexus effect system ...");
+        nexusLogger.info("Register built-in trigger and filter types");
+        registerBuiltInTriggerAndFilterTypes();
+        nexusLogger.warning("Register Nexus effect bindings from testing config. This should be removed in production!");
+        NexusEffectsApi.registerBindingsFromSection(this, settingsFile.getConfig());
+        logEffectSystemStats();
         nexusLogger.info("Nexus is enabled");
     }
 
@@ -104,7 +123,8 @@ public final class NexusPlugin extends JavaPlugin {
     public void onReload() {
         loadNexusFiles();
         messageSender = new MessageSender(nexusLanguage);
-        loadInventories();
+        //loadInventories();
+        //PlayerVariables.set(UUID.randomUUID(), "stat-level", "50");
     }
 
     private void commandCompletions() {
@@ -120,7 +140,7 @@ public final class NexusPlugin extends JavaPlugin {
     }
 
     private void loadNexusFiles() {
-        settingsFile = new NexusFile(this, "settings.yml", nexusLogger, true);
+        settingsFile = new NexusFile(this, "settings.yml", nexusLogger, false);
         // preload the default english language file.
         new NexusFile(this, "languages/english.yml", nexusLogger, true);
         nexusLogger.setDebugEnabled(settingsFile.getBoolean("logging.debug.enable", true));
@@ -206,6 +226,11 @@ public final class NexusPlugin extends JavaPlugin {
             nexusLogger.info("<yellow>MMOItems<reset> hook registered successfully.");
         }
 
+        if(getServer().getPluginManager().getPlugin("AuraSkills") != null) {
+            auraSkillsHook = new AuraSkillsHook();
+            nexusLogger.info("<yellow>AuraSkills<reset> hook registered successfully.");
+        }
+
         // Check if Vault is installed and register the hook mythicMobsHook
         if(getServer().getPluginManager().getPlugin("Vault") != null) {
             vaultHook = new VaultHook(this, nexusLogger);
@@ -237,11 +262,14 @@ public final class NexusPlugin extends JavaPlugin {
         commandManager.registerCommand(new ReloadCommand());
         commandManager.registerCommand(new SwitchLanguage());
         commandManager.registerCommand(new OpenMenus());
+        commandManager.registerCommand(new StatCommand());
         int size = commandManager.getRegisteredRootCommands().size();
         nexusLogger.info("Successfully registered " + size  + " command(s).");
     }
     public void registerEvents() {
         Bukkit.getPluginManager().registerEvents(new NexusMenuEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new EntityDamageTriggerListener(bindingRegistry), this);
+
     }
 
     public void loadInventories() {
@@ -275,4 +303,43 @@ public final class NexusPlugin extends JavaPlugin {
 
         getNexusLogger().info("Successfully loaded " + this.nexusInventoryData.size() + " inventories.");
     }
+
+    private void registerBuiltInTriggerAndFilterTypes() {
+        // Trigger-Typen, die dein Core nutzt
+        NexusEffectsApi.registerTriggerType("entity-damage");
+        // Optional: nur, wenn du bereits einen Kill-Trigger im Core verwendest
+        // NexusEffectsApi.registerTriggerType("kill-entity");
+
+        // Filter-Typen, die dein Core nutzt
+        NexusEffectsApi.registerFilterType("match-item-hand");
+        NexusEffectsApi.registerFilterType("match-item-inventory");
+        NexusEffectsApi.registerFilterType("has-permission");
+        NexusEffectsApi.registerFilterType("in-world");
+    }
+
+
+    public void logEffectSystemStats() {
+        int effectTypes = effectFactory != null ? effectFactory.getRegisteredEffectTypeCount() : 0;
+        List<EffectBinding> bindings = bindingRegistry != null ? bindingRegistry.getBindings() : List.of();
+
+        int bindingCount = bindings.size();
+        int triggerCount = 0;
+        int filterCount = 0;
+
+        for (EffectBinding b : bindings) {
+            if (b.triggers() != null) {
+                triggerCount += b.triggers().size();
+            }
+            Object rawFilters = b.rawConfig() != null ? b.rawConfig().get("filters") : null;
+            if (rawFilters instanceof List<?> l) {
+                filterCount += l.size();
+            }
+        }
+
+        nexusLogger.info(String.format(
+                "Effect System: %d Effect(s), %d Binding(s), %d Trigger(s), %d Filter(s).",
+                effectTypes, bindingCount, triggerCount, filterCount
+        ));
+    }
+
 }

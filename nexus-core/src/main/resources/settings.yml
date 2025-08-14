@@ -15,6 +15,15 @@ logging:
     enable: false
     level: 3
 
+effects:
+  - id: add-damage
+    expression: '40'
+    trigger:
+      - id: entity-damage
+        entities:
+          - minecraft:zombie
+          - mythicmobs:SkeletalKnight
+
 # ######################################################  #
 #                       IO SYSTEM                         #
 # ######################################################  #
