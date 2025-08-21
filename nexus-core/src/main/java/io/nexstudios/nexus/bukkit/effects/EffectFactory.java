@@ -12,8 +12,8 @@ public class EffectFactory {
 
     private static final class EffectType {
         final Function<EffectConfig, NexusEffect> builder;
-        final Set<String> allowedTriggers; // null => alle erlaubt
-        final Set<String> allowedFilters;  // null => alle erlaubt
+        final Set<String> allowedTriggers;
+        final Set<String> allowedFilters;
 
         EffectType(Function<EffectConfig, NexusEffect> builder,
                    Set<String> allowedTriggers,
@@ -32,36 +32,40 @@ public class EffectFactory {
 
     private final Map<String, EffectType> registry = new HashMap<>();
     private final PlayerVariableResolver resolver;
+    private final String effectContextKey; // Neu: Kontextkennung (z. B. "stat:<statId>")
 
     public EffectFactory(PlayerVariableResolver resolver) {
+        this(resolver, null);
+    }
+
+    public EffectFactory(PlayerVariableResolver resolver, String effectContextKey) {
         this.resolver = resolver;
+        this.effectContextKey = effectContextKey;
         registerBuiltins();
     }
 
-    public EffectFactory() {
-        this(PlayerVariableResolver.ofStore());
-    }
-
     private void registerBuiltins() {
-        // Builtins: Damage-Trigger + match-item Filter
-        register("add-damage",
-                cfg -> new AddDamageEffect(cfg.getString("expression", "0"), this.resolver),
-                Set.of("entity-damage"),
-                Set.of("match-item-hand", "has-permission", "in-world", "match-item-inventory")
-        );
-        register("multiply-damage",
-                cfg -> new MultiplyDamageEffect(cfg.getString("expression", "1"), this.resolver),
-                Set.of("entity-damage"),
-                Set.of("match-item-hand", "has-permission", "in-world", "match-item-inventory")
-        );
+        // add-damage
+        register("add-damage", cfg -> new AddDamageEffect(
+                cfg.getString("expression", "0"),
+                this.resolver,
+                this.effectContextKey
+        ), Set.of("entity-damage"), null);
+
+        // multiply-damage
+        register("multiply-damage", cfg -> new MultiplyDamageEffect(
+                cfg.getString("expression", "1"),
+                this.resolver,
+                this.effectContextKey
+        ), Set.of("entity-damage"), null);
+
+        // Weitere Effekte hier …
     }
 
-    // Kompatibel: keine Restriktion
     public boolean register(String id, Function<EffectConfig, NexusEffect> builder) {
         return register(id, builder, null, null);
     }
 
-    // Registrierung mit erlaubten Trigger-/Filter-IDs
     public boolean register(String id,
                             Function<EffectConfig, NexusEffect> builder,
                             Set<String> allowedTriggers,
@@ -91,8 +95,3 @@ public class EffectFactory {
         return t == null ? null : t.allowedFilters;
     }
 }
-
-
-
-
-

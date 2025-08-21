@@ -3,6 +3,7 @@ package io.nexstudios.nexus.bukkit.actions;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.actions.handler.ActionCommand;
 import io.nexstudios.nexus.bukkit.actions.handler.ActionSendMessage;
+import io.nexstudios.nexus.bukkit.actions.handler.ActionSound;
 import io.nexstudios.nexus.bukkit.actions.handler.ActionVaultAdd;
 import lombok.Getter;
 import org.bukkit.entity.Player;
@@ -26,6 +27,7 @@ public class ActionFactory {
         this.availableActions.put("message", new ActionSendMessage());
         this.availableActions.put("vault-add", new ActionVaultAdd());
         this.availableActions.put("command", new ActionCommand());
+        this.availableActions.put("sound", new ActionSound());
     }
 
     public boolean registerAction(String id, NexusAction action) {

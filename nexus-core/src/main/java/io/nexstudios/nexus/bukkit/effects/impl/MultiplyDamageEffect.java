@@ -10,23 +10,29 @@ public class MultiplyDamageEffect implements NexusDamageEffect {
 
     private final String expression;
     private final PlayerVariableResolver resolver;
+    private final String contextKey; // z. B. "stat:<statId>" oder null
 
     public MultiplyDamageEffect(String expression, PlayerVariableResolver resolver) {
+        this(expression, resolver, null);
+    }
+
+    public MultiplyDamageEffect(String expression, PlayerVariableResolver resolver, String contextKey) {
         this.expression = expression;
         this.resolver = resolver;
+        this.contextKey = contextKey;
     }
 
     @Override
     public void onDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player player)) {
-            return; // nur Spieler-basiert; optional: anders behandeln
+            return;
         }
-        double factor = DamageValueCache.getOrCompute(player, expression, resolver);
+        double factor = DamageValueCache.getOrCompute(player, expression, resolver, contextKey);
         if (!Double.isFinite(factor) || factor == 1.0d) {
-            return; // nichts zu tun
+            return;
         }
         double result = event.getDamage() * factor;
-        if (result < 0.0) result = 0.0; // negative Werte vermeiden
+        if (result < 0.0) result = 0.0;
         event.setDamage(result);
     }
 }

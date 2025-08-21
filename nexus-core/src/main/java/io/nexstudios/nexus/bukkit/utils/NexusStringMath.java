@@ -1,5 +1,7 @@
 package io.nexstudios.nexus.bukkit.utils;
 
+import io.nexstudios.nexus.bukkit.NexusPlugin;
+
 import java.util.Stack;
 
 public class NexusStringMath {

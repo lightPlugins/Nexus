@@ -23,15 +23,12 @@ public final class NexusEffectsApi {
         return Objects.requireNonNull(NexusPlugin.getInstance().getBindingRegistry(), "EffectBindingRegistry not initialized");
     }
 
-    // Interner Speicher
     private static final List<EffectBinding> CORE = new ArrayList<>();
     private static final Map<String, List<EffectBinding>> BY_NAMESPACE = new LinkedHashMap<>();
 
-    // Trigger-/Filter-Typen registrieren
     public static boolean registerTriggerType(String id) { return TriggerRegistry.register(id); }
     public static boolean registerFilterType(String id) { return FilterRegistry.register(id); }
 
-    // Effekt-Typen registrieren
     public static boolean registerEffectType(String id, Function<EffectConfig, NexusEffect> builder) {
         return factory().register(id, builder);
     }
@@ -42,7 +39,6 @@ public final class NexusEffectsApi {
         return factory().register(id, builder, allowedTriggerIds, allowedFilterIds);
     }
 
-    // Bindings registrieren
     public static List<EffectBinding> registerBindingsFromSection(ConfigurationSection rootSection) {
         List<EffectBinding> loaded = EffectsLoader.load(rootSection, factory());
         if (!loaded.isEmpty()) {
@@ -62,7 +58,14 @@ public final class NexusEffectsApi {
         return loaded;
     }
 
-    // Namespaced-Bindings ersetzen/entfernen (String)
+    // NEU: Bereits geladene Bindings (z. B. via EffectsLoader mit eigener Factory) in einen Namespace hängen
+    public static void addBindings(Plugin owner, List<EffectBinding> toAdd) {
+        if (owner == null || toAdd == null || toAdd.isEmpty()) return;
+        String ns = owner.getName().toLowerCase(Locale.ROOT);
+        BY_NAMESPACE.computeIfAbsent(ns, k -> new ArrayList<>()).addAll(toAdd);
+        rebuild();
+    }
+
     public static void replaceExternalBindings(String namespace, List<EffectBinding> newBindings) {
         String ns = safeNs(namespace);
         if (newBindings == null || newBindings.isEmpty()) {
@@ -79,7 +82,6 @@ public final class NexusEffectsApi {
         rebuild();
     }
 
-    // Overloads mit Plugin (komfortabel)
     public static void replaceExternalBindings(Plugin owner, List<EffectBinding> newBindings) {
         String ns = owner == null ? "external" : owner.getName().toLowerCase(Locale.ROOT);
         replaceExternalBindings(ns, newBindings);
@@ -90,7 +92,6 @@ public final class NexusEffectsApi {
         removeExternalNamespace(ns);
     }
 
-    // Alle Bindings ersetzen (Vorsicht)
     public static void replaceBindings(List<EffectBinding> newBindings) {
         CORE.clear();
         BY_NAMESPACE.clear();
@@ -120,6 +121,7 @@ public final class NexusEffectsApi {
         return ns.trim().toLowerCase(Locale.ROOT);
     }
 }
+
 
 
 

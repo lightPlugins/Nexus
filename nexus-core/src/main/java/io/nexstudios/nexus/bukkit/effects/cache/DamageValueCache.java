@@ -5,61 +5,64 @@ import io.nexstudios.nexus.bukkit.effects.vars.PlayerVariables;
 import io.nexstudios.nexus.bukkit.utils.NexusStringMath;
 import org.bukkit.entity.Player;
 
-import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class DamageValueCache {
 
-    private static final class Entry {
-        final long version;
-        final double value;
-        Entry(long version, double value) { this.version = version; this.value = value; }
-    }
-
-    // Cache-Key: pro Spieler pro Expression-String
-    private static final Map<UUID, Map<String, Entry>> CACHE = new ConcurrentHashMap<>();
-
     private DamageValueCache() {}
 
+    private static final Map<Key, Entry> CACHE = new ConcurrentHashMap<>();
+
+    private record Key(UUID playerId, String expr, String context, long version) {
+        Key(UUID playerId, String expr, String context, long version) {
+            this.playerId = playerId;
+            this.expr = expr;
+            this.context = context == null ? "" : context;
+            this.version = version;
+        }
+    }
+
+    private record Entry(double value) {}
+
+    // Bestehender Overload bleibt bestehen (backward compatible)
     public static double getOrCompute(Player player, String expression, PlayerVariableResolver resolver) {
-        UUID pid = player.getUniqueId();
-        long ver = PlayerVariables.version(pid);
-
-        Map<String, Entry> perExpr = CACHE.computeIfAbsent(pid, k -> new ConcurrentHashMap<>());
-        Entry e = perExpr.get(expression);
-        if (e != null && e.version == ver) {
-            return e.value;
-        }
-
-        // Neu berechnen
-        String prepared = prepare(expression, resolver, player);
-        double val = NexusStringMath.evaluateExpression(prepared);
-        perExpr.put(expression, new Entry(ver, val));
-        return val;
+        return getOrCompute(player, expression, resolver, null);
     }
 
-    private static String prepare(String expr, PlayerVariableResolver resolver, Player player) {
-        Map<String, String> vars = resolver.resolve(player);
-        String out = expr;
-        for (Map.Entry<String, String> en : vars.entrySet()) {
-            String plain = toPlain(en.getValue());
-            out = out.replace("#" + en.getKey() + "#", plain);
-        }
-        // sinnvolle Defaults
-        out = out.replace("#stat-level#", "0");
-        return out;
-    }
+    // Neu: kontextsensitiver Cache (z. B. pro Stat "stat:<statId>")
+    public static double getOrCompute(Player player, String expression, PlayerVariableResolver resolver, String contextKey) {
+        Objects.requireNonNull(player, "player");
+        Objects.requireNonNull(expression, "expression");
 
-    private static String toPlain(String in) {
-        if (in == null) return "0";
-        try { return new BigDecimal(in).toPlainString(); }
-        catch (NumberFormatException ex) { return in; }
+        long version = PlayerVariables.version(player.getUniqueId());
+        Key key = new Key(player.getUniqueId(), expression, contextKey, version);
+
+        Entry cached = CACHE.get(key);
+        if (cached != null) return cached.value();
+
+        // Variablen auflösen und Ausdruck rechnen
+        Map<String, String> vars = resolver != null ? resolver.resolve(player) : Map.of();
+        String exprResolved = expression;
+        for (var e : vars.entrySet()) {
+            // Ersetzt #key# durch den Wert. Simple, aber ausreichend, da wir unsere eigenen Keys kontrollieren.
+            exprResolved = exprResolved.replace("#" + e.getKey() + "#", e.getValue());
+        }
+
+        double result = 0.0;
+        try {
+            result = NexusStringMath.evaluateExpression(exprResolved);
+        } catch (Exception ignored) {
+            // Absichtlich still: Ungültige Ausdrücke sollen nicht crashen
+        }
+
+        CACHE.put(key, new Entry(result));
+        return result;
     }
 
     public static void clearAll() {
         CACHE.clear();
     }
-
 }

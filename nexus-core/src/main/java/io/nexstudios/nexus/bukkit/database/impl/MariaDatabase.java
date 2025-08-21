@@ -30,11 +30,20 @@ public class MariaDatabase extends PooledDatabase {
         this.applyCredentials(hikari, credentials, connectionProperties);
         this.applyConnectionProperties(hikari, connectionProperties);
         this.addDefaultDataSourceProperties(hikari);
-        this.hikari = new HikariDataSource(hikari);
+
+        HikariDataSource newDs = new HikariDataSource(hikari);
+        // Atomar tauschen, Executor anpassen, alten Pool schließen
+        swapInNewDataSource(newDs);
     }
 
     private void applyCredentials(HikariConfig hikari, DatabaseCredentials credentials, ConnectionProperties connectionProperties) {
-        hikari.setJdbcUrl("jdbc:mariadb://" + credentials.host() + ":" + credentials.port() + "/" + credentials.databaseName() + "?characterEncoding=" + connectionProperties.characterEncoding());
+        String enc = connectionProperties.characterEncoding() == null ? "utf8" : connectionProperties.characterEncoding();
+        String url = "jdbc:mariadb://" + credentials.host() + ":" + credentials.port() + "/" + credentials.databaseName()
+                + "?useUnicode=true"
+                + "&characterEncoding=" + enc
+                + "&useSsl=false"
+                + "&serverTimezone=UTC";
+        hikari.setJdbcUrl(url);
         hikari.setUsername(credentials.userName());
         hikari.setPassword(credentials.password());
     }

@@ -32,10 +32,6 @@ public class SQLiteDatabase extends PooledDatabase {
     @Override
     public void connect() {
 
-        if(this.hikari != null) {
-            this.hikari.close();
-        }
-
         this.createDBFile();
 
         final HikariConfig hikari = new HikariConfig();
@@ -52,16 +48,26 @@ public class SQLiteDatabase extends PooledDatabase {
         hikari.setMinimumIdle(connectionProperties.minimumIdle());
         hikari.setMaximumPoolSize(1);
         hikari.setLeakDetectionThreshold(connectionProperties.leakDetectionThreshold());
-        hikari.setConnectionTestQuery(connectionProperties.testQuery());
+        if (connectionProperties.testQuery() != null && !connectionProperties.testQuery().isBlank()) {
+            hikari.setConnectionTestQuery(connectionProperties.testQuery());
+        }
 
-        this.hikari = new HikariDataSource(hikari);
+        HikariDataSource newDs = new HikariDataSource(hikari);
+        // Atomar tauschen, Executor anpassen, alten Pool schließen
+        swapInNewDataSource(newDs);
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     private void createDBFile() {
         File dbFile = new File(this.filePath);
+        File parent = dbFile.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
         try {
-            dbFile.createNewFile();
+            if (!dbFile.exists()) {
+                dbFile.createNewFile();
+            }
         } catch (IOException e) {
             NexusPlugin.nexusLogger.error(List.of(
                     "Failed to create SQLite database file",

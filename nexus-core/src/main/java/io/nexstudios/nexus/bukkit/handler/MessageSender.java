@@ -56,39 +56,41 @@ public class MessageSender {
             return;
         }
 
-        Component component;
+        TagResolver safeResolver = tagResolver != null ? tagResolver : TagResolver.empty();
+        MiniMessage mm = MiniMessage.miniMessage();
 
         if (sender instanceof Player player) {
-            component = language.getTranslation(player.getUniqueId(), path, true);
+            // 1) Hole Component aus der Sprache
+            Component component = language.getTranslation(player.getUniqueId(), path, true);
 
+            // 2) Serialisieren -> String
+            String miniMessageText = mm.serialize(component);
+
+            // 3) Optional: PlaceholderAPI anwenden
             if (NexusPlugin.getInstance().papiHook != null) {
-                String miniMessageText = MiniMessage.miniMessage().serialize(component);
-                String translatedText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
-                component = MiniMessage.miniMessage().deserialize(translatedText, tagResolver);
-            } else {
-                // replace any backslashes in the serialized component.
-                // Without -> ("\<nex_placeholder>")
-                // This is a workaround for the issue where MiniMessage placeholders would not translate via TagResolver
-                // because of the backslashes being present in the serialized string.
-                String plainText = MiniMessage.miniMessage().serialize(component).replace("\\", "");
-                component = MiniMessage.miniMessage().deserialize(plainText, tagResolver);
+                miniMessageText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
             }
 
-            player.sendMessage(component);
-        } else {
-            UUID consoleUUID = language.getConsoleUUID();
-            component = language.getTranslation(consoleUUID, path, true);
+            // 4) Backslashes entfernen, die unbekannte Tags escapen
+            String unescaped = miniMessageText.replace("\\", "");
 
-            if (tagResolver != null) {
-                component = MiniMessage.miniMessage().deserialize(
-                        MiniMessage.miniMessage().serialize(component),
-                        tagResolver
-                );
-            }
-
-            NexusPlugin.nexusLogger.info(MiniMessage.miniMessage().serialize(component));
+            // 5) Mit Resolver deserialisieren
+            Component result = mm.deserialize(unescaped, safeResolver);
+            player.sendMessage(result);
+            return;
         }
+
+        // Konsole
+        UUID consoleUUID = language.getConsoleUUID();
+        Component component = language.getTranslation(consoleUUID, path, true);
+
+        // Serialisieren -> unescapen -> mit Resolver deserialisieren (wenn nötig)
+        String serialized = mm.serialize(component).replace("\\", "");
+        Component resolved = mm.deserialize(serialized, safeResolver);
+
+        NexusPlugin.nexusLogger.info(mm.serialize(resolved));
     }
+
 
     public Component stringToComponent(Player player, String legacyText) {
         String text = legacyText;

@@ -37,6 +37,10 @@ public class MythicMobsHook implements Listener {
         mythicDeathEvents.add(event);
     }
 
+    public ActiveMob getActiveMob(LivingEntity entity) {
+        return MythicBukkit.inst().getAPIHelper().getMythicMobInstance(entity);
+    }
+
 
     @EventHandler
     public void onMythicDeathEvent(MythicMobDeathEvent event) {

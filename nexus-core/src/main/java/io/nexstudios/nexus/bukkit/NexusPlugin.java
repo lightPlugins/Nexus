@@ -4,11 +4,14 @@ import co.aikar.commands.PaperCommandManager;
 import com.google.common.collect.ImmutableList;
 import com.zaxxer.hikari.HikariDataSource;
 import io.nexstudios.nexus.bukkit.actions.ActionFactory;
-import io.nexstudios.nexus.bukkit.command.OpenMenus;
 import io.nexstudios.nexus.bukkit.command.ReloadCommand;
 import io.nexstudios.nexus.bukkit.command.StatCommand;
 import io.nexstudios.nexus.bukkit.command.SwitchLanguage;
 import io.nexstudios.nexus.bukkit.database.AbstractDatabase;
+import io.nexstudios.nexus.bukkit.database.PooledDatabase;
+import io.nexstudios.nexus.bukkit.database.api.DefaultNexusDatabaseService;
+import io.nexstudios.nexus.bukkit.database.api.NexusDatabaseBukkitRegistrar;
+import io.nexstudios.nexus.bukkit.database.api.NexusDatabaseService;
 import io.nexstudios.nexus.bukkit.database.impl.MariaDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.MySQLDatabase;
 import io.nexstudios.nexus.bukkit.database.impl.SQLiteDatabase;
@@ -17,9 +20,9 @@ import io.nexstudios.nexus.bukkit.database.model.DatabaseCredentials;
 import io.nexstudios.nexus.bukkit.effects.EffectBinding;
 import io.nexstudios.nexus.bukkit.effects.EffectFactory;
 import io.nexstudios.nexus.bukkit.effects.NexusEffectsApi;
-import io.nexstudios.nexus.bukkit.effects.cache.DamageValueCache;
 import io.nexstudios.nexus.bukkit.effects.runtime.EffectBindingRegistry;
 import io.nexstudios.nexus.bukkit.effects.trigger.EntityDamageTriggerListener;
+import io.nexstudios.nexus.bukkit.effects.vars.PlayerVariableResolver;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hooks.*;
 import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
@@ -27,6 +30,7 @@ import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
 import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
+import io.nexstudios.nexus.bukkit.player.events.NoMoreFeed;
 import io.nexstudios.nexus.bukkit.utils.NexusLogger;
 import io.nexstudios.nexus.bukkit.files.NexusFile;
 import io.nexstudios.nexus.bukkit.files.NexusFileReader;
@@ -75,6 +79,8 @@ public final class NexusPlugin extends JavaPlugin {
     // Database related fields
     private AbstractDatabase abstractDatabase;
     public HikariDataSource hikariDataSource;
+    private NexusDatabaseService nexusDatabaseService;
+
 
     // test inventories
     private final Map<String, InventoryData> nexusInventoryData = new HashMap<>();
@@ -97,7 +103,7 @@ public final class NexusPlugin extends JavaPlugin {
         checkForHooks();
         commandManager = new PaperCommandManager(this);
         actionFactory = new ActionFactory();
-        effectFactory = new EffectFactory();
+        effectFactory = new EffectFactory(PlayerVariableResolver.ofStore());
         bindingRegistry = new EffectBindingRegistry();
         registerCommands();
         nexusLogger.info("Register Nexus events...");
@@ -108,6 +114,7 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger.warning("Register Nexus effect bindings from testing config. This should be removed in production!");
         NexusEffectsApi.registerBindingsFromSection(this, settingsFile.getConfig());
         logEffectSystemStats();
+        registerDatabaseService();
         nexusLogger.info("Nexus is enabled");
     }
 
@@ -117,6 +124,23 @@ public final class NexusPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (nexusDatabaseService != null) {
+            NexusDatabaseBukkitRegistrar.unregister(this, nexusDatabaseService);
+            nexusDatabaseService = null;
+        }
+        // DB sauber schließen
+        if (abstractDatabase != null) {
+            try {
+                abstractDatabase.close();
+            } catch (Exception e) {
+                nexusLogger.error(List.of(
+                        "Error while closing database.",
+                        "Error: " + e.getMessage()
+                ));
+            }
+            abstractDatabase = null;
+        }
+        hikariDataSource = null;
         nexusLogger.info("Nexus has been disabled!");
     }
 
@@ -160,7 +184,7 @@ public final class NexusPlugin extends JavaPlugin {
             ConnectionProperties connectionProperties = ConnectionProperties.fromConfig(settingsFile.getConfig());
             DatabaseCredentials credentials = DatabaseCredentials.fromConfig(settingsFile.getConfig());
 
-            if(databaseType == null) {
+            if (databaseType == null) {
                 this.getNexusLogger().error(List.of(
                         "Database type not specified in config. Disabling plugin.",
                         "Please specify the database type in the config file.",
@@ -202,6 +226,28 @@ public final class NexusPlugin extends JavaPlugin {
             throw new RuntimeException("Could not maintain Database Connection.", e);
         }
     }
+
+    private void registerDatabaseService() {
+        if (this.abstractDatabase instanceof PooledDatabase pooled) {
+            try {
+                // DataSource referenzieren (optional lokal halten)
+                this.hikariDataSource = (HikariDataSource) pooled.getDataSource();
+                // Service erzeugen und registrieren
+                this.nexusDatabaseService = new DefaultNexusDatabaseService(pooled.getDataSource());
+                NexusDatabaseBukkitRegistrar.register(this, this.nexusDatabaseService);
+                nexusLogger.info("NexusDatabaseService registered successfully.");
+            } catch (Exception e) {
+                nexusLogger.error(List.of(
+                        "Failed to register NexusDatabaseService.",
+                        "Error: " + e.getMessage()
+                ));
+            }
+        } else {
+            nexusLogger.warning("AbstractDatabase is not a PooledDatabase. NexusDatabaseService will not be registered.");
+        }
+    }
+
+
 
     private void checkForHooks() {
 
@@ -261,7 +307,6 @@ public final class NexusPlugin extends JavaPlugin {
         commandCompletions();
         commandManager.registerCommand(new ReloadCommand());
         commandManager.registerCommand(new SwitchLanguage());
-        commandManager.registerCommand(new OpenMenus());
         commandManager.registerCommand(new StatCommand());
         int size = commandManager.getRegisteredRootCommands().size();
         nexusLogger.info("Successfully registered " + size  + " command(s).");
@@ -269,6 +314,7 @@ public final class NexusPlugin extends JavaPlugin {
     public void registerEvents() {
         Bukkit.getPluginManager().registerEvents(new NexusMenuEvent(), this);
         Bukkit.getPluginManager().registerEvents(new EntityDamageTriggerListener(bindingRegistry), this);
+        Bukkit.getPluginManager().registerEvents(new NoMoreFeed(), this);
 
     }
 
