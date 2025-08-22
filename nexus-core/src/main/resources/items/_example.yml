@@ -1,0 +1,50 @@
+# custom internal placeholder for THIS item only
+# The value is the result of the expression (PlaceholderAPI support)
+placeholder:
+  - id: 'example-placeholder'
+    value: '100 / 10'
+# The base item, can be a custom item or a vanilla item
+# minecraft:diamond_sword <- a vanilla item
+# mmoitems:type:id <- MMOItems support
+item: 'minecraft:diamond_sword'
+# The display name and lore of the item (Supports PlaceholderAPI)
+name: '<red>Example Item'
+# The lore of the item (Supports PlaceholderAPI)
+lore:
+  - 'This is an example item'
+  - 'PlaceholderAPI support %player_name%'
+  - ' '
+  - '<gray>Strong against Monsters <#ffdc73>#example-placeholder# <gray>%'
+# Item settings, such as model data, enchantments, flags, etc.
+# 'value' are expression compatible
+# values have internal placeholder support for e.g., -> '#example-placeholder#'
+settings:
+  model-data: 1337
+  tooltip-style: 'minecraft:legendary'
+  max-stack-size: 1
+  enchantments:
+    - id: sharpness
+      value: 5
+    - id: unbreaking
+      value: 3
+  hide-flags:
+    - 'hide-enchants'
+# add attributes to the item (all vanilla attributes available)
+# values are expression compatible
+# values have internal placeholder support for e.g., -> '#example-placeholder#'
+attributes:
+  - id: attack-speed
+    value: 5
+  - id: attack-damage
+    value: 10
+# to add bonus stats to the item while holding it
+# (bonus stats are temporary bonus stats),
+# requires NexStats to be installed
+# values are expression compatible
+# values have internal placeholder support for e.g., -> '#example-placeholder#'
+nex-stats:
+  - id: strong_against_monsters
+    value: '#example-placeholder#'
+    slots:
+      - HAND
+      - OFF_HAND
