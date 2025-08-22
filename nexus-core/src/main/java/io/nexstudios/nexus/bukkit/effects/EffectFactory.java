@@ -59,7 +59,7 @@ public class EffectFactory {
                 this.effectContextKey
         ), Set.of("entity-damage"), null);
 
-        // Weitere Effekte hier …
+        // Weitere Effekte hier ...
     }
 
     public boolean register(String id, Function<EffectConfig, NexusEffect> builder) {
