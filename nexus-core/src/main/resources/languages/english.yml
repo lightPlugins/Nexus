@@ -7,28 +7,33 @@ general:
 #                   INVENTORY Translations                #
 # ######################################################  #
 # Here you can localize the inventory titles and content.
-# (lore and display names)
+# The Inventory name is the namespace of the inventory
+# It is the .yml name without the .yml extension
+# In this case the inventory namespace is 'test-inv'.
 inventories:
-  # the Inventory name is the namespace of the inventory
-  # In this case the inventory namespace is 'test'
-  test:
-    # The title of the inventory
+  test-inv:
     title: '<dark_purple>Test Inventory'
-    # Here you can localize the inventory content.
     content:
-      # the content name is the namespace of the content
-      # In this case the content namespace is 'close'
-      close:
-        # The display name of the close item for example
-        display-name: '<red>Close Inventory'
-        # The lore of the close item for example
-        lore:
-          - 'Close Inventory'
-      previous-page:
-        display-name: '<yellow>Previous Page'
-        lore:
+      navigation:
+        close:
+          name: '<red>Close Inventory'
+          lore:
+            - 'Close Inventory'
+        previous-page:
+          name: '<yellow>Previous Page'
+          lore:
             - 'Previous page'
-      next-page:
-        display-name: '<yellow>Next Page'
-        lore:
+        next-page:
+          name: '<yellow>Next Page'
+          lore:
             - 'Next page'
+      required:
+        heal:
+          name: '<red>Heal me'
+          lore:
+            - 'Click me to heal yourself'
+      custom:
+        my-custom-item:
+          name: '<red>My Custom Item'
+          lore:
+            - 'This is a custom item'

@@ -4,6 +4,7 @@ import co.aikar.commands.PaperCommandManager;
 import com.google.common.collect.ImmutableList;
 import com.zaxxer.hikari.HikariDataSource;
 import io.nexstudios.nexus.bukkit.actions.ActionFactory;
+import io.nexstudios.nexus.bukkit.command.InvOpenCommand;
 import io.nexstudios.nexus.bukkit.command.ReloadCommand;
 import io.nexstudios.nexus.bukkit.command.StatCommand;
 import io.nexstudios.nexus.bukkit.command.SwitchLanguage;
@@ -27,6 +28,9 @@ import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hooks.*;
 import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
 import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
+import io.nexstudios.nexus.bukkit.inv.api.InvService;
+import io.nexstudios.nexus.bukkit.inv.event.NexInventoryClickListener;
+import io.nexstudios.nexus.bukkit.inv.renderer.DefaultNexItemRenderer;
 import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
@@ -43,6 +47,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Getter
@@ -59,6 +64,7 @@ public final class NexusPlugin extends JavaPlugin {
     public NexusLanguage nexusLanguage;
     public EffectFactory effectFactory;
     public EffectBindingRegistry bindingRegistry;
+    private InvService invService;
 
     // API Services
     public MessageSender messageSender;
@@ -115,6 +121,10 @@ public final class NexusPlugin extends JavaPlugin {
         NexusEffectsApi.registerBindingsFromSection(this, settingsFile.getConfig());
         logEffectSystemStats();
         registerDatabaseService();
+
+        this.invService = new InvService(this, new DefaultNexItemRenderer());
+        invService.registerNamespace(this.getName().toLowerCase(Locale.ROOT), inventoryFiles);
+
         nexusLogger.info("Nexus is enabled");
     }
 
@@ -308,6 +318,7 @@ public final class NexusPlugin extends JavaPlugin {
         commandManager.registerCommand(new ReloadCommand());
         commandManager.registerCommand(new SwitchLanguage());
         commandManager.registerCommand(new StatCommand());
+        commandManager.registerCommand(new InvOpenCommand());
         int size = commandManager.getRegisteredRootCommands().size();
         nexusLogger.info("Successfully registered " + size  + " command(s).");
     }
@@ -315,6 +326,7 @@ public final class NexusPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new NexusMenuEvent(), this);
         Bukkit.getPluginManager().registerEvents(new EntityDamageTriggerListener(bindingRegistry), this);
         Bukkit.getPluginManager().registerEvents(new NoMoreFeed(), this);
+        Bukkit.getPluginManager().registerEvents(new NexInventoryClickListener(), this);
 
     }
 

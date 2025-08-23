@@ -1,10 +1,9 @@
 # The title of the Inventory (PlaceholderAPI support)
-title: 'Example Title'
+title: '#language:title#'
 # The size of the Inventory
 size: 6
-# How many pages you want
-max-pages: 1
-# The update intervall, how often the inventory refreshes his content
+# The update intervall, how often the inventory refreshes his content if needed,
+# for example, a placeholder or a timer in the lore
 update-intervall: 2
 # The main section for the inventory content
 content:
@@ -17,32 +16,62 @@ content:
   # The Inventory Navigation subsection
   # namespaces such as 'close' cannot be renamed!
   navigation:
-    close:
+    - id: close
+      item: 'minecraft:redstone'
+      page: 1
       slots: [51,52]
       use-page-number-as-amount: false
-      item: redstone
-      display-name: '<red>Close Inventory'
-      custom-model-data: 1337
-      lore:
-        - 'Close Inventory'
-    previous-page:
+      name: '#language:navigation.close.name#'
+      model-data: 1337
+      lore: '#language:navigation.close.lore#'
+      extras: [ ] #(optional)
+    - id: previous-page
+      item: 'minecraft:arrow'
+      page: 1
       slots: [47]
       use-page-number-as-amount: false
-      item: arrow
-      display-name: '<yellow>Previous Page'
-      custom-model-data: 1337
-      lore:
-        - 'Previous page'
-    next-page:
+      name: '#language:previous-page.name#'
+      model-data: 1337
+      lore: '#language:navigation.previous-page.lore#'
+      extras: [ ] #(optional)
+    - id: next-page
+      item: 'minecraft:arrow'
+      page: 1
       slots: [48]
       use-page-number-as-amount: false
-      item: arrow
-      display-name: '<yellow>Next Page'
-      custom-model-data: 1337
-      lore:
-        - 'Next page'
-  static: [ ]
-  custom: [ ]
+      name: '#language:navigation.next-page.name#'
+      model-data: 1337
+      lore: '#language:navigation.next-page.lore#'
+      extras: [ ] #(optional)
+  # must have items for the api use
+  # the namespace 'heal' is required for the api.
+  required:
+    - id: heal
+      item: 'vanilla:diamond_sword'
+      page: 1
+      slots: [15]
+      model-data: 1337 #(optional)
+      tooltip-style: 'minecraft:legendary' #(optional)
+      amount: 1
+      name: '#language:required.heal.name#'
+      lore: '#language:required.heal.lore#'
+      extras: [ ] #(optional)
+# The custom subsection for the inventory content
+# Users can define their own items without functionality (Visual only) (optional)
+  custom:
+    - id: my-custom-item
+      item: 'vanilla:emerald'
+      page: 1
+      slots: [15]
+      model-data: 1337 #(optional)
+      tooltip-style: 'minecraft:legendary' #(optional)
+      amount: 1
+      name: '#language:custom.name#'
+      lore: '#language:required.lore#'
+      extras: [ ] #(optional)
+  # The extra settings subsection for the inventory content,
+  # for example, a plugin needs some extra settings for the inventory (optional)
+  # This section is just an example for a use case
   extra-settings:
     lore-format:
       requirements: '#status# <gray>#requirement#'
