@@ -1,7 +1,6 @@
 package io.nexstudios.nexus.bukkit.inv.api;
 
 import io.nexstudios.nexus.bukkit.inv.NexInventoryView;
-import io.nexstudios.nexus.bukkit.inv.NexInventory;
 import io.nexstudios.nexus.bukkit.inv.NexOnClick;
 import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
 import org.bukkit.entity.Player;

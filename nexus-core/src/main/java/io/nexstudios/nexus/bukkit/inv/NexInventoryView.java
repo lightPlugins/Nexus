@@ -1,10 +1,18 @@
 package io.nexstudios.nexus.bukkit.inv;
 
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.inv.config.NexItemConfig;
 import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
 import io.nexstudios.nexus.bukkit.inv.fill.InvFillStrategy;
 import io.nexstudios.nexus.bukkit.inv.pagination.NexPageSource;
+import io.nexstudios.nexus.bukkit.items.ItemBuilder;
+import io.nexstudios.nexus.bukkit.items.ItemHideFlag;
+import io.nexstudios.nexus.bukkit.platform.NexServices;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -56,20 +64,68 @@ public class NexInventoryView {
     public Player player() { return player; }
 
     public void open() {
-        String titleStr = inv.titleSupplier().apply(player);
-        this.top = Bukkit.createInventory(inv, inv.size(), titleStr != null ? titleStr : "Inventory");
+        String rawTitle = inv.titleSupplier().apply(player);
+
+        // Neu: Language-Keys direkt via NexusLanguage auflösen, sonst MessageSender nutzen
+        Component titleComp = resolveTitle(rawTitle, inv.inventoryId(), player);
+
+        this.top = Bukkit.createInventory(inv, inv.size(), titleComp);
         player.openInventory(this.top);
         NexInventoryManager.get().register(player.getUniqueId(), this);
         renderAll();
     }
 
+    private static Component resolveTitle(String raw, String inventoryId, Player player) {
+        if (raw == null || raw.isBlank()) {
+            return Component.text("Inventory");
+        }
+        String s = raw.trim();
 
-    public void setBodyItems(List<?> models, NexOnClick clickHandler) {
-        this.bodyModels = (List<Object>) (models != null ? models : Collections.emptyList());
-        this.bodyClickHandler = clickHandler;
-        this.pageIndex = 0;
-        renderAll();
+        if (s.startsWith("#language:")) {
+            // "#language:..." -> Pfad für NexusLanguage bilden
+            String path = languageTitlePath(s, inventoryId);
+            return io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
+                    .getNexusLanguage()
+                    .getTranslation(player.getUniqueId(), path, false);
+        }
+
+        // Kein Language-Key: nutze bestehende MessageSender-Pipeline (PAPI + MiniMessage)
+        return io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
+                .messageSender
+                .stringToComponent(player, raw);
     }
+
+    private static String languageTitlePath(String raw, String invId) {
+        String s = raw;
+
+        // Präfix entfernen
+        if (s.startsWith("#language:")) {
+            s = s.substring("#language:".length());
+        }
+        // trailing "#": entfernen, falls vorhanden
+        if (s.endsWith("#")) {
+            s = s.substring(0, s.length() - 1);
+        }
+
+        // Bereits vollständiger Pfad
+        if (s.startsWith("inventories.")) {
+            return s;
+        }
+
+        // Standardfall: nur "title" oder custom Schlüssel
+        if ("title".equalsIgnoreCase(s)) {
+            return "inventories." + invId + ".title";
+        }
+        return "inventories." + invId + "." + s;
+    }
+
+
+//    public void setBodyItems(List<?> models, NexOnClick clickHandler) {
+//        this.bodyModels = (List<Object>) (models != null ? models : Collections.emptyList());
+//        this.bodyClickHandler = clickHandler;
+//        this.pageIndex = 0;
+//        renderAll();
+//    }
 
     public void nextPage() {
         NexPageSource ps = inv.pageSourceFor(bodyModels.size());
@@ -115,7 +171,7 @@ public class NexInventoryView {
     private void placeDecoration() {
         if (!inv.decorationEnabled()) return;
         ItemStack deco = renderItemSpec(inv.decorationItemSpec(), null);
-        if (deco == null) return;
+        deco = NexServices.newItemBuilder().itemStack(deco).displayName(Component.text(" ")).build();
         // Deko füllt alles – wird später von höher priorisierten Items überschrieben
         for (int i = 0; i < inv.size(); i++) {
             top.setItem(i, deco);
@@ -228,6 +284,7 @@ public class NexInventoryView {
         // Restlöcher in der Body-Zone wieder mit Deko füllen (falls aktiviert)
         if (inv.decorationEnabled()) {
             ItemStack deco = renderItemSpec(inv.decorationItemSpec(), null);
+            deco = NexServices.newItemBuilder().itemStack(deco).displayName(Component.text(" ")).build();
             if (deco != null) {
                 for (int slot : zone.slots) {
                     if (top.getItem(slot) == null) {
@@ -242,16 +299,17 @@ public class NexInventoryView {
         ItemStack stack = inv.renderer().renderStatic(cfg, inv.inventoryId());
         if (stack == null) return;
 
+        // Language für Name/Lore pro Spieler anwenden (falls konfiguriert)
+        stack = applyLanguageForPlayer(stack, cfg, inv.inventoryId(), player.getUniqueId());
+
         int newRank = rankForNamespace(namespace);
 
         for (Integer s1b : cfg.slots1b) {
             int s0 = Math.max(0, s1b - 1);
             if (s0 < 0 || s0 >= inv.size()) continue;
 
-            // Prioritätsprüfung: nur setzen, wenn Slot leer oder niedrigere Priorität
             Integer existingRank = staticPriorities.get(s0);
             if (existingRank != null && existingRank >= newRank) {
-                // vorhandenes Item hat höhere/gleiche Priorität -> nicht überschreiben
                 continue;
             }
 
@@ -262,6 +320,7 @@ public class NexInventoryView {
             staticPriorities.put(s0, newRank);
         }
     }
+
 
     private int rankForNamespace(String ns) {
         if (ns == null) return -1;
@@ -349,7 +408,7 @@ public class NexInventoryView {
         int newRank = rankForNamespace("extra");
         for (int s1 : slots1b) {
             int s0 = Math.max(0, s1 - 1);
-            if (s0 < 0 || s0 >= inv.size()) continue;
+            if (s0 >= inv.size()) continue;
 
             Integer existingRank = staticPriorities.get(s0);
             if (existingRank != null && existingRank >= newRank) {
@@ -380,10 +439,169 @@ public class NexInventoryView {
             return is;
         }
         if (model instanceof NexItemConfig cfg) {
-            return inv.renderer().renderStatic(cfg, inv.inventoryId());
+            ItemStack st = inv.renderer().renderStatic(cfg, inv.inventoryId());
+            if (st != null) {
+                st = applyLanguageForPlayer(st, cfg, inv.inventoryId(), player.getUniqueId());
+            }
+            return st;
         }
         return null;
     }
+    private ItemStack applyLanguageForPlayer(ItemStack stack, NexItemConfig cfg, String inventoryId, java.util.UUID playerId) {
+        try {
+            if (cfg == null) return stack;
+
+            // Spezifikation prüfen
+            String spec = (cfg.itemSpec == null) ? "" : cfg.itemSpec.trim().toLowerCase(java.util.Locale.ROOT);
+            boolean isVanilla = spec.startsWith("minecraft:") || spec.startsWith("vanilla:") || !spec.contains(":");
+            if (!isVanilla) {
+                // Externe Items nicht anfassen (keine Anreicherung via Builder)
+                return stack;
+            }
+
+            // Material auflösen
+            String normalized = normalizeMinecraftSpec(spec);
+            Material mat = Material.matchMaterial(normalized, false);
+            if (mat == null) {
+                String enumName = normalized.substring(normalized.indexOf(':') + 1).toUpperCase(java.util.Locale.ROOT);
+                try { mat = Material.valueOf(enumName); } catch (IllegalArgumentException ignored) {}
+            }
+            if (mat == null) mat = Material.STONE;
+
+            // Language: Name/Lore Pfade berechnen und via NexusLanguage auflösen
+            Component nameComp = null;
+            if (cfg.name != null && cfg.name.startsWith("#language:")) {
+                String path = languagePath(cfg.name, inventoryId);
+                nameComp = io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
+                        .getNexusLanguage()
+                        .getTranslation(playerId, path, false);
+            }
+
+            java.util.List<Component> loreComp = null;
+            if (cfg.lore != null) {
+                if (cfg.lore instanceof String s && s.startsWith("#language:")) {
+                    String path = languagePath(s, inventoryId);
+                    loreComp = io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
+                            .getNexusLanguage()
+                            .getTranslationList(playerId, path, false);
+                } else if (cfg.lore instanceof java.util.List<?> list) {
+                    java.util.List<Component> out = new java.util.ArrayList<>();
+                    for (Object o : list) {
+                        if (o instanceof String ls && ls.startsWith("#language:")) {
+                            String path = languagePath(ls, inventoryId);
+                            java.util.List<Component> parts = io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
+                                    .getNexusLanguage()
+                                    .getTranslationList(playerId, path, false);
+                            if (parts != null && !parts.isEmpty()) out.addAll(parts);
+                        }
+                    }
+                    if (!out.isEmpty()) loreComp = out;
+                }
+            }
+
+            // Builder aufsetzen
+            int amount = (cfg.amount != null ? Math.max(1, cfg.amount) : Math.max(1, stack.getAmount()));
+            ItemBuilder b = NexServices.newItemBuilder()
+                    .material(mat)
+                    .amount(amount);
+
+            if (nameComp != null) b.displayName(nameComp);
+            if (loreComp != null && !loreComp.isEmpty()) b.lore(loreComp);
+            if (cfg.modelData != null) b.modelData(cfg.modelData);
+            if (cfg.tooltipStyle != null && !cfg.tooltipStyle.isBlank()) {
+                NamespacedKey style = parseKey(cfg.tooltipStyle.trim());
+                b.tooltipStyle(style);
+            }
+
+            // Enchants / Hide-Flags aus der Config übernehmen
+            java.util.Map<Enchantment, Integer> enchants = parseEnchantments(cfg.enchantments);
+            if (enchants != null && !enchants.isEmpty()) b.enchantments(enchants);
+
+            java.util.Set<ItemHideFlag> flags = parseHideFlags(cfg);
+            if (flags != null && !flags.isEmpty()) b.hideFlags(flags);
+
+            return b.build();
+        } catch (Exception ignored) {
+            return stack; // Fallback: unverändert lassen
+        }
+    }
+
+    private static String normalizeMinecraftSpec(String spec) {
+        if (spec == null || spec.isBlank()) return "minecraft:stone";
+        if (!spec.contains(":")) return "minecraft:" + spec.toLowerCase(java.util.Locale.ROOT);
+        if (spec.startsWith("vanilla:")) return "minecraft:" + spec.substring("vanilla:".length());
+        return spec.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private static NamespacedKey parseKey(String value) {
+        String v = value.toLowerCase(java.util.Locale.ROOT);
+        NamespacedKey key = NamespacedKey.fromString(v);
+        if (key == null) key = NamespacedKey.minecraft(v);
+        return key;
+    }
+
+    private static java.util.Map<Enchantment, Integer> parseEnchantments(java.util.List<java.util.Map<String, Object>> raw) {
+        if (raw == null || raw.isEmpty()) return null;
+        java.util.Map<Enchantment, Integer> out = new java.util.HashMap<>();
+        for (java.util.Map<String, Object> e : raw) {
+            if (e == null) continue;
+            Object idObj = e.get("id");
+            Object valObj = e.get("value");
+            if (idObj == null) continue;
+
+            String id = String.valueOf(idObj).toLowerCase(java.util.Locale.ROOT).trim();
+            NamespacedKey key = NamespacedKey.fromString(id);
+            if (key == null) key = NamespacedKey.minecraft(id);
+            Enchantment ench = io.papermc.paper.registry.RegistryAccess.registryAccess()
+                    .getRegistry(io.papermc.paper.registry.RegistryKey.ENCHANTMENT).get(key);
+            if (ench == null) continue;
+
+            int lvl = 1;
+            if (valObj instanceof Number n) lvl = n.intValue();
+            else if (valObj instanceof String s) {
+                try { lvl = Integer.parseInt(s.trim()); } catch (NumberFormatException ignored) {}
+            }
+            out.put(ench, Math.max(1, lvl));
+        }
+        return out.isEmpty() ? null : out;
+    }
+
+
+    private static java.util.Set<ItemHideFlag> parseHideFlags(NexItemConfig cfx) {
+        java.util.List<String> list = cfx.hideFlags;
+        if (list == null || list.isEmpty()) return null;
+        java.util.Set<ItemHideFlag> out = java.util.EnumSet.noneOf(ItemHideFlag.class);
+        for (String f : list) {
+            if (f == null) continue;
+            String key = f.toLowerCase(java.util.Locale.ROOT).trim();
+            ItemHideFlag hiddenFlag = ItemHideFlag.fromString(key);
+            if (hiddenFlag != null) out.add(hiddenFlag);
+        }
+        return out.isEmpty() ? null : out;
+    }
+
+    private static String languagePath(String raw, String invId) {
+        if (raw == null) return null;
+        String s = raw;
+
+        // "#language:" Präfix entfernen
+        if (s.startsWith("#language:")) {
+            s = s.substring("#language:".length());
+        }
+        // trailing "#": entfernen, falls vorhanden
+        if (s.endsWith("#")) {
+            s = s.substring(0, s.length() - 1);
+        }
+
+        if (s.startsWith("inventories.")) {
+            return s;
+        }
+        if (s.startsWith("navigation.") || s.startsWith("required.") || s.startsWith("custom.")) {
+            return "inventories." + invId + ".content." + s;
+        }
+        return "inventories." + invId + "." + s;
+    }
+
 
 
     // Dispatch aus Listener

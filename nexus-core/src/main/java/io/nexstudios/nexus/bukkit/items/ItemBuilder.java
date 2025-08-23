@@ -21,6 +21,7 @@ import java.util.Set;
 public interface ItemBuilder {
 
     // Grundlegendes
+    ItemBuilder itemStack(ItemStack stack); // base item
     ItemBuilder material(Material material);
     ItemBuilder amount(int amount);
     ItemBuilder stackSize(int stackSize);
