@@ -34,6 +34,7 @@ import io.nexstudios.nexus.bukkit.inv.renderer.DefaultNexItemRenderer;
 import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
+import io.nexstudios.nexus.bukkit.platform.NexServices;
 import io.nexstudios.nexus.bukkit.player.events.NoMoreFeed;
 import io.nexstudios.nexus.bukkit.utils.NexusLogger;
 import io.nexstudios.nexus.bukkit.files.NexusFile;
@@ -95,6 +96,7 @@ public final class NexusPlugin extends JavaPlugin {
     public void onLoad() {
         // Plugin startup logic
         instance = this;
+        NexServices.init();
         nexusLogger = new NexusLogger("<reset>[<yellow>Nexus<reset>]", true, 99, "<yellow>");
         nexusLogger.info("Nexus is loading...");
         onReload();
