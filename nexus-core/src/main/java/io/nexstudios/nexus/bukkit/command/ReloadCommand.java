@@ -5,6 +5,7 @@ import co.aikar.commands.annotation.*;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.effects.NexusEffectsApi;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.util.Locale;
 
@@ -33,6 +34,8 @@ public class ReloadCommand extends BaseCommand {
 
 
         NexusPlugin.getInstance().messageSender.send(sender, "general.reload");
+
+        NexusPlugin.getInstance().getMmoItemsHook().applyTest((Player) sender);
 
     }
 }
