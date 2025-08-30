@@ -24,6 +24,7 @@ import java.util.*;
 public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
 
     // Grunddaten
+    private ItemStack baseStack;
     private Material material = Material.AIR;
     private int amount = 1;
     private int stackSize = 64;
@@ -54,6 +55,12 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
     @Override
     public ItemBuilder create() {
         return new PaperItemBuilder();
+    }
+
+    @Override
+    public ItemBuilder itemStack(ItemStack stack) {
+        this.baseStack = stack;
+        return this;
     }
 
     @Override
@@ -169,7 +176,12 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
     @Override
     @SuppressWarnings("UnstableApiUsage")
     public ItemStack build() {
+
         ItemStack stack = new ItemStack(material, amount);
+
+        if(baseStack != null) {
+            stack = baseStack;
+        }
 
         stack.setData(DataComponentTypes.MAX_STACK_SIZE, stackSize);
 
