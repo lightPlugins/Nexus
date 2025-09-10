@@ -1,6 +1,7 @@
 package io.nexstudios.nexus.bukkit.inv.config;
 
 import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
+import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ public class NexInventoryConfig {
     public final int bodyCols;                 // Anzahl Spalten der Body-Zone
     public final List<Integer> bodySlots1b;    // explizite Slots 1-basiert (optional; hat Vorrang vor rows/cols)
 
-    public final Map<String, Object> extraSettings; // frei
+    public final ConfigurationSection extraSettings; // frei
 
     public NexInventoryConfig(String inventoryId,
                               String title,
@@ -40,7 +41,7 @@ public class NexInventoryConfig {
                               int bodyRows,
                               int bodyCols,
                               List<Integer> bodySlots1b,
-                              Map<String, Object> extraSettings) {
+                              ConfigurationSection extraSettings) {
         this.inventoryId = inventoryId;
         this.title = title;
         this.rows = rows;

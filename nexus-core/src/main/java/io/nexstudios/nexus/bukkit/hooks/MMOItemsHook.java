@@ -12,13 +12,13 @@ import lombok.Getter;
 import net.Indyuce.mmoitems.MMOItems;
 import net.Indyuce.mmoitems.api.Type;
 import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
-import net.Indyuce.mmoitems.manager.ItemManager;
 import net.Indyuce.mmoitems.manager.TypeManager;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 
@@ -52,19 +52,53 @@ public class MMOItemsHook {
         return is;
     }
 
-    public void applyTest(Player player) {
+    /**
+     * Applies a stat modifier to a player's MMO data instance using the specified parameters.
+     * This method registers the stat modification under a given namespace and is processed
+     * within the player's MMOPlayerData context.
+     *
+     * @param namespace the unique namespace used to identify the stat modifier
+     * @param player the player to whom the stat modifier will be applied
+     * @param stat the specific stat to modify (e.g., damage, defense)
+     * @param value the value of the stat modifier to apply
+     * @param modifierType the type of the stat modifier (e.g., addition, multiplier)
+     */
+    public void applyRuntimeStat(String namespace, Player player, String stat, double value, ModifierType modifierType) {
 
         MMOPlayerData data = MMOPlayerData.get(player);
-        StatModifier modifier = new StatModifier(NexusPlugin.getInstance().getName().toLowerCase(Locale.ROOT), "FACTION_DAMAGE_CRYSTAL", 500, ModifierType.FLAT);
+        StatModifier modifier = new StatModifier(
+                namespace.toLowerCase(Locale.ROOT),
+                stat.toUpperCase(Locale.ROOT),
+                value,
+                modifierType);
         modifier.register(data);
+    }
+
+    /**
+     * Applies a temporary stat modifier to a player's MMO data instance using the specified parameters.
+     * This stat modifier will be automatically removed after the specified duration.
+     *
+     * @param namespace the unique namespace to identify the stat modifier
+     * @param player the player to whom the stat modifier will be applied
+     * @param stat the specific stat to modify
+     * @param value the value of the stat modifier to apply
+     * @param duration the duration for which the stat modifier will be active
+     * @param modifierType the type of the stat modifier (e.g., addition, multiplier)
+     */
+    public void applyTemporaryStat(String namespace, Player player, String stat, double value, Duration duration, ModifierType modifierType) {
+
+        long millis = duration.toMillis();
+        long ticks = millis / 50;
+
+        MMOPlayerData data = MMOPlayerData.get(player);
         TemporaryStatModifier modifier2 = new TemporaryStatModifier(
-                NexusPlugin.getInstance().getName().toLowerCase(Locale.ROOT),
-                "FACTION_DAMAGE_CRYSTAL",
-                500,
-                ModifierType.FLAT,
+                namespace.toLowerCase(Locale.ROOT),
+                stat.toUpperCase(Locale.ROOT),
+                value,
+                modifierType,
                 EquipmentSlot.OTHER,
                 ModifierSource.OTHER);
-        modifier2.register(data, 80L);
+        modifier2.register(data, ticks);
     }
 
     public int getUpgradeLevel(String type, String id) {

@@ -3,6 +3,7 @@ package io.nexstudios.nexus.bukkit.inv.api;// Java
 import io.nexstudios.nexus.bukkit.inv.config.NexInventoryConfig;
 import io.nexstudios.nexus.bukkit.inv.config.NexItemConfig;
 import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.*;
@@ -65,9 +66,7 @@ public final class InvConfigLoader {
         int bodyCols = cfg.getInt("content.body.cols", 7);
         List<Integer> bodySlots1b = cfg.getIntegerList("content.body.slots");
 
-        Map<String, Object> extra = cfg.contains("content.extra-settings")
-                ? cfg.getConfigurationSection("content.extra-settings").getValues(true)
-                : Map.of();
+        ConfigurationSection extraSection = cfg.getConfigurationSection("content.extra-settings");
 
         return new NexInventoryConfig(
                 inventoryId,
@@ -83,7 +82,7 @@ public final class InvConfigLoader {
                 bodyRows,
                 bodyCols,
                 bodySlots1b,
-                extra
+                extraSection
         );
     }
 

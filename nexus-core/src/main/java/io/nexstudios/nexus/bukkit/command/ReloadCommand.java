@@ -29,13 +29,13 @@ public class ReloadCommand extends BaseCommand {
         NexusPlugin.getInstance().logEffectSystemStats();
 
         String namespace = NexusPlugin.getInstance().getName().toLowerCase(Locale.ROOT);
-        NexusPlugin.getInstance().getInvService().registerNamespace(namespace, NexusPlugin.getInstance().getInventoryFiles());
+        NexusPlugin.getInstance().getInvService().registerNamespace(
+                namespace,
+                NexusPlugin.getInstance().getInventoryFiles());
         NexusPlugin.getInstance().getInvService().reload();
 
 
         NexusPlugin.getInstance().messageSender.send(sender, "general.reload");
-
-        NexusPlugin.getInstance().getMmoItemsHook().applyTest((Player) sender);
 
     }
 }

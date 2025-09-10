@@ -7,17 +7,20 @@ import io.nexstudios.nexus.bukkit.inv.fill.InvFillStrategy;
 import io.nexstudios.nexus.bukkit.inv.pagination.NexPageSource;
 import io.nexstudios.nexus.bukkit.items.ItemBuilder;
 import io.nexstudios.nexus.bukkit.items.ItemHideFlag;
+import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.lang.module.Configuration;
 import java.util.*;
 
 public class NexInventoryView {
@@ -50,16 +53,18 @@ public class NexInventoryView {
     // Optional: Override der Body-Zone/Alignment (für populateFiller(...))
     private InvFillStrategy.BodyZone overrideZone;
     private InvAlignment overrideAlignment;
+    
+    private static NexusLanguage nexusLanguage;
 
     private final Map<Integer, Integer> staticPriorities = new HashMap<>();
 
 
-    public NexInventoryView(NexInventory inv, Player player) {
+    public NexInventoryView(NexInventory inv, Player player, NexusLanguage nexusLanguage) {
         this.inv = inv;
         this.player = player;
         this.top = inv.getInventory();
+        NexInventoryView.nexusLanguage = nexusLanguage;
     }
-
 
     public Player player() { return player; }
 
@@ -84,8 +89,7 @@ public class NexInventoryView {
         if (s.startsWith("#language:")) {
             // "#language:..." -> Pfad für NexusLanguage bilden
             String path = languageTitlePath(s, inventoryId);
-            return io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
-                    .getNexusLanguage()
+            return nexusLanguage
                     .getTranslation(player.getUniqueId(), path, false);
         }
 
@@ -472,8 +476,7 @@ public class NexInventoryView {
             Component nameComp = null;
             if (cfg.name != null && cfg.name.startsWith("#language:")) {
                 String path = languagePath(cfg.name, inventoryId);
-                nameComp = io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
-                        .getNexusLanguage()
+                nameComp = nexusLanguage
                         .getTranslation(playerId, path, false);
             }
 
@@ -481,16 +484,14 @@ public class NexInventoryView {
             if (cfg.lore != null) {
                 if (cfg.lore instanceof String s && s.startsWith("#language:")) {
                     String path = languagePath(s, inventoryId);
-                    loreComp = io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
-                            .getNexusLanguage()
+                    loreComp = nexusLanguage
                             .getTranslationList(playerId, path, false);
                 } else if (cfg.lore instanceof java.util.List<?> list) {
                     java.util.List<Component> out = new java.util.ArrayList<>();
                     for (Object o : list) {
                         if (o instanceof String ls && ls.startsWith("#language:")) {
                             String path = languagePath(ls, inventoryId);
-                            java.util.List<Component> parts = io.nexstudios.nexus.bukkit.NexusPlugin.getInstance()
-                                    .getNexusLanguage()
+                            java.util.List<Component> parts = nexusLanguage
                                     .getTranslationList(playerId, path, false);
                             if (parts != null && !parts.isEmpty()) out.addAll(parts);
                         }
@@ -659,6 +660,7 @@ public class NexInventoryView {
             @Override public boolean isCustom() { return cus; }
             @Override public boolean isBody() { return body; }
             @Override public Integer bodyIndex() { return bodyIndex; }
+            @Override public ConfigurationSection extraSettings() { return inv.extraSettings(); }
         };
     }
 

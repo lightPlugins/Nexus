@@ -34,6 +34,8 @@ import io.nexstudios.nexus.bukkit.inv.renderer.DefaultNexItemRenderer;
 import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
 import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
+import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderBootstrap;
+import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderRegistry;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
 import io.nexstudios.nexus.bukkit.player.events.NoMoreFeed;
 import io.nexstudios.nexus.bukkit.utils.NexusLogger;
@@ -109,6 +111,10 @@ public final class NexusPlugin extends JavaPlugin {
     public void onEnable() {
         nexusLogger.info("Register Nexus commands...");
         checkForHooks();
+        nexusLogger.info("Register internal and third party placeholders...");
+        NexusPlaceholderBootstrap.registerNexusPlaceholders(this);
+        int internalPlaceholders = NexusPlaceholderRegistry.countKeys("nexus");
+        nexusLogger.info("Registered <yellow>" + internalPlaceholders + "<reset> internal placeholders.");
         commandManager = new PaperCommandManager(this);
         actionFactory = new ActionFactory();
         effectFactory = new EffectFactory(PlayerVariableResolver.ofStore());
@@ -124,7 +130,7 @@ public final class NexusPlugin extends JavaPlugin {
         logEffectSystemStats();
         registerDatabaseService();
 
-        this.invService = new InvService(this, new DefaultNexItemRenderer());
+        this.invService = new InvService(this, new DefaultNexItemRenderer(), nexusLanguage);
         invService.registerNamespace(this.getName().toLowerCase(Locale.ROOT), inventoryFiles);
 
         nexusLogger.info("Nexus is enabled");

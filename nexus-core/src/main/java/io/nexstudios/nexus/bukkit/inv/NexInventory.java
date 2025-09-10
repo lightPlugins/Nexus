@@ -6,12 +6,14 @@ import io.nexstudios.nexus.bukkit.inv.fill.InvFillStrategy;
 import io.nexstudios.nexus.bukkit.inv.fill.RowMajorFillStrategy;
 import io.nexstudios.nexus.bukkit.inv.pagination.NexPageSource;
 import io.nexstudios.nexus.bukkit.inv.renderer.NexItemRenderer;
+import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
 
+import java.io.ObjectInputFilter;
 import java.util.*;
 import java.util.function.Function;
 
@@ -36,12 +38,18 @@ public class NexInventory implements InventoryHolder {
 
     private final NexItemRenderer itemRenderer;
 
+    private final NexusLanguage nexusLanguage;
+
+    // NEU: Extra-Settings aus der YML
+    private final ConfigurationSection extraSettings;
+
     private final Inventory inventory;
 
     private NexInventory(Builder b) {
         this.inventoryId = b.inventoryId;
         this.rows = b.rows;
         this.size = rows * 9;
+        this.nexusLanguage = b.nexusLanguage;
         this.titleSupplier = b.titleSupplier != null ? b.titleSupplier : (p -> "Inventory");
         this.updateIntervalTicks = b.updateIntervalTicks;
 
@@ -72,10 +80,12 @@ public class NexInventory implements InventoryHolder {
         this.fillStrategy = b.fillStrategy != null ? b.fillStrategy : new RowMajorFillStrategy();
 
         this.itemRenderer = Objects.requireNonNull(b.itemRenderer, "NexItemRenderer required");
-        // Paper-konform: Holder ist this (NexInventory)
+
+        // NEU: Extra-Settings übernehmen (niemals null)
+        this.extraSettings = b.extraSettings;
+
         this.inventory = Bukkit.createInventory(this, size, titleSupplier.apply(null));
     }
-
 
     @Override
     public Inventory getInventory() {
@@ -83,7 +93,7 @@ public class NexInventory implements InventoryHolder {
     }
 
     public NexInventoryView openFor(Player player) {
-        NexInventoryView view = new NexInventoryView(this, player);
+        NexInventoryView view = new NexInventoryView(this, player, nexusLanguage);
         view.open();
         return view;
     }
@@ -102,6 +112,9 @@ public class NexInventory implements InventoryHolder {
     public InvFillStrategy fillStrategy() { return fillStrategy; }
     public NexItemRenderer renderer() { return itemRenderer; }
     public Function<Player, String> titleSupplier() { return titleSupplier; }
+
+    // NEU: Getter für Extra-Settings
+    public ConfigurationSection extraSettings() { return extraSettings; }
 
     public static Builder builder() { return new Builder(); }
 
@@ -125,6 +138,10 @@ public class NexInventory implements InventoryHolder {
         private InvFillStrategy fillStrategy;
 
         private NexItemRenderer itemRenderer;
+        private NexusLanguage nexusLanguage;
+
+        // NEU: Extra-Settings in den Builder
+        private ConfigurationSection extraSettings;
 
         public Builder inventoryId(String id) { this.inventoryId = id; return this; }
         public Builder rows(int rows) { this.rows = rows; return this; }
@@ -144,10 +161,13 @@ public class NexInventory implements InventoryHolder {
 
         public Builder itemRenderer(NexItemRenderer r) { this.itemRenderer = r; return this; }
 
+        // NEU: Setter für Extra-Settings
+        public Builder extraSettings(ConfigurationSection extra) { this.extraSettings = extra; return this; }
+        public Builder nexusLanguage(NexusLanguage nexusLanguage) { this.nexusLanguage = nexusLanguage; return this; }
+
         public NexInventory build() { return new NexInventory(this); }
     }
 
-    // Hilfsfunktionen (intern)
     NexPageSource pageSourceFor(int totalBodyItems) {
         int pageSize = Math.max(1, bodyZone.slots.size());
         return new NexPageSource(totalBodyItems, pageSize);

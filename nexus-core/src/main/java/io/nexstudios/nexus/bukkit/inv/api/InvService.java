@@ -12,6 +12,7 @@ import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
 import io.nexstudios.nexus.bukkit.inv.fill.InvFillStrategy;
 import io.nexstudios.nexus.bukkit.inv.fill.RowMajorFillStrategy;
 import io.nexstudios.nexus.bukkit.inv.renderer.NexItemRenderer;
+import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,10 +27,12 @@ public final class InvService {
     private final NexItemRenderer renderer;
     private final Map<InvKey, InvHandleImpl> registry = new ConcurrentHashMap<>();
     private final Map<String, NexusFileReader> namespaces = new ConcurrentHashMap<>();
+    private final NexusLanguage nexusLanguage;
 
-    public InvService(JavaPlugin plugin, NexItemRenderer renderer) {
+    public InvService(JavaPlugin plugin, NexItemRenderer renderer, NexusLanguage nexusLanguage) {
         this.plugin = plugin;
         this.renderer = renderer;
+        this.nexusLanguage = nexusLanguage;
     }
 
     // Namespace registrieren und initial laden (preload aller inv yml)
@@ -124,6 +127,8 @@ public final class InvService {
                 .bodySlots0b(bodySlots0b)
                 .fillStrategy(strategy)
                 .itemRenderer(renderer)
+                .extraSettings(nic.extraSettings)
+                .nexusLanguage(nexusLanguage)
                 .build();
     }
 

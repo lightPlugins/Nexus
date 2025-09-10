@@ -3,6 +3,7 @@ package io.nexstudios.nexus.bukkit.inv.api;
 import io.nexstudios.nexus.bukkit.inv.NexInventoryView;
 import io.nexstudios.nexus.bukkit.inv.NexOnClick;
 import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -37,6 +38,13 @@ public final class NexMenuSession {
         this.player = p;
         return this;
     }
+
+    // extra-settings section from the content path
+    public ConfigurationSection extraSettings() {
+        if (handle == null) return null;
+        return handle.inventory().extraSettings();
+    }
+
 
     // Filler-Bindung
     public FillerBinding populateFiller(List<ItemStack> items, int startSlot1b, int endSlot1b, InvAlignment alignment) {
