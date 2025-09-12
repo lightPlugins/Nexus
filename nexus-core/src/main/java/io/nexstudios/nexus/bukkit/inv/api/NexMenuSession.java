@@ -1,83 +1,81 @@
 package io.nexstudios.nexus.bukkit.inv.api;
 
+import io.nexstudios.nexus.bukkit.inv.NexInventory;
 import io.nexstudios.nexus.bukkit.inv.NexInventoryView;
 import io.nexstudios.nexus.bukkit.inv.NexOnClick;
 import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
-import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
-// Fluente Session für Menü-Nutzung
-public final class NexMenuSession {
+public class NexMenuSession {
 
-    private final InvService.InvHandleImpl handle;
-    private Player player;
+    private final InvHandle handle;
+    NexInventoryView view;
+    final List<Runnable> preOpenTasks = new ArrayList<>();
+    private boolean opened = false;
 
-    // Konfiguration vor open()
-    private final List<Runnable> preOpenTasks = new ArrayList<>();
-
-    private NexInventoryView view; // nach open()
-
-    private NexMenuSession(InvService.InvHandleImpl handle) {
+    private NexMenuSession(InvHandle handle) {
         this.handle = handle;
     }
 
-    public static NexMenuSession forHandle(InvService.InvHandleImpl handle) {
+    public static NexMenuSession forHandle(InvHandle handle) {
+        Objects.requireNonNull(handle, "handle");
         return new NexMenuSession(handle);
     }
 
     public static NexMenuSession empty() {
-        return new NexMenuSession(null);
+        return new NexMenuSession(new InvHandle() {
+            @Override public InvKey key() { return null; }
+            @Override public NexInventoryView open(Player player) { return null; }
+            @Override public InvHandle setBodyItems(List<?> models, NexOnClick clickHandler) { return this; }
+            @Override public io.nexstudios.nexus.bukkit.inv.NexInventory inventory() { return null; }
+            @Override public InvHandle onPostLoad(Consumer<NexInventory> a) { return this; }
+        }) {
+            @Override public NexInventoryView openFor(Player player) { return null; }
+            @Override public NexMenuSession onRequireClick(NexOnClick handler) { return this; }
+            @Override public NexMenuSession onRequireClick(String id, NexOnClick handler) { return this; }
+            @Override public NexMenuSession onCustomClick(String id, NexOnClick handler) { return this; }
+            @Override public NexMenuSession onNavigationClick(String idOrNull, NexOnClick handler) { return this; }
+            @Override public FillerBinding populateFiller(List<ItemStack> items, int startSlot1b, int endSlot1b, InvAlignment alignment) { return new FillerBinding(this, startSlot1b, endSlot1b, alignment); }
+            @Override public NexMenuSession populateFillerEntries(List<NexFillerEntry> entries, int startSlot1b, int endSlot1b, InvAlignment alignment) { return this; }
+        };
     }
 
-    public NexMenuSession forPlayer(Player p) {
-        this.player = p;
-        return this;
+    public NexInventoryView openFor(Player player) {
+        if (!opened) {
+            this.view = handle.open(player);
+            for (Runnable r : preOpenTasks) {
+                try { r.run(); } catch (Exception ignored) { /* Pre-open task failed */ }
+            }
+            preOpenTasks.clear();
+            opened = true;
+        }
+        return view;
     }
 
-    // extra-settings section from the content path
-    public ConfigurationSection extraSettings() {
-        if (handle == null) return null;
-        return handle.inventory().extraSettings();
+    void ensureView() {
+        if (view == null) {
+            throw new IllegalStateException("View is not initialized. Call openFor(player) before accessing the view.");
+        }
     }
 
-
-    // Filler-Bindung
-    public FillerBinding populateFiller(List<ItemStack> items, int startSlot1b, int endSlot1b, InvAlignment alignment) {
-        Objects.requireNonNull(items, "items");
-        preOpenTasks.add(() -> {
-            ensureView();
-            view.populateFillerStacks(items, startSlot1b, endSlot1b, alignment, null);
-        });
-        return new FillerBinding(this, items, startSlot1b, endSlot1b, alignment);
-    }
-
-    // Extra-Item-Bindung
-    public ExtraBinding addItem(ItemStack stack, int[] slots1b) {
-        Objects.requireNonNull(stack, "ItemStack");
-        Objects.requireNonNull(slots1b, "slots");
-        preOpenTasks.add(() -> {
-            ensureView();
-            view.addExtraItem(stack, slots1b, null);
-        });
-        return new ExtraBinding(this, stack, slots1b);
-    }
-
-    // Required-Handler global
     public NexMenuSession onRequireClick(NexOnClick handler) {
+        Objects.requireNonNull(handler, "handler");
         preOpenTasks.add(() -> {
             ensureView();
-            view.bindRequired(null, handler); // global
+            view.bindRequired(null, handler);
         });
         return this;
     }
 
-    // Required-Handler gezielt
     public NexMenuSession onRequireClick(String id, NexOnClick handler) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(handler, "handler");
         preOpenTasks.add(() -> {
             ensureView();
             view.bindRequired(id, handler);
@@ -85,16 +83,9 @@ public final class NexMenuSession {
         return this;
     }
 
-    // Custom-Handler global/gezielt
-    public NexMenuSession onCustomClick(NexOnClick handler) {
-        preOpenTasks.add(() -> {
-            ensureView();
-            view.bindCustom(null, handler);
-        });
-        return this;
-    }
-
     public NexMenuSession onCustomClick(String id, NexOnClick handler) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(handler, "handler");
         preOpenTasks.add(() -> {
             ensureView();
             view.bindCustom(id, handler);
@@ -102,81 +93,104 @@ public final class NexMenuSession {
         return this;
     }
 
-    // Navigation-Handler global/gezielt (zusätzlich zur Standardaktion)
-    public NexMenuSession onNavigationClick(NexOnClick handler) {
+    public NexMenuSession onNavigationClick(String idOrNull, NexOnClick handler) {
+        Objects.requireNonNull(handler, "handler");
         preOpenTasks.add(() -> {
             ensureView();
-            view.bindNavigation(null, handler);
+            view.bindNavigation(idOrNull, handler);
         });
         return this;
     }
 
-    public NexMenuSession onNavigationClick(String id, NexOnClick handler) {
-        preOpenTasks.add(() -> {
+    public FillerBinding populateFiller(List<ItemStack> items, int startSlot1b, int endSlot1b, InvAlignment alignment) {
+        Objects.requireNonNull(items, "items");
+        Runnable task = () -> {
             ensureView();
-            view.bindNavigation(id, handler);
-        });
+            view.populateFillerStacks(items, startSlot1b, endSlot1b, alignment, null);
+        };
+
+        if (opened && view != null) {
+            task.run();
+        } else {
+            preOpenTasks.add(task);
+        }
+        return new FillerBinding(this, startSlot1b, endSlot1b, alignment);
+    }
+
+
+    // CHANGED: return NexMenuSession for fluent chaining (lambda style)
+    public NexMenuSession populateFillerEntries(List<NexFillerEntry> entries, int startSlot1b, int endSlot1b, InvAlignment alignment) {
+        Objects.requireNonNull(entries, "entries");
+
+        List<ItemStack> items = new ArrayList<>(entries.size());
+        List<NexOnClick> handlers = new ArrayList<>(entries.size());
+        for (NexFillerEntry e : entries) {
+            items.add(e.item());
+            handlers.add(e.onClick());
+        }
+
+        Runnable task = () -> {
+            ensureView();
+            view.populateFillerEntries(items, handlers, startSlot1b, endSlot1b, alignment);
+        };
+
+        // Wenn bereits geöffnet: sofort ausführen, sonst für openFor() vormerken
+        if (opened && view != null) {
+            task.run();
+        } else {
+            preOpenTasks.add(task);
+        }
+
         return this;
     }
-
-    // Öffnen
-    public NexInventoryView open() {
-        ensureView();
-        // Nach dem Öffnen alle vorab definierten Konfigurationen anwenden (Filler/Extras/Handler)
-        for (Runnable r : preOpenTasks) r.run();
-        preOpenTasks.clear();
-        return view;
-    }
-
-    private void ensureView() {
-        if (view != null) return;
-        if (handle == null) throw new IllegalStateException("No inventory handle available");
-        if (player == null) throw new IllegalStateException("Player not set. Call forPlayer(player) first.");
-        view = handle.open(player);
-    }
-
-    // Binding-Typen
 
     public static final class FillerBinding {
         private final NexMenuSession session;
-        private final List<ItemStack> items;
-        private final int start1b, end1b;
+        private final int start1b;
+        private final int end1b;
         private final InvAlignment alignment;
 
-        FillerBinding(NexMenuSession session, List<ItemStack> items, int start1b, int end1b, InvAlignment alignment) {
+        FillerBinding(NexMenuSession session, int start1b, int end1b, InvAlignment alignment) {
             this.session = session;
-            this.items = items;
             this.start1b = start1b;
             this.end1b = end1b;
             this.alignment = alignment;
         }
 
-        public NexMenuSession onClick(NexOnClick handler) {
-            session.preOpenTasks.add(() -> {
-                session.ensureView();
-                session.view.populateFillerStacks(items, start1b, end1b, alignment, handler);
+        private NexInventoryView view() {
+            session.ensureView();
+            return session.view;
+        }
+
+        public FillerBinding update(int bodyIndexInPage, UnaryOperator<ItemStack> transformer) {
+            if (transformer == null) return this;
+            view().updateBodyItemAtVisibleIndex(bodyIndexInPage, transformer);
+            return this;
+        }
+
+        public FillerBinding set(int bodyIndexInPage, ItemStack newStack) {
+            if (newStack == null) return this;
+            return update(bodyIndexInPage, old -> newStack);
+        }
+
+        public FillerBinding toggleGlow(int bodyIndexInPage, boolean glow) {
+            return update(bodyIndexInPage, current -> {
+                if (current == null) return null;
+                var builder = io.nexstudios.nexus.bukkit.platform.NexServices
+                        .newItemBuilder()
+                        .itemStack(current);
+                if (glow) {
+                    builder.enchantments(Map.of(Enchantment.FORTUNE, 1))
+                            .hideFlags(Set.of(io.nexstudios.nexus.bukkit.items.ItemHideFlag.HIDE_ENCHANTS));
+                } else {
+                    builder.enchantments(Collections.emptyMap());
+                }
+                return builder.build();
             });
-            return session;
-        }
-    }
-
-    public static final class ExtraBinding {
-        private final NexMenuSession session;
-        private final ItemStack stack;
-        private final int[] slots1b;
-
-        ExtraBinding(NexMenuSession session, ItemStack stack, int[] slots1b) {
-            this.session = session;
-            this.stack = stack;
-            this.slots1b = slots1b;
         }
 
-        public NexMenuSession onClick(NexOnClick handler) {
-            session.preOpenTasks.add(() -> {
-                session.ensureView();
-                session.view.addExtraItem(stack, slots1b, handler);
-            });
-            return session;
-        }
+        public int startSlot1b() { return start1b; }
+        public int endSlot1b() { return end1b; }
+        public InvAlignment alignment() { return alignment; }
     }
 }
