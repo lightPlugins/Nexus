@@ -62,4 +62,5 @@ public interface ItemBuilder {
     static ItemBuilder create() {
         return ItemBuilders.create();
     }
+    boolean hasCustomName();
 }

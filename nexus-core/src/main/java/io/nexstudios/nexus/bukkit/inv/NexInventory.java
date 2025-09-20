@@ -7,6 +7,7 @@ import io.nexstudios.nexus.bukkit.inv.fill.RowMajorFillStrategy;
 import io.nexstudios.nexus.bukkit.inv.pagination.NexPageSource;
 import io.nexstudios.nexus.bukkit.inv.renderer.NexItemRenderer;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;

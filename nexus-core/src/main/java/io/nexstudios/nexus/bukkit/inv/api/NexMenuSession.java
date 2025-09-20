@@ -4,6 +4,8 @@ import io.nexstudios.nexus.bukkit.inv.NexInventory;
 import io.nexstudios.nexus.bukkit.inv.NexInventoryView;
 import io.nexstudios.nexus.bukkit.inv.NexOnClick;
 import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -33,10 +35,11 @@ public class NexMenuSession {
             @Override public InvKey key() { return null; }
             @Override public NexInventoryView open(Player player) { return null; }
             @Override public InvHandle setBodyItems(List<?> models, NexOnClick clickHandler) { return this; }
-            @Override public io.nexstudios.nexus.bukkit.inv.NexInventory inventory() { return null; }
+            @Override public NexInventory inventory() { return null; }
             @Override public InvHandle onPostLoad(Consumer<NexInventory> a) { return this; }
         }) {
             @Override public NexInventoryView openFor(Player player) { return null; }
+            @Override public NexMenuSession withTitleTags(TagResolver... tags) { return this; }
             @Override public NexMenuSession onRequireClick(NexOnClick handler) { return this; }
             @Override public NexMenuSession onRequireClick(String id, NexOnClick handler) { return this; }
             @Override public NexMenuSession onCustomClick(String id, NexOnClick handler) { return this; }
@@ -63,6 +66,20 @@ public class NexMenuSession {
             throw new IllegalStateException("View is not initialized. Call openFor(player) before accessing the view.");
         }
     }
+
+    public NexMenuSession withTitleTags(TagResolver... tags) {
+        Runnable task = () -> {
+            ensureView();
+            view.setTitleTagResolver(tags != null && tags.length > 0 ? TagResolver.resolver(tags) : null);
+        };
+        if (opened && view != null) {
+            task.run();
+        } else {
+            preOpenTasks.add(task);
+        }
+        return this;
+    }
+
 
     public NexMenuSession onRequireClick(NexOnClick handler) {
         Objects.requireNonNull(handler, "handler");

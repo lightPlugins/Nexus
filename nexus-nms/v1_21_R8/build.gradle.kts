@@ -5,17 +5,13 @@ plugins {
 group = "io.nexstudios"
 version = rootProject.version
 
-repositories {
-
-}
-
-
 dependencies {
     paperweight.paperDevBundle("1.21.8-R0.1-SNAPSHOT")
-}
 
-tasks {
-    compileJava {
-        options.release.set(21)
+    implementation("net.kyori:adventure-text-minimessage:4.23.0") {
+        version {
+            strictly("4.23.0")
+        }
+        exclude(group = "net.kyori", module = "adventure-api")
     }
 }

@@ -5,6 +5,7 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.*;
 import io.papermc.paper.datacomponent.item.attribute.AttributeModifierDisplay;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -14,7 +15,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import javax.xml.crypto.Data;
 import java.util.*;
 
 /**
@@ -31,7 +31,7 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
 
     // Anzeige
     private Component displayName;
-    private List<Component> lore;
+    private final List<Component> lore = new ArrayList<>();
 
     // Enchantments
     private Map<Enchantment, Integer> enchants;
@@ -84,13 +84,16 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
 
     @Override
     public ItemBuilder displayName(Component name) {
-        this.displayName = name;
+        this.displayName = name.decoration(TextDecoration.ITALIC, false);
         return this;
     }
 
     @Override
     public ItemBuilder lore(List<Component> lines) {
-        this.lore = lines == null ? null : List.copyOf(lines);
+        for(Component line : lines) {
+            if(line == null) continue;
+            this.lore.add(line.decoration(TextDecoration.ITALIC, false));
+        }
         return this;
     }
 
@@ -176,7 +179,6 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
     @Override
     @SuppressWarnings("UnstableApiUsage")
     public ItemStack build() {
-
         ItemStack stack = new ItemStack(material, amount);
 
         if(baseStack != null) {
@@ -327,5 +329,16 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
         if (full.endsWith("spawn_reinforcements")) return Attribute.SPAWN_REINFORCEMENTS;
 
         return null;
+    }
+
+    @Override
+    @SuppressWarnings("UnstableApiUsage")
+    public boolean hasCustomName() {
+        if(displayName == null) return false;
+        if(baseStack != null) {
+            Component name = baseStack.getData(DataComponentTypes.CUSTOM_NAME);
+            return name != null;
+        }
+        return true;
     }
 }

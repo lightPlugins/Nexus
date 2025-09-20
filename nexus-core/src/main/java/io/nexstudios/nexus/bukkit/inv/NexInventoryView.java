@@ -9,7 +9,11 @@ import io.nexstudios.nexus.bukkit.items.ItemBuilder;
 import io.nexstudios.nexus.bukkit.items.ItemHideFlag;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
+import lombok.Setter;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -62,6 +66,7 @@ public class NexInventoryView {
     private final Map<Integer, Integer> staticPriorities = new HashMap<>();
 
     private int updateTaskId = -1;
+    @Setter private TagResolver titleTagResolver;
 
     public NexInventoryView(NexInventory inv, Player player, NexusLanguage nexusLanguage) {
         this.inv = inv;
@@ -75,13 +80,10 @@ public class NexInventoryView {
     public void open() {
         String rawTitle = inv.titleSupplier().apply(player);
         Component titleComp = resolveTitle(rawTitle, inv.inventoryId(), player);
-
         this.top = Bukkit.createInventory(inv, inv.size(), titleComp);
         player.openInventory(this.top);
         NexInventoryManager.get().register(player.getUniqueId(), this);
         renderAll();
-
-        // NEW: start auto refresh if configured
         startAutoUpdate();
     }
 
@@ -516,11 +518,11 @@ public class NexInventoryView {
         return null;
     }
 
-    private ItemStack applyLanguageForPlayer(ItemStack stack, NexItemConfig cfg, String inventoryId, java.util.UUID playerId) {
+    private ItemStack applyLanguageForPlayer(ItemStack stack, NexItemConfig cfg, String inventoryId, UUID playerId) {
         try {
             if (cfg == null) return stack;
 
-            String spec = (cfg.itemSpec == null) ? "" : cfg.itemSpec.trim().toLowerCase(java.util.Locale.ROOT);
+            String spec = (cfg.itemSpec == null) ? "" : cfg.itemSpec.trim().toLowerCase(Locale.ROOT);
             boolean isVanilla = spec.startsWith("minecraft:") || spec.startsWith("vanilla:") || !spec.contains(":");
             if (!isVanilla) {
                 return stack;
@@ -529,17 +531,19 @@ public class NexInventoryView {
             String normalized = normalizeMinecraftSpec(spec);
             Material mat = Material.matchMaterial(normalized, false);
             if (mat == null) {
-                String enumName = normalized.substring(normalized.indexOf(':') + 1).toUpperCase(java.util.Locale.ROOT);
+                String enumName = normalized.substring(normalized.indexOf(':') + 1).toUpperCase(Locale.ROOT);
                 try { mat = Material.valueOf(enumName); } catch (IllegalArgumentException ignored) {}
             }
             if (mat == null) mat = Material.STONE;
 
+            // displayname minimessage
             Component nameComp = null;
             if (cfg.name != null && cfg.name.startsWith("#language:")) {
                 String path = languagePath(cfg.name, inventoryId);
                 nameComp = nexusLanguage.getTranslation(playerId, path, false);
             }
 
+            // lore minimessage
             List<Component> loreComp = null;
             if (cfg.lore != null) {
                 if (cfg.lore instanceof String s && s.startsWith("#language:")) {
