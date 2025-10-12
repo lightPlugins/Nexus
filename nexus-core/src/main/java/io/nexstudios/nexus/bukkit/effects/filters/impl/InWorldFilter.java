@@ -26,7 +26,6 @@ public final class InWorldFilter implements NexusFilter<WorldContext> {
         return worldNamesLower.contains(w.getName().toLowerCase());
     }
 
-    @SuppressWarnings("unchecked")
     public static InWorldFilter fromConfig(Map<String, Object> cfg) {
         if (cfg == null) return null;
 
@@ -41,7 +40,7 @@ public final class InWorldFilter implements NexusFilter<WorldContext> {
             }
         }
 
-        // Abwärtskompatibel: world: "world"
+        // Abwärtskompatibel: world: “world” -> single world
         Object single = cfg.get("world");
         if ((worlds == null || names.isEmpty()) && single != null) {
             String s = String.valueOf(single).trim();

@@ -32,7 +32,7 @@ public final class DamageValueCache {
         return getOrCompute(player, expression, resolver, null);
     }
 
-    // Neu: kontextsensitiver Cache (z. B. pro Stat "stat:<statId>")
+    // kontextsensitiver Cache (z. B. pro Stat "stat:<statId>")
     public static double getOrCompute(Player player, String expression, PlayerVariableResolver resolver, String contextKey) {
         Objects.requireNonNull(player, "player");
         Objects.requireNonNull(expression, "expression");
@@ -47,16 +47,14 @@ public final class DamageValueCache {
         Map<String, String> vars = resolver != null ? resolver.resolve(player) : Map.of();
         String exprResolved = expression;
         for (var e : vars.entrySet()) {
-            // Ersetzt #key# durch den Wert. Simple, aber ausreichend, da wir unsere eigenen Keys kontrollieren.
+            // Ersetzt #key# durch den Wert.
             exprResolved = exprResolved.replace("#" + e.getKey() + "#", e.getValue());
         }
 
         double result = 0.0;
         try {
             result = NexusStringMath.evaluateExpression(exprResolved);
-        } catch (Exception ignored) {
-            // Absichtlich still: Ungültige Ausdrücke sollen nicht crashen
-        }
+        } catch (Exception ignored) { }
 
         CACHE.put(key, new Entry(result));
         return result;

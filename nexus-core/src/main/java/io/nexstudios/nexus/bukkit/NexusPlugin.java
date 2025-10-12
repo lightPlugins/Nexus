@@ -31,8 +31,6 @@ import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
 import io.nexstudios.nexus.bukkit.inv.api.InvService;
 import io.nexstudios.nexus.bukkit.inv.event.NexInventoryClickListener;
 import io.nexstudios.nexus.bukkit.inv.renderer.DefaultNexItemRenderer;
-import io.nexstudios.nexus.bukkit.inventory.event.NexusMenuEvent;
-import io.nexstudios.nexus.bukkit.inventory.models.InventoryData;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderBootstrap;
 import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderRegistry;
@@ -89,10 +87,6 @@ public final class NexusPlugin extends JavaPlugin {
     private AbstractDatabase abstractDatabase;
     public HikariDataSource hikariDataSource;
     private NexusDatabaseService nexusDatabaseService;
-
-
-    // test inventories
-    private final Map<String, InventoryData> nexusInventoryData = new HashMap<>();
 
     @Override
     public void onLoad() {
@@ -173,10 +167,6 @@ public final class NexusPlugin extends JavaPlugin {
         // Register command completions for various types
         commandManager.getCommandCompletions().registerCompletion("languages", c -> {
             List<String> completions = nexusLanguage.getAvailableLanguages().keySet().stream().toList();
-            return ImmutableList.copyOf(completions);
-        });
-        commandManager.getCommandCompletions().registerCompletion("inventories", c -> {
-            List<String> completions = nexusInventoryData.keySet().stream().toList();
             return ImmutableList.copyOf(completions);
         });
     }
@@ -331,51 +321,16 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger.info("Successfully registered " + size  + " command(s).");
     }
     public void registerEvents() {
-        Bukkit.getPluginManager().registerEvents(new NexusMenuEvent(), this);
         Bukkit.getPluginManager().registerEvents(new EntityDamageTriggerListener(bindingRegistry), this);
         Bukkit.getPluginManager().registerEvents(new NoMoreFeed(), this);
         Bukkit.getPluginManager().registerEvents(new NexInventoryClickListener(), this);
 
     }
 
-    public void loadInventories() {
-
-        getNexusLogger().info("Loading inventories ...");
-        this.nexusInventoryData.clear();
-
-        // create InventoryData from inventoryfiles
-        List<File> files = inventoryFiles.getFiles();
-        if (files.isEmpty()) {
-            // If no inventory files are found, log a warning and skip loading inventories
-            getNexusLogger().warning("No inventory files found. Skipping inventory loading.");
-            return;
-        }
-
-        files.forEach(file -> {
-            try {
-                FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-                String id = file.getName().replace(".yml", "");
-                InventoryData inventoryData = new InventoryData(config, nexusLanguage, id);
-                this.nexusInventoryData.put(id, inventoryData);
-                getNexusLogger().info("Loaded inventory: " + id);
-            } catch (Exception e) {
-                getNexusLogger().error(List.of(
-                        "Failed to load inventory from file: " + file.getName(),
-                        "Error: " + e.getMessage()
-                ));
-                e.printStackTrace();
-            }
-        });
-
-        getNexusLogger().info("Successfully loaded " + this.nexusInventoryData.size() + " inventories.");
-    }
-
     private void registerBuiltInTriggerAndFilterTypes() {
-        // Trigger-Typen, die dein Core nutzt
+        // Trigger-Typen
         NexusEffectsApi.registerTriggerType("entity-damage");
         // NexusEffectsApi.registerTriggerType("kill-entity");
-
-        // Filter-Typen, die dein Core nutzt
         NexusEffectsApi.registerFilterType("match-item-hand");
         NexusEffectsApi.registerFilterType("match-item-inventory");
         NexusEffectsApi.registerFilterType("has-permission");

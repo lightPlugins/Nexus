@@ -5,9 +5,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-/**
- * Einfache Service-Registry, die Implementierungen (oder Supplier) an Interfaces bindet.
- */
 public final class VersionedServiceRegistry {
 
     private final Map<Class<?>, Object> services = new ConcurrentHashMap<>();
@@ -35,7 +32,7 @@ public final class VersionedServiceRegistry {
         if (sup != null) {
             T created = (T) sup.get();
             if (created != null) {
-                // Cachen, damit spätere Zugriffe schneller sind (optional)
+                // Cachen, damit spätere Zugriffe schneller sind, hoffentlich -.-
                 services.put(type, created);
             }
             return created;

@@ -6,10 +6,6 @@ import org.bukkit.Bukkit;
 
 import java.util.Objects;
 
-/**
- * Zentrale Fassade zum Zugriff auf versionsabhängige Services.
- * Beim Serverstart einmalig initialisieren, danach überall nutzen.
- */
 public final class NexServices {
 
     private static volatile VersionedServiceRegistry REGISTRY;
@@ -19,7 +15,7 @@ public final class NexServices {
     public static void init() {
         if (REGISTRY != null) return;
 
-        String mcVersion = Bukkit.getMinecraftVersion(); // z. B. "1.21.8"
+        String mcVersion = Bukkit.getMinecraftVersion(); // zB. "1.21.8"
         String[] candidates = getCandidates(mcVersion);
 
         VersionedServiceRegistry reg = new VersionedServiceRegistry();
@@ -29,19 +25,19 @@ public final class NexServices {
             try {
                 Class<?> clazz = Class.forName(providerClass);
                 if (!NmsServiceProvider.class.isAssignableFrom(clazz)) {
-                    throw new IllegalStateException("ServicesProvider implementiert NmsServiceProvider nicht: " + providerClass);
+                    throw new IllegalStateException("ServicesProvider could not implement NmsServiceProvider: " + providerClass);
                 }
                 NmsServiceProvider provider = (NmsServiceProvider) clazz.getDeclaredConstructor().newInstance();
                 provider.registerServices(reg);
                 REGISTRY = reg;
-                return; // Erfolg
+                return;
             } catch (Throwable t) {
                 last = t; // weiter zum nächsten Kandidaten
             }
         }
 
         throw new IllegalStateException(
-                "Keine kompatible ServicesProvider-Implementierung gefunden für Minecraft-Version: " + mcVersion,
+                "Your Minecraft version " + mcVersion + " is not supported by Nexus.",
                 last
         );
     }
@@ -66,14 +62,14 @@ public final class NexServices {
 
     private static VersionedServiceRegistry registry() {
         VersionedServiceRegistry r = REGISTRY;
-        if (r == null) throw new IllegalStateException("Services.init() wurde nicht aufgerufen!");
+        if (r == null) throw new IllegalStateException("Services.init() could not be called!");
         return r;
     }
 
     public static <T> T get(Class<T> type) {
         T instance = registry().get(Objects.requireNonNull(type, "type"));
         if (instance == null) {
-            throw new IllegalStateException("Kein Service für Typ registriert: " + type.getName());
+            throw new IllegalStateException("Could not register Service for " + type.getName());
         }
         return instance;
     }
@@ -83,7 +79,7 @@ public final class NexServices {
         ItemBuilderFactory factory = get(ItemBuilderFactory.class);
         ItemBuilder builder = factory.create();
         if (builder == null) {
-            throw new IllegalStateException("ItemBuilderFactory#create() lieferte null");
+            throw new IllegalStateException("ItemBuilderFactory#create() is null. Contact the developer");
         }
         return builder;
     }
