@@ -61,7 +61,7 @@ public class NexusFileReader {
             }
             Files.walkFileTree(directory, EnumSet.noneOf(FileVisitOption.class), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
                 @Override
-                public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) {
+                public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) {
                     if (file.toString().endsWith(".yml")) {
                         String fileName = file.getFileName().toString();
                         // Exclude the example file with the name "_example.yml"
