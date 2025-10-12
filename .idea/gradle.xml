@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$/nexus-nms" />
             <option value="$PROJECT_DIR$/nexus-nms/v1_21_R7" />
             <option value="$PROJECT_DIR$/nexus-nms/v1_21_R8" />
+            <option value="$PROJECT_DIR$/nexus-nms/v1_21_R9" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="true" />

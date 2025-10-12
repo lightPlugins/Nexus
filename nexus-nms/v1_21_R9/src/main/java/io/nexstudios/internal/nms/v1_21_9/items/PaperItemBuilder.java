@@ -1,4 +1,4 @@
-package io.nexstudios.internal.nms.v1_21_8.items;
+package io.nexstudios.internal.nms.v1_21_9.items;
 
 import io.nexstudios.nexus.bukkit.items.*;
 import io.papermc.paper.datacomponent.DataComponentTypes;
@@ -245,6 +245,7 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
             stack.setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, ab.build());
         }
 
+        // Hide Attributes (Tooltip)
         if (hideFlags != null && hideFlags.contains(ItemHideFlag.HIDE_ATTRIBUTES)) {
             ItemAttributeModifiers current = stack.getData(DataComponentTypes.ATTRIBUTE_MODIFIERS);
             if (current != null) {
@@ -275,7 +276,8 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
         return stack;
     }
 
-    private static @NotNull AttributeModifier getAttributeModifier(Attr a) {
+
+    private @NotNull AttributeModifier getAttributeModifier(Attr a) {
         AttributeModifier.Operation op = switch (a.operation()) {
             case ADD_SCALAR -> AttributeModifier.Operation.ADD_SCALAR;
             case MULTIPLY_SCALAR_1 -> AttributeModifier.Operation.MULTIPLY_SCALAR_1;
@@ -289,7 +291,7 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
         return new AttributeModifier(modifierKey, a.amount(), op);
     }
 
-    private Attribute resolveBukkitAttribute(NamespacedKey key) {
+    private static Attribute resolveBukkitAttribute(NamespacedKey key) {
         if (key == null) return null;
         String full = (key.getNamespace() + ":" + key.getKey()).toLowerCase(Locale.ROOT);
 

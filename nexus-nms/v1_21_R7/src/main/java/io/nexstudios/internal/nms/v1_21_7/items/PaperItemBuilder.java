@@ -17,37 +17,26 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * Paper-Implementierung für MC/Paper 1.21.8.
- * Verwendet ausschließlich die Data Components API (ItemStack#setData(...)) und die offiziellen Builder.
- */
 public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
 
-    // Grunddaten
     private ItemStack baseStack;
     private Material material = Material.AIR;
     private int amount = 1;
     private int stackSize = 64;
 
-    // Anzeige
     private Component displayName;
     private final List<Component> lore = new ArrayList<>();
 
-    // Enchantments
     private Map<Enchantment, Integer> enchants;
 
-    // Attribute (gespeichert als rohe Daten; beim Build in ItemAttributeModifiers umgewandelt)
     private final List<Attr> attributes = new ArrayList<>();
 
-    // Flags
     private Set<ItemHideFlag> hideFlags;
 
-    // Model/Tooltip
     private Integer customModelData;
     private NamespacedKey tooltipStyleKey;
     private NamespacedKey itemModelKey;
 
-    // Misc
     private Boolean unbreakable;
 
     private record Attr(String name, NamespacedKey attributeKey, double amount, AttributeOperation operation, Set<EquipmentSlot> slots) {}
@@ -65,7 +54,7 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
 
     @Override
     public ItemBuilder material(Material material) {
-        this.material = Objects.requireNonNull(material, "material");
+        this.material = Objects.requireNonNull(material, "ItemBuilder -> Material cant be null!");
         return this;
     }
 
@@ -191,11 +180,9 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
             stack.setData(DataComponentTypes.CUSTOM_NAME, displayName);
         }
 
-        if (lore != null) {
-            ItemLore.Builder lb = ItemLore.lore();
-            for (Component line : lore) lb.addLine(line == null ? Component.empty() : line);
-            stack.setData(DataComponentTypes.LORE, lb.build());
-        }
+        ItemLore.Builder lb = ItemLore.lore();
+        for (Component line : lore) lb.addLine(line == null ? Component.empty() : line);
+        stack.setData(DataComponentTypes.LORE, lb.build());
 
         if (unbreakable != null && unbreakable) {
             stack.setData(DataComponentTypes.UNBREAKABLE);
@@ -231,24 +218,20 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
                 Attribute bukkitAttr = resolveBukkitAttribute(a.attributeKey());
                 if (bukkitAttr == null) continue;
 
-                // Operation bestimmen
                 AttributeModifier.Operation op = switch (a.operation()) {
                     case ADD_SCALAR -> AttributeModifier.Operation.ADD_SCALAR;
                     case MULTIPLY_SCALAR_1 -> AttributeModifier.Operation.MULTIPLY_SCALAR_1;
                     default -> AttributeModifier.Operation.ADD_NUMBER;
                 };
 
-                // Basis-ID für den Modifier-Schlüssel
                 String baseId = (a.attributeKey().getKey() + "_" + (a.name() == null ? "" : a.name())).toLowerCase(Locale.ROOT);
                 String safeBaseId = baseId.replaceAll("[^a-z0-9._-]", "_");
 
                 if (a.slots() == null || a.slots().isEmpty()) {
-                    // Globaler Modifier (kein spezifischer Slot) – ein Eintrag
                     NamespacedKey key = new NamespacedKey(a.attributeKey().getNamespace(), safeBaseId);
                     AttributeModifier mod = new AttributeModifier(key, a.amount(), op);
                     ab.addModifier(bukkitAttr, mod);
                 } else {
-                    // Pro Slot ein eindeutiger Key -> verhindert Kollisionen bei identischem Attribut
                     for (EquipmentSlot slot : a.slots()) {
                         if (slot == null) continue;
                         String perSlotId = safeBaseId + "_" + slot.name().toLowerCase(Locale.ROOT);
@@ -262,18 +245,17 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
             stack.setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, ab.build());
         }
 
-        // Hide Attributes (Tooltip) – falls Flag gesetzt
+        // Hide Attributes (Tooltip)
         if (hideFlags != null && hideFlags.contains(ItemHideFlag.HIDE_ATTRIBUTES)) {
             ItemAttributeModifiers current = stack.getData(DataComponentTypes.ATTRIBUTE_MODIFIERS);
             if (current != null) {
                 ItemAttributeModifiers.Builder hidden = ItemAttributeModifiers.itemAttributes();
                 for (ItemAttributeModifiers.Entry entry : current.modifiers()) {
-                    // Wichtig: Anzeige explizit auf "hidden" setzen
                     hidden.addModifier(
-                            entry.attribute(),              // org.bukkit.attribute.Attribute
-                            entry.modifier(),               // org.bukkit.attribute.AttributeModifier
-                            entry.getGroup(),               // org.bukkit.inventory.EquipmentSlotGroup
-                            AttributeModifierDisplay.hidden() // io.papermc.paper.datacomponent.item.AttributeModifierDisplay
+                            entry.attribute(),
+                            entry.modifier(),
+                            entry.getGroup(),
+                            AttributeModifierDisplay.hidden()
                     );
                 }
                 stack.setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, hidden.build());
@@ -295,7 +277,7 @@ public final class PaperItemBuilder implements ItemBuilder, ItemBuilderFactory {
     }
 
 
-    private static @NotNull AttributeModifier getAttributeModifier(Attr a) {
+    private @NotNull AttributeModifier getAttributeModifier(Attr a) {
         AttributeModifier.Operation op = switch (a.operation()) {
             case ADD_SCALAR -> AttributeModifier.Operation.ADD_SCALAR;
             case MULTIPLY_SCALAR_1 -> AttributeModifier.Operation.MULTIPLY_SCALAR_1;

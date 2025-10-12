@@ -9,10 +9,7 @@ public final class ServicesProvider implements NmsServiceProvider {
 
     @Override
     public void registerServices(VersionedServiceRegistry registry) {
-        // ItemBuilder-Factory registrieren (pro Aufruf eine neue Builder-Instanz)
         registry.registerSupplier(ItemBuilderFactory.class, PaperItemBuilder::new);
-
-        // Hier später weitere versionierte Services registrieren (Particles, Packets, usw.)
     }
 }
 
