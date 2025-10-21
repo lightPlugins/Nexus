@@ -13,6 +13,7 @@ softdepend:
   - WorldGuard
   - Luckperms
   - AuraSkills
+  - Orestack
 depend:
   - Vault
 libraries:

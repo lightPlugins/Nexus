@@ -25,6 +25,7 @@ dependencies {
     compileOnly("io.lumine:MythicLib-dist:1.7.1-SNAPSHOT")
     compileOnly("net.Indyuce:MMOItems-API:6.10-SNAPSHOT")
     compileOnly("dev.aurelium:auraskills-api-bukkit:2.3.6")
+    compileOnly(files("C:/Users/phili/IdeaProjects/Nexus/build/libs/Orestack-3.41.4.jar"))
 
     compileOnly("redis.clients:jedis:5.2.0")
     compileOnly("com.zaxxer:HikariCP:6.3.0")
