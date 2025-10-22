@@ -28,6 +28,7 @@ import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hooks.*;
 import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
 import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
+import io.nexstudios.nexus.bukkit.hooks.worldguard.WorldGuardHook;
 import io.nexstudios.nexus.bukkit.inv.api.InvService;
 import io.nexstudios.nexus.bukkit.inv.event.NexInventoryClickListener;
 import io.nexstudios.nexus.bukkit.inv.renderer.DefaultNexItemRenderer;
@@ -283,6 +284,11 @@ public final class NexusPlugin extends JavaPlugin {
         if(getServer().getPluginManager().getPlugin("AuraSkills") != null) {
             auraSkillsHook = new AuraSkillsHook();
             nexusLogger.info("<yellow>AuraSkills<reset> hook registered successfully.");
+        }
+
+        if(getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            Bukkit.getPluginManager().registerEvents(new WorldGuardHook(), this);
+            nexusLogger.info("<yellow>WorldGuard<reset> hook registered successfully.");
         }
 
         // Check if Vault is installed and register the hook mythicMobsHook

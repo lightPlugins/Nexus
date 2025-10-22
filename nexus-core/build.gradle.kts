@@ -10,6 +10,8 @@ repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.auxilor.io/repository/maven-public/")
+    maven("https://maven.enginehub.org/repo/")
+    maven("https://repo.bg-software.com/repository/api/")
 }
 
 dependencies {
@@ -25,6 +27,8 @@ dependencies {
     compileOnly("io.lumine:MythicLib-dist:1.7.1-SNAPSHOT")
     compileOnly("net.Indyuce:MMOItems-API:6.10-SNAPSHOT")
     compileOnly("dev.aurelium:auraskills-api-bukkit:2.3.6")
+    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.14")
+    compileOnly("com.bgsoftware:SuperiorSkyblockAPI:2025.1")
 
     compileOnly("redis.clients:jedis:5.2.0")
     compileOnly("com.zaxxer:HikariCP:6.3.0")
