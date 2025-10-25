@@ -13,7 +13,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 public class WorldGuardHook implements Listener {
 
 
-    @EventHandler
+    //@EventHandler
     public void onMove(PlayerMoveEvent e) {
 
         String targetRegionId = "time-night"; // deine Region-ID (kleinbuchstaben in WG)
@@ -48,7 +48,7 @@ public class WorldGuardHook implements Listener {
         }
     }
 
-    @EventHandler
+    //@EventHandler
     public void onTeleport(PlayerTeleportEvent e) {
 
         String targetRegionId = "time-night";

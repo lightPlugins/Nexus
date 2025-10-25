@@ -37,6 +37,7 @@ import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderBootstrap;
 import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderRegistry;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
 import io.nexstudios.nexus.bukkit.player.events.NoMoreFeed;
+import io.nexstudios.nexus.bukkit.utils.BlockUtil;
 import io.nexstudios.nexus.bukkit.utils.NexusLogger;
 import io.nexstudios.nexus.bukkit.files.NexusFile;
 import io.nexstudios.nexus.bukkit.files.NexusFileReader;
@@ -67,6 +68,8 @@ public final class NexusPlugin extends JavaPlugin {
     public EffectFactory effectFactory;
     public EffectBindingRegistry bindingRegistry;
     private InvService invService;
+    @Getter
+    public BlockUtil blockUtil;
 
     // API Services
     public MessageSender messageSender;
@@ -114,6 +117,7 @@ public final class NexusPlugin extends JavaPlugin {
         actionFactory = new ActionFactory();
         effectFactory = new EffectFactory(PlayerVariableResolver.ofStore());
         bindingRegistry = new EffectBindingRegistry();
+        blockUtil = new BlockUtil(this);
         registerCommands();
         nexusLogger.info("Register Nexus events...");
         registerEvents();
@@ -330,6 +334,7 @@ public final class NexusPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EntityDamageTriggerListener(bindingRegistry), this);
         Bukkit.getPluginManager().registerEvents(new NoMoreFeed(), this);
         Bukkit.getPluginManager().registerEvents(new NexInventoryClickListener(), this);
+        Bukkit.getPluginManager().registerEvents(blockUtil, this);
 
     }
 
