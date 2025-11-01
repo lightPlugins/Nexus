@@ -27,6 +27,7 @@ import io.nexstudios.nexus.bukkit.effects.vars.PlayerVariableResolver;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hooks.*;
 import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
+import io.nexstudios.nexus.bukkit.hooks.auroracollections.AuroraCollectionsHook;
 import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
 import io.nexstudios.nexus.bukkit.hooks.worldguard.WorldGuardHook;
 import io.nexstudios.nexus.bukkit.inv.api.InvService;
@@ -86,6 +87,7 @@ public final class NexusPlugin extends JavaPlugin {
     public MythicMobsHook mythicMobsHook;
     public MMOItemsHook mmoItemsHook;
     public AuraSkillsHook auraSkillsHook;
+    public AuroraCollectionsHook auroraCollectionsHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -293,6 +295,11 @@ public final class NexusPlugin extends JavaPlugin {
         if(getServer().getPluginManager().getPlugin("WorldGuard") != null) {
             Bukkit.getPluginManager().registerEvents(new WorldGuardHook(), this);
             nexusLogger.info("<yellow>WorldGuard<reset> hook registered successfully.");
+        }
+
+        if(getServer().getPluginManager().getPlugin("AuroraCollections") != null) {
+            auroraCollectionsHook = new AuroraCollectionsHook();
+            nexusLogger.info("<yellow>AuroraCollections<reset> hook registered successfully.");
         }
 
         // Check if Vault is installed and register the hook mythicMobsHook

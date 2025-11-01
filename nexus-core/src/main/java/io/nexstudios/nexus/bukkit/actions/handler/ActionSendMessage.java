@@ -5,6 +5,7 @@ import io.nexstudios.nexus.bukkit.actions.ActionData;
 import io.nexstudios.nexus.bukkit.actions.NexusAction;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -16,7 +17,7 @@ public class ActionSendMessage implements NexusAction {
     }
 
     @Override
-    public void execute(Player player, ActionData data) {
+    public void execute(Player player, ActionData data, Location targetLocation) {
 
         if(!data.validate(data.getData().get("message"), String.class)) {
             NexusPlugin.nexusLogger.warning("Invalid message data.");

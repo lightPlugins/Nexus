@@ -1,17 +1,16 @@
 package io.nexstudios.nexus.bukkit.actions;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
-import io.nexstudios.nexus.bukkit.actions.handler.ActionCommand;
-import io.nexstudios.nexus.bukkit.actions.handler.ActionSendMessage;
-import io.nexstudios.nexus.bukkit.actions.handler.ActionSound;
-import io.nexstudios.nexus.bukkit.actions.handler.ActionVaultAdd;
+import io.nexstudios.nexus.bukkit.actions.handler.*;
 import lombok.Getter;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 public class ActionFactory {
@@ -28,6 +27,7 @@ public class ActionFactory {
         this.availableActions.put("vault-add", new ActionVaultAdd());
         this.availableActions.put("command", new ActionCommand());
         this.availableActions.put("sound", new ActionSound());
+        this.availableActions.put("exp", new ActionEXP());
     }
 
     public boolean registerAction(String id, NexusAction action) {
@@ -47,7 +47,7 @@ public class ActionFactory {
         return this.availableActions.get(actionID);
     }
 
-    public void executeActions(Player player, List<Map<String, Object>> actions) {
+    public void executeActions(Player player, @Nullable Location targetLocation, List<Map<String, Object>> actions) {
 
         if (actions == null || actions.isEmpty()) {
             return;
@@ -72,10 +72,11 @@ public class ActionFactory {
 
             try {
                 // Führe die Aktion aus
-                action.execute(player, actionData);
+                action.execute(player, actionData, targetLocation);
             } catch (Exception e) {
                 // Fehler beim Ausführen der Aktion abfangen und protokollieren
-                NexusPlugin.nexusLogger.error("Failed to execute action " + actionId);
+                NexusPlugin.nexusLogger.error("Failed to execute action: " + actionId);
+                e.printStackTrace();
             }
         }
     }

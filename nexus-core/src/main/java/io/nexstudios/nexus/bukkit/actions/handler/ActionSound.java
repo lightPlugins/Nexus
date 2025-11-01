@@ -3,6 +3,7 @@ package io.nexstudios.nexus.bukkit.actions.handler;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.actions.ActionData;
 import io.nexstudios.nexus.bukkit.actions.NexusAction;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -14,7 +15,7 @@ public class ActionSound implements NexusAction {
     }
 
     @Override
-    public void execute(Player player, ActionData data) {
+    public void execute(Player player, ActionData data, Location targetLocation) {
 
         if(!data.validate(data.getData().get("sound"), String.class)) {
             NexusPlugin.nexusLogger.error("Invalid sound data.");

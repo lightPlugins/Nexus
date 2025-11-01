@@ -11,6 +11,7 @@ import io.nexstudios.nexus.bukkit.utils.NexusStringMath;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -25,7 +26,7 @@ public class ActionVaultAdd implements NexusAction {
     }
 
     @Override
-    public void execute(Player player, ActionData data) {
+    public void execute(Player player, ActionData data, Location targetLocation) {
 
         StatModifier modifier = new StatModifier("test", "Test Stat", 1.0);
         MMOPlayerData playerData = MMOPlayerData.get(player);

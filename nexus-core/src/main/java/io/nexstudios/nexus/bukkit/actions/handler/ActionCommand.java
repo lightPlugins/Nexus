@@ -4,6 +4,7 @@ import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.actions.ActionData;
 import io.nexstudios.nexus.bukkit.actions.NexusAction;
 import io.nexstudios.nexus.bukkit.utils.StringUtils;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,7 +16,7 @@ public class ActionCommand implements NexusAction {
     }
 
     @Override
-    public void execute(Player player, ActionData data) {
+    public void execute(Player player, ActionData data, Location targetLocation) {
 
         if(!data.validate(data.getData().get("command"), String.class)) {
             NexusPlugin.nexusLogger.error("Invalid command data.");
