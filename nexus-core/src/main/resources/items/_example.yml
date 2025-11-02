@@ -42,7 +42,7 @@ attributes:
 # requires NexStats to be installed
 # values are expression compatible
 # values have internal placeholder support for e.g., -> '#example-placeholder#'
-nex-stats:
+effects:
   - id: strong_against_monsters
     value: '#example-placeholder#'
     slots:

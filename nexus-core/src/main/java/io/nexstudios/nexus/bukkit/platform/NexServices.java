@@ -2,6 +2,7 @@ package io.nexstudios.nexus.bukkit.platform;
 
 import io.nexstudios.nexus.bukkit.items.ItemBuilder;
 import io.nexstudios.nexus.bukkit.items.ItemBuilderFactory;
+import io.nexstudios.nexus.bukkit.items.ItemPacketModifier;
 import org.bukkit.Bukkit;
 
 import java.util.Objects;
@@ -82,5 +83,9 @@ public final class NexServices {
             throw new IllegalStateException("ItemBuilderFactory#create() is null. Contact the developer");
         }
         return builder;
+    }
+
+    public static ItemPacketModifier newItemPacketModifier() {
+        return get(ItemPacketModifier.class);
     }
 }
