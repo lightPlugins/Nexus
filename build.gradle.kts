@@ -12,6 +12,8 @@ dependencies {
     implementation(project(":nexus-core"))
     implementation(project(":nexus-nms:v1_21_R7"))
     implementation(project(":nexus-nms:v1_21_R8"))
+    implementation(project(":nexus-nms:v1_21_R9"))
+    implementation(project(":nexus-nms:v1_21_R10"))
 
 }
 

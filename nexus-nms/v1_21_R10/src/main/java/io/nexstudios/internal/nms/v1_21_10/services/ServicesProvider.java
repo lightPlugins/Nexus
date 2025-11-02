@@ -1,6 +1,6 @@
 package io.nexstudios.internal.nms.v1_21_10.services;
 
-import io.nexstudios.internal.nms.v1_21_9.items.PaperItemBuilder;
+import io.nexstudios.internal.nms.v1_21_10.items.PaperItemBuilder;
 import io.nexstudios.nexus.bukkit.items.ItemBuilderFactory;
 import io.nexstudios.nexus.bukkit.platform.NmsServiceProvider;
 import io.nexstudios.nexus.bukkit.platform.VersionedServiceRegistry;
