@@ -12,6 +12,6 @@ import java.util.Set;
  * - For dynamic providers, return the currently known/static keys (or an empty set).
  * - This interface is optional; providers that do not implement it will simply not contribute to counts.
  */
-public interface PlaceholderIntrospector {
+public interface NexPlaceholderIntrospector {
     Set<String> advertisedKeys();
 }

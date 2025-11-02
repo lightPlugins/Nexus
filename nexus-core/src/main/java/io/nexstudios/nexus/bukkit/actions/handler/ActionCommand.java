@@ -8,6 +8,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Map;
+
 public class ActionCommand implements NexusAction {
 
     @Override
@@ -44,6 +46,11 @@ public class ActionCommand implements NexusAction {
         }
 
         player.performCommand(command);
+
+    }
+
+    @Override
+    public void execute(Player player, ActionData data, Location targetLocation, Map<String, Object> params) {
 
     }
 }

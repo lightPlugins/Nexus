@@ -1,6 +1,6 @@
 package io.nexstudios.nexus.bukkit.placeholder.internal;
 
-import io.nexstudios.nexus.bukkit.placeholder.PlaceholderProvider;
+import io.nexstudios.nexus.bukkit.placeholder.NexPlaceholderProvider;
 import io.nexstudios.nexus.bukkit.placeholder.PlaceholderValue;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * - Marked as cacheable with a short default TTL to be configured on registration.
  * - Comments are in English.
  */
-public final class NexusPlayerNamePlaceholder implements PlaceholderProvider {
+public final class NexusPlayerNamePlaceholder implements NexPlaceholderProvider {
 
     private final String KEY_PLAYERNAME = "playername";
 
@@ -36,7 +36,6 @@ public final class NexusPlayerNamePlaceholder implements PlaceholderProvider {
     @Override
     public @Nullable PlaceholderValue resolve(Player player, String key) {
         if (!KEY_PLAYERNAME.equals(key)) return null;
-
         // Use Adventure display name component if available.
         Component display = player.displayName();
         String plain = PlainTextComponentSerializer.plainText().serialize(display);

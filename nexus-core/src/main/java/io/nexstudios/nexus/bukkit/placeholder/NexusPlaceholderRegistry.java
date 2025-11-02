@@ -59,7 +59,7 @@ public final class NexusPlaceholderRegistry {
             }
         }
 
-    public record Registration(Plugin owner, String namespace, PlaceholderProvider provider, CachePolicy cachePolicy) { }
+    public record Registration(Plugin owner, String namespace, NexPlaceholderProvider provider, CachePolicy cachePolicy) { }
 
     private static final Map<String, Registration> PROVIDERS = new ConcurrentHashMap<>();
     private static final Map<CacheKey, CacheEntry> CACHE = new ConcurrentHashMap<>();
@@ -86,7 +86,7 @@ public final class NexusPlaceholderRegistry {
 
     public static boolean register(Plugin owner,
                                    String namespace,
-                                   PlaceholderProvider provider,
+                                   NexPlaceholderProvider provider,
                                    CachePolicy cachePolicy) {
         Objects.requireNonNull(owner, "owner");
         Objects.requireNonNull(namespace, "namespace");
@@ -220,7 +220,7 @@ public final class NexusPlaceholderRegistry {
         if (namespace == null) return 0;
         var reg = PROVIDERS.get(namespace.toLowerCase(Locale.ROOT).trim());
         if (reg == null) return 0;
-        if (reg.provider() instanceof PlaceholderIntrospector pi) {
+        if (reg.provider() instanceof NexPlaceholderIntrospector pi) {
             var keys = pi.advertisedKeys();
             return keys == null ? 0 : keys.size();
         }
@@ -234,7 +234,7 @@ public final class NexusPlaceholderRegistry {
     public static int countAllKeys() {
         int total = 0;
         for (var reg : PROVIDERS.values()) {
-            if (reg.provider() instanceof PlaceholderIntrospector pi) {
+            if (reg.provider() instanceof NexPlaceholderIntrospector pi) {
                 var keys = pi.advertisedKeys();
                 if (keys != null) total += keys.size();
             }

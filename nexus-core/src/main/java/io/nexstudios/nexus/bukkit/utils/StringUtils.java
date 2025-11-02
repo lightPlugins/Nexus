@@ -7,6 +7,8 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Map;
+
 public class StringUtils {
 
     /**
@@ -80,6 +82,13 @@ public class StringUtils {
                 return ItemStack.of(Material.DEEPSLATE);
             }
         }
+    }
+
+    public static String replaceInternalPlaceholders(String input, Map<String, Object> placeholders) {
+        for(Map.Entry<String, Object> entry : placeholders.entrySet()) {
+            input = input.replace("#" + entry.getKey() + "#", entry.getValue().toString());
+        }
+        return input;
     }
 
     public static String parsePlaceholderAPI(OfflinePlayer offlinePlayer, String input) {

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * Logging and comments must be in English.
  */
-public interface PlaceholderProvider {
+public interface NexPlaceholderProvider {
 
     /**
      * Resolve a key without player context.

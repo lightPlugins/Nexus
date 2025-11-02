@@ -16,6 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class ActionVaultAdd implements NexusAction {
@@ -108,6 +109,11 @@ public class ActionVaultAdd implements NexusAction {
         } else {
             NexusPlugin.nexusLogger.warning("You are trying to use Vault actions in drop table, but Vault was not found");
         }
+    }
+
+    @Override
+    public void execute(Player player, ActionData data, Location targetLocation, Map<String, Object> params) {
+
     }
 
     private int amountMultiplier(String expression, Player player) {

@@ -7,6 +7,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Map;
+
 public class ActionSound implements NexusAction {
 
     @Override
@@ -28,6 +30,11 @@ public class ActionSound implements NexusAction {
         String pitch = (String) data.getData().getOrDefault("pitch", "1.0");
 
         player.playSound(player.getLocation(), sound, Float.parseFloat(volume), Float.parseFloat(pitch));
+
+    }
+
+    @Override
+    public void execute(Player player, ActionData data, Location targetLocation, Map<String, Object> params) {
 
     }
 }

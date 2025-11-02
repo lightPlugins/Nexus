@@ -9,6 +9,8 @@ import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Map;
+
 public class ActionEXP implements NexusAction {
 
     @Override
@@ -46,5 +48,10 @@ public class ActionEXP implements NexusAction {
         }
         ExperienceOrb orb = targetLocation.getWorld().spawn(targetLocation, ExperienceOrb.class);
         orb.setExperience((int) amountExpression);
+    }
+
+    @Override
+    public void execute(Player player, ActionData data, Location targetLocation, Map<String, Object> params) {
+
     }
 }
