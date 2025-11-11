@@ -1,12 +1,15 @@
 package io.nexstudios.nexus.bukkit.hooks.mythicmobs;
 
 import io.lumine.mythic.api.MythicPlugin;
+import io.lumine.mythic.api.exceptions.InvalidMobTypeException;
 import io.lumine.mythic.api.mobs.MythicMob;
+import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import io.lumine.mythic.bukkit.events.MythicMobDeathEvent;
 import io.lumine.mythic.bukkit.events.MythicMobInteractEvent;
 import io.lumine.mythic.core.mobs.ActiveMob;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
+import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
@@ -39,6 +42,18 @@ public class MythicMobsHook implements Listener {
 
     public ActiveMob getActiveMob(LivingEntity entity) {
         return MythicBukkit.inst().getAPIHelper().getMythicMobInstance(entity);
+    }
+
+    public static LivingEntity spawnMythicMob(String id, Location location) {
+
+        try {
+            return (LivingEntity) MythicBukkit.inst().getAPIHelper().spawnMythicMob(id, location);
+        } catch (InvalidMobTypeException ex) {
+            NexusPlugin.nexusLogger.error(List.of(
+                    "Invalid mob type: " + id,
+                    "Could not spawn mythic mob!"));
+        }
+        return null;
     }
 
 

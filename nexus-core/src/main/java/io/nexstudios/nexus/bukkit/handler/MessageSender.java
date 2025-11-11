@@ -14,19 +14,12 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.UUID;
 
-public class MessageSender {
-
-    private final NexusLanguage language;
-
-    public MessageSender(NexusLanguage language) {
-        this.language = language;
-    }
+public record MessageSender(NexusLanguage language) {
 
     public void send(CommandSender sender, String path) {
-
         Component component;
 
-        if(sender == null) {
+        if (sender == null) {
             NexusPlugin.nexusLogger.warning(List.of(
                     "Cannot send message: CommandSender or Component is null."
             ));
@@ -35,7 +28,7 @@ public class MessageSender {
 
         if (sender instanceof Player player) {
             component = language.getTranslation(player.getUniqueId(), path, true);
-            if(NexusPlugin.getInstance().papiHook != null) {
+            if (NexusPlugin.getInstance().papiHook != null) {
                 String legacyText = MiniMessage.miniMessage().serialize(component);
                 component = NexusPlugin.getInstance().papiHook.translate(player, legacyText);
             }
@@ -60,37 +53,29 @@ public class MessageSender {
         MiniMessage mm = MiniMessage.miniMessage();
 
         if (sender instanceof Player player) {
-            // 1) Hole Component aus der Sprache
             Component component = language.getTranslation(player.getUniqueId(), path, true);
-
-            // 2) Serialisieren -> String
             String miniMessageText = mm.serialize(component);
 
-            // 3) Optional: PlaceholderAPI anwenden
             if (NexusPlugin.getInstance().papiHook != null) {
                 miniMessageText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
             }
 
-            // 4) Backslashes entfernen, die unbekannte Tags escapen
             String unescaped = miniMessageText.replace("\\", "");
 
-            // 5) Mit Resolver deserialisieren
             Component result = mm.deserialize(unescaped, safeResolver);
             player.sendMessage(result);
             return;
         }
 
-        // Konsole
+        // Console
         UUID consoleUUID = language.getConsoleUUID();
         Component component = language.getTranslation(consoleUUID, path, true);
 
-        // Serialisieren -> unescapen -> mit Resolver deserialisieren (wenn nötig)
         String serialized = mm.serialize(component).replace("\\", "");
         Component resolved = mm.deserialize(serialized, safeResolver);
 
         NexusPlugin.nexusLogger.info(mm.serialize(resolved));
     }
-
 
     public Component stringToComponent(Player player, String legacyText) {
         String text = legacyText;

@@ -4,18 +4,15 @@ import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.*;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.effects.NexusEffectsApi;
-import io.nexstudios.nexus.bukkit.hologram.NexHologram;
 import io.nexstudios.nexus.bukkit.hologram.NexHologramService;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.*;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Function;
 
 @CommandAlias("nexus")
 public class ReloadCommand extends BaseCommand {

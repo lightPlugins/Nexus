@@ -21,15 +21,12 @@ import java.util.function.Predicate;
 
 public final class NexHoloService implements NexHologramService, Listener {
 
-    private final Plugin plugin;
     private final Map<UUID, Entry> registry = new ConcurrentHashMap<>();
     private int schedulerTaskId = -1;
     private long tickNow = 0L;
 
     public NexHoloService(Plugin plugin) {
-        this.plugin = plugin;
         Bukkit.getPluginManager().registerEvents(this, plugin);
-        // Globaler 1-Tick Loop, pro Hologramm eigener refreshTicks => nextDue
         this.schedulerTaskId = Bukkit.getScheduler().runTaskTimer(plugin, this::onTick, 1L, 1L).getTaskId();
     }
 
@@ -43,7 +40,6 @@ public final class NexHoloService implements NexHologramService, Listener {
         Entry e = new Entry(id, spec);
         registry.put(id, e);
 
-        // initial anzeigen für alle passenden Spieler
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (e.visibleFor(p)) e.ensureShown(p);
         }
@@ -82,25 +78,21 @@ public final class NexHoloService implements NexHologramService, Listener {
     // Tick-Loop
     private void onTick() {
         tickNow++;
-        // Wichtig: Kopie der Werte, damit wir während des Loops sicher deregistrieren können
         for (Entry e : new java.util.ArrayList<>(registry.values())) {
 
-            // 1) Hard-Lifecycle: Wenn attachTo nicht mehr lebt/valide ist -> Hologram sofort zerstören
             if (e.attachTo != null) {
                 boolean invalid = !e.attachTo.isValid();
                 boolean dead = (e.attachTo instanceof org.bukkit.entity.LivingEntity le) && le.isDead();
                 if (invalid || dead) {
-                    e.destroy();            // hideFromAll + Cleanup im Handle
-                    registry.remove(e.id()); // aus Registry entfernen
-                    continue;               // nächstes Entry
+                    e.destroy();
+                    registry.remove(e.id());
+                    continue;
                 }
             }
 
-            // 2) normaler Refresh-Takt: nur ausführen, wenn fällig
             if (tickNow < e.nextDue) continue;
             e.nextDue = tickNow + e.refreshTicks;
 
-            // Sichtbarkeit anwenden
             for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
                 boolean wanted = e.visibleFor(p);
                 boolean currently = e.visiblePlayers.contains(p.getUniqueId());
@@ -108,7 +100,6 @@ public final class NexHoloService implements NexHologramService, Listener {
                 else if (!wanted && currently) e.ensureHidden(p);
             }
 
-            // Refresh (nur noch einmal hier, kein extra Modulo mehr)
             e.refreshVisible();
         }
     }
@@ -134,7 +125,7 @@ public final class NexHoloService implements NexHologramService, Listener {
         }
     }
 
-    // -------- interne Entry-Implementierung (Handle) --------
+    // -------- internal Entry-Implementer (Handle) --------
 
     private final class Entry implements Handle {
         final UUID id;
@@ -151,7 +142,6 @@ public final class NexHoloService implements NexHologramService, Listener {
         final Set<UUID> visiblePlayers = new HashSet<>();
         final Map<UUID, List<Component>> lastRendered = new HashMap<>();
 
-        // die echte Version-Hologram-Instanz pro Spieler (optional)
         final Map<UUID, NexHologram> perViewerHolo = new HashMap<>();
 
         long nextDue = 0L;
@@ -165,7 +155,7 @@ public final class NexHoloService implements NexHologramService, Listener {
             this.perPlayer = spec.perPlayerLines;
             this.staticLines = spec.staticLines;
             this.attachTo = spec.attachTo;
-            this.nextDue = tickNow; // sofort tickbar
+            this.nextDue = tickNow;
         }
 
         boolean visibleFor(Player p) {
@@ -175,12 +165,12 @@ public final class NexHoloService implements NexHologramService, Listener {
         void ensureShown(Player p) {
             if (p == null || !p.isOnline()) return;
             if (visiblePlayers.add(p.getUniqueId())) {
-                // Hologram für diesen Viewer erzeugen
+                // create holo for target player
                 NexHologram holo = NexServices.newHoloBuilder()
                         .location(base)
                         .lines(resolveLinesFor(p))
                         .viewerOnly(p)
-                        .billboard("center") // oder aus Spec anreichern
+                        .billboard("center")
                         .lineWidth(200)
                         .backgroundColor(0x00000000)
                         .attachToEntity(attachTo)
@@ -216,7 +206,7 @@ public final class NexHoloService implements NexHologramService, Listener {
         @Override public void teleport(Location newBase) {
             if (newBase == null) return;
             base.setX(newBase.getX()); base.setY(newBase.getY()); base.setZ(newBase.getZ());
-            // Neuaufbau (einfach): verstecken + zeigen
+
             for (UUID uid : new ArrayList<>(visiblePlayers)) {
                 Player p = Bukkit.getPlayer(uid);
                 if (p == null) continue;
@@ -225,7 +215,7 @@ public final class NexHoloService implements NexHologramService, Listener {
             }
         }
         @Override public void updateLines(List<Component> newLines) {
-            // statisch überschreiben
+            // static overwrite
             if (newLines != null) {
                 for (UUID uid : visiblePlayers) {
                     Player p = Bukkit.getPlayer(uid);
@@ -240,7 +230,6 @@ public final class NexHoloService implements NexHologramService, Listener {
         @Override public void destroy() { hideFromAll(); registry.remove(id); }
 
         void refreshVisible() {
-            // KEIN tickNow % currentRefreshTicks mehr – das macht already onTick per nextDue
             for (UUID uid : new ArrayList<>(visiblePlayers)) {
                 Player p = Bukkit.getPlayer(uid);
                 if(p == null) continue;
@@ -258,8 +247,6 @@ public final class NexHoloService implements NexHologramService, Listener {
                 }
             }
         }
-
-
 
         List<Component> resolveLinesFor(Player p) {
             if (perPlayer != null) {
