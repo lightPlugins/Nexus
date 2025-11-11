@@ -4,10 +4,18 @@ import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.*;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.effects.NexusEffectsApi;
+import io.nexstudios.nexus.bukkit.hologram.NexHologram;
+import io.nexstudios.nexus.bukkit.hologram.NexHologramService;
+import io.nexstudios.nexus.bukkit.platform.NexServices;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 @CommandAlias("nexus")
 public class ReloadCommand extends BaseCommand {
@@ -36,6 +44,62 @@ public class ReloadCommand extends BaseCommand {
 
 
         NexusPlugin.getInstance().messageSender.send(sender, "general.reload");
+
+    }
+
+    // Just for testing !!!
+    // TODO -> Remove this command
+    @Subcommand("spawn")
+    @CommandCompletion("@inventories")
+    @CommandPermission("nexus.command.admin.spawn")
+    @Description("Reloads the plugin configuration and settings.")
+    public void onMobSpawn(CommandSender sender) {
+
+        Player player = (Player) sender;
+        Location location = player.getLocation();
+
+        LivingEntity le = NexServices.newMobBuilder()
+                .entity(EntityType.COW)
+                .damage(1)
+                .aggressive(true)
+                .baby(false)
+                .speed(0.2)
+                .spawn(location, player);
+
+
+        Function<Player, List<Component>> perPlayer = p -> {
+            String name = p.getName();
+            return List.of(
+                    Component.text("Hi " + name),
+                    Component.text("Time: " + p.getWorld().getTime()) // <- p, nicht player
+            );
+        };
+
+
+        NexHologramService.Handle papiHolo = NexusPlugin.getInstance().nexHoloService.register(
+                new NexHologramService.Spec()
+                        .base(player.getLocation().add(0, 2.5, 0))
+                        .perPlayer(perPlayer)
+                        .refreshTicks(20) // 1s
+                        .attachTo(le) // optional mounten (dein Builder handhabt das)
+        );
+
+
+//        NexHologram holo = NexServices.newHoloBuilder()
+//                .location(location)
+//                .lines(List.of(
+//                        Component.text("Hallo, "),
+//                        Component.text(player.getName())
+//                ))
+//                .viewerOnly(player)         // nur dieser Spieler
+//                .seeThrough(true)           // Stil-Flag
+//                .shadow(true)               // Stil-Flag
+//                .backgroundColor(0x80000000) // halbtransparent (ARGB)
+//                .lineWidth(180)
+//                .billboard("center")         // "fixed", "vertical", "horizontal", "center"
+//                .lineSpacing(0.27)
+//                .attachToEntity(le)
+//                .build();
 
     }
 }

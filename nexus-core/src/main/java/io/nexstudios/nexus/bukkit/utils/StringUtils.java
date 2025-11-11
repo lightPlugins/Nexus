@@ -1,13 +1,29 @@
 package io.nexstudios.nexus.bukkit.utils;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
+import io.nexstudios.nexus.bukkit.items.AttributeOperation;
+import io.nexstudios.nexus.bukkit.items.ItemAttributeSpec;
+import io.nexstudios.nexus.bukkit.items.ItemBuilder;
+import io.nexstudios.nexus.bukkit.items.ItemHideFlag;
+import io.nexstudios.nexus.bukkit.platform.NexServices;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
+
+import java.util.*;
 
 public class StringUtils {
 
@@ -147,5 +163,218 @@ public class StringUtils {
         }
 
         return is;
+
+
     }
+
+    public static ItemStack parseConfigItem(Map<String, Object> itemParams, TagResolver resolver, Player player) {
+
+        if(itemParams == null) {
+            return new ItemStack(Material.COBBLESTONE);
+        }
+
+        try {
+            // Pflichtfeld: item -> Base-Item erstellen (unterstützt z. B. "minecraft:diamond_pickaxe")
+            Object rawItem = itemParams.get("item");
+            if (rawItem == null) {
+                return new ItemStack(Material.COBBLESTONE);
+            }
+
+            String itemId = String.valueOf(rawItem).trim();
+            ItemStack baseStack = parseItem(itemId);
+
+            // Builder with Base Item
+            ItemBuilder builder = NexServices.newItemBuilder().itemStack(baseStack);
+
+            // Optional: amount
+            Object rawAmount = itemParams.get("amount");
+            if (rawAmount instanceof Number n) {
+                builder.amount(Math.max(1, n.intValue()));
+            } else if (rawAmount instanceof String s && !s.isBlank()) {
+                try { builder.amount(Math.max(1, Integer.parseInt(s.trim()))); } catch (NumberFormatException ignored) {}
+            }
+
+            // Optional: displayname
+            Object rawName = itemParams.get("displayname");
+            if (rawName instanceof String nameStr && !nameStr.isBlank()) {
+                Component nameComp = MiniMessage.miniMessage().deserialize(nameStr);
+                // keine speziellen Platzhalter -> TagResolver.empty(), Player-Kontext nicht vorhanden (null ok)
+                nameComp = MiniMessageUtil.replace(
+                        nameComp,
+                        resolver != null ? resolver : TagResolver.empty(),
+                        player
+                );
+                builder.displayName(nameComp);
+            }
+
+            // Optional: lore (Liste von Strings -> MiniMessageUtil.replace)
+            Object rawLore = itemParams.get("lore");
+            if (rawLore instanceof List<?> list) {
+                List<Component> lore = new ArrayList<>();
+                for (Object o : list) {
+                    if (o == null) continue;
+                    String line = String.valueOf(o);
+                    Component comp = MiniMessage.miniMessage().deserialize(line);
+                    comp = MiniMessageUtil.replace(
+                            comp,
+                            TagResolver.empty(),
+                            null
+                    );
+                    lore.add(comp);
+                }
+                if (!lore.isEmpty()) builder.lore(lore);
+            }
+
+            // Optional: hide-flags (Strings oder {id: ...})
+            Object rawHide = itemParams.get("hide-flags");
+            if (rawHide instanceof List<?> hideList) {
+                Set<ItemHideFlag> hideFlags = new HashSet<>();
+                for (Object e : hideList) {
+                    String idStr = null;
+                    if (e instanceof Map<?, ?> m) {
+                        Object id = m.get("id");
+                        if (id != null) idStr = String.valueOf(id);
+                    } else if (e != null) {
+                        idStr = String.valueOf(e);
+                    }
+                    if (idStr == null || idStr.isBlank()) continue;
+                    try {
+                        hideFlags.add(ItemHideFlag.valueOf(idStr.toUpperCase()));
+                    } catch (IllegalArgumentException ignored) {}
+                }
+                if (!hideFlags.isEmpty()) builder.hideFlags(hideFlags);
+            }
+
+            // Optional: enchantments (über Paper-Registry auflösen)
+            Object rawEnch = itemParams.get("enchantments");
+            if (rawEnch instanceof List<?> enchList) {
+                var registry = RegistryAccess.registryAccess()
+                        .getRegistry(RegistryKey.ENCHANTMENT);
+                Map<Enchantment, Integer> enchants = new HashMap<>();
+                for (Object e : enchList) {
+                    if (!(e instanceof Map<?, ?> m)) continue;
+                    Object idObj = m.get("id");
+                    if (idObj == null) continue;
+
+                    String id = String.valueOf(idObj).toLowerCase(Locale.ROOT).trim();
+                    NamespacedKey key = NamespacedKey.fromString(id);
+                    if (key == null) key = NamespacedKey.minecraft(id);
+
+                    Enchantment ench = registry.get(key);
+                    if (ench == null) continue;
+
+                    int lvl = 1;
+                    Object lvlObj = m.get("level");
+                    if (lvlObj instanceof Number n) lvl = n.intValue();
+                    else if (lvlObj instanceof String s && !s.isBlank()) {
+                        try { lvl = Integer.parseInt(s.trim()); } catch (NumberFormatException ignored) {}
+                    }
+                    enchants.put(ench, Math.max(1, lvl));
+                }
+                if (!enchants.isEmpty()) builder.enchantments(enchants);
+            }
+
+            // Optional: attributes
+            Object rawAttrs = itemParams.get("attributes");
+            if (rawAttrs instanceof List<?> attrList) {
+                List<ItemAttributeSpec> specs = new ArrayList<>();
+                for (Object e : attrList) {
+                    if (!(e instanceof Map<?, ?> m)) continue;
+
+                    Object idObj = m.get("id");
+                    if (idObj == null) continue;
+                    String attrId = String.valueOf(idObj).trim().toLowerCase(Locale.ROOT);
+                    org.bukkit.NamespacedKey attrKey = org.bukkit.NamespacedKey.fromString(attrId);
+                    if (attrKey == null) continue;
+
+                    double amount = 0.0;
+                    Object amt = m.get("amount");
+                    if (amt instanceof Number n) amount = n.doubleValue();
+                    else if (amt instanceof String s && !s.isBlank()) {
+                        try { amount = Double.parseDouble(s.trim()); } catch (NumberFormatException ignored) {}
+                    }
+
+                    AttributeOperation operation =
+                            AttributeOperation.ADD_NUMBER;
+                    Object op = m.get("operation");
+                    if (op != null) {
+                        String opStr = String.valueOf(op).trim().toUpperCase(Locale.ROOT);
+                        operation = switch (opStr) {
+                            case "ADD", "ADD_NUMBER" -> AttributeOperation.ADD_NUMBER;
+                            case "ADD_SCALAR", "SCALAR" ->
+                                    AttributeOperation.ADD_SCALAR;
+                            case "MULTIPLY_SCALAR_1", "MULTIPLY" ->
+                                    AttributeOperation.MULTIPLY_SCALAR_1;
+                            default -> operation;
+                        };
+                    }
+
+                    Set<EquipmentSlot> slotsSet = new HashSet<>();
+                    Object slots = m.get("slots");
+                    if (slots instanceof List<?> sl) {
+                        for (Object s : sl) {
+                            if (s == null) continue;
+                            switch (String.valueOf(s).toLowerCase(Locale.ROOT)) {
+                                case "hand", "mainhand", "main_hand" -> slotsSet.add(EquipmentSlot.HAND);
+                                case "offhand", "off_hand" -> slotsSet.add(EquipmentSlot.OFF_HAND);
+                                case "head", "helmet" -> slotsSet.add(EquipmentSlot.HEAD);
+                                case "chest", "chestplate" -> slotsSet.add(EquipmentSlot.CHEST);
+                                case "legs", "leggings" -> slotsSet.add(EquipmentSlot.LEGS);
+                                case "feet", "boots" -> slotsSet.add(EquipmentSlot.FEET);
+                            }
+                        }
+                    }
+
+                    specs.add(new ItemAttributeSpec(
+                            "cfg",
+                            attrKey,
+                            amount,
+                            operation,
+                            slotsSet
+                    ));
+                }
+                if (!specs.isEmpty()) builder.attributes(specs);
+            }
+
+            // Optional: model-data-float
+            Object rawModelData = itemParams.get("model-data-float");
+            if (rawModelData instanceof Number n) {
+                builder.modelData(n.intValue());
+            } else if (rawModelData instanceof String s && !s.isBlank()) {
+                try { builder.modelData((int) Math.floor(Double.parseDouble(s.trim()))); } catch (NumberFormatException ignored) {}
+            }
+
+            // Optional: item-model
+            Object rawItemModel = itemParams.get("item-model");
+            if (rawItemModel instanceof String s && !s.isBlank()) {
+                org.bukkit.NamespacedKey key = org.bukkit.NamespacedKey.fromString(s.trim());
+                if (key != null) builder.itemModel(key);
+            }
+
+            // Optional: tooltip-model
+            Object rawTooltipModel = itemParams.get("tooltip-model");
+            if (rawTooltipModel instanceof String s && !s.isBlank()) {
+                org.bukkit.NamespacedKey key = org.bukkit.NamespacedKey.fromString(s.trim());
+                if (key != null) builder.tooltipStyle(key);
+            }
+
+            // Optional: unbreakable
+            Object rawUnbreakable = itemParams.get("unbreakable");
+            if (rawUnbreakable instanceof Boolean b) {
+                builder.unbreakable(b);
+            } else if (rawUnbreakable instanceof String s && !s.isBlank()) {
+                builder.unbreakable(Boolean.parseBoolean(s.trim()));
+            }
+
+            return builder.build();
+        } catch (Exception ex) {
+            NexusPlugin.nexusLogger.error("Could not parse item from Config with error: " + ex.getMessage());
+            NexusPlugin.nexusLogger.error("Fallback to default itemstack: COOBLESTONE");
+            // TODO: remove stacktrace here later
+            ex.printStackTrace();
+            return new ItemStack(Material.COBBLESTONE);
+        }
+    }
+
+
 }

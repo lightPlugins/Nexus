@@ -25,6 +25,7 @@ import io.nexstudios.nexus.bukkit.effects.runtime.EffectBindingRegistry;
 import io.nexstudios.nexus.bukkit.effects.trigger.EntityDamageTriggerListener;
 import io.nexstudios.nexus.bukkit.effects.vars.PlayerVariableResolver;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
+import io.nexstudios.nexus.bukkit.hologram.NexHoloService;
 import io.nexstudios.nexus.bukkit.hooks.*;
 import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
 import io.nexstudios.nexus.bukkit.hooks.auroracollections.AuroraCollectionsHook;
@@ -34,6 +35,10 @@ import io.nexstudios.nexus.bukkit.inv.api.InvService;
 import io.nexstudios.nexus.bukkit.inv.event.NexInventoryClickListener;
 import io.nexstudios.nexus.bukkit.inv.renderer.DefaultNexItemRenderer;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
+import io.nexstudios.nexus.bukkit.levels.events.LevelFlushListener;
+import io.nexstudios.nexus.bukkit.levels.impl.DefaultLevelService;
+import io.nexstudios.nexus.bukkit.levels.LevelService;
+import io.nexstudios.nexus.bukkit.levels.NexLevel;
 import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderBootstrap;
 import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderRegistry;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
@@ -49,10 +54,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 @Getter
 public final class NexusPlugin extends JavaPlugin {
@@ -75,6 +78,8 @@ public final class NexusPlugin extends JavaPlugin {
     // API Services
     public MessageSender messageSender;
     public ActionFactory actionFactory;
+    public LevelService levelService;
+    public NexHoloService nexHoloService;
 
     // Command Manager
     public PaperCommandManager commandManager;
@@ -98,7 +103,7 @@ public final class NexusPlugin extends JavaPlugin {
     public void onLoad() {
         // Plugin startup logic
         instance = this;
-        NexServices.init();
+        NexServices.init(this);
         nexusLogger = new NexusLogger("<reset>[<yellow>Nexus<reset>]", true, 99, "<yellow>");
         nexusLogger.info("Nexus is loading...");
         onReload();
@@ -133,8 +138,45 @@ public final class NexusPlugin extends JavaPlugin {
 
         this.invService = new InvService(this, new DefaultNexItemRenderer(), nexusLanguage);
         invService.registerNamespace(this.getName().toLowerCase(Locale.ROOT), inventoryFiles);
+        nexusLogger.info("Initiate Nexus level system ...");
+        registerLevelService();
+
+        if (levelService != null) {
+            try {
+                nexusLogger.info("NexLevel preload started (sync).");
+                levelService.preloadAllSync();
+            } catch (Throwable t) {
+                nexusLogger.warning("Could not start NexLevel preload: " + t.getMessage());
+            }
+        }
+
+        nexHoloService = new NexHoloService(this);
+
 
         nexusLogger.info("Nexus is enabled");
+    }
+
+    public void registerLevelService() {
+        try {
+            var dbService = this.nexusDatabaseService;
+            if (dbService != null) {
+                NexLevel.FlushConfig cfg = new NexLevel.FlushConfig();
+                cfg.flushIntervalMillis = 300_000L; // 5 Minuten
+                cfg.batchSize = 500;
+                cfg.tableName = "nex_player_levels";
+                NexLevel.init(this, dbService, cfg);
+
+                this.levelService = new DefaultLevelService(NexLevel.getInstance());
+                nexusLogger.info("LevelService initialized successfully.");
+            } else {
+                nexusLogger.error(List.of(
+                        "NexusDatabaseService not available. LevelService not initialized."
+                ));
+            }
+        } catch (Exception ex) {
+            nexusLogger.error(List.of("Failed to initialize LevelService.", "Error: " + ex.getMessage()));
+        }
+
     }
 
     public NexusLogger getNexusLogger() {
@@ -143,10 +185,19 @@ public final class NexusPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+
+        // Level-System geordnet stoppen
+        nexusLogger.info("Write last backups in database ...");
+        try {
+            NexLevel.shutdown();
+        } catch (Throwable ignored) {}
+
+        nexusLogger.info("Shutting down Database connection ...");
         if (nexusDatabaseService != null) {
             NexusDatabaseBukkitRegistrar.unregister(this, nexusDatabaseService);
             nexusDatabaseService = null;
         }
+
         // DB sauber schließen
         if (abstractDatabase != null) {
             try {
@@ -341,6 +392,7 @@ public final class NexusPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EntityDamageTriggerListener(bindingRegistry), this);
         Bukkit.getPluginManager().registerEvents(new NoMoreFeed(), this);
         Bukkit.getPluginManager().registerEvents(new NexInventoryClickListener(), this);
+        Bukkit.getPluginManager().registerEvents(new LevelFlushListener(), this);
         Bukkit.getPluginManager().registerEvents(blockUtil, this);
 
     }

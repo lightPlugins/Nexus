@@ -1,0 +1,43 @@
+# The type of the boss entity
+# Can be any entity type supported by Minecraft
+# Blacklisted entities:
+# - ender_dragon
+type: 'minecraft:zombie'
+name: 'Revenant Horror'
+# The settings for the boss entity
+# This section is fully optional
+# If you use type: 'mythicmobs:id' the settings section will be ignored
+settings:
+  scale: 1.2
+  health: 40.0
+  damage: 2.0
+  speed: 0.3
+  armor: 2.0
+  armor-toughness: 2.0
+  knockback-resistance: 0.0
+  no-damage-ticks: 10
+  aggressive: true
+  baby: false
+  equipment:
+    head: 'minecraft:iron_helmet'
+    body: 'minecraft:diamond_chestplate'
+    legs: 'minecraft:iron_leggings'
+    feet: 'minecraft:leather_boots'
+    hand: 'minecraft:stick'
+    offHand: 'minecraft:shield'
+hologram:
+  enabled: true
+  settings:
+    billboard: center
+    backgroundColor: transparent
+    size:
+      x: 1.0
+      y: 1.0
+      z: 1.0
+    viewRange: 75
+    seeThrough: false
+    lineWidth: 1000.0
+  lines:
+    - '<red>Time left: <dark_red>#time#'
+    - '<red>#player# <white>´s Zombie Slayer Boss'
+    - '<red>#current-health# <gray>/ <dark_red>#max-health#'

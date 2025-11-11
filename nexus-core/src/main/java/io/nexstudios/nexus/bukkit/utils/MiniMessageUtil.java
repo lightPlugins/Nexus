@@ -9,12 +9,13 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.bukkit.entity.Player;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class MiniMessageUtil {
 
 
-    public static Component replace(Component component, TagResolver resolver, Player player) {
+    public static Component replace(Component component, TagResolver resolver, @Nullable Player player) {
 
         TagResolver.Builder builder = TagResolver.builder();
 
@@ -31,7 +32,7 @@ public class MiniMessageUtil {
         String resolvedText = MiniMessage.miniMessage().serialize(resolvedComponent);
 
         // PlaceholderAPI-Anwendung
-        if (NexusPlugin.getInstance().papiHook != null) {
+        if (NexusPlugin.getInstance().papiHook != null && player != null) {
             String translatedText = PlaceholderAPI.setPlaceholders(player, resolvedText);
 
             // Zurück zu MiniMessage nach PlaceholderAPI-Verarbeitung

@@ -1,6 +1,7 @@
 // Java
 package io.nexstudios.nexus.bukkit.inv.api;
 
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.files.NexusFileReader;
 import io.nexstudios.nexus.bukkit.inv.NexInventory;
 import io.nexstudios.nexus.bukkit.inv.NexInventoryManager;
@@ -55,6 +56,33 @@ public final class InvService {
             registry.put(invKey, new InvHandleImpl(invKey, inv));
         }
     }
+
+    public void reloadWithNamespace(String namespace, NexusFileReader fileReader) {
+        if (namespace == null) return;
+        String nsLower = namespace.toLowerCase(Locale.ROOT);
+
+        // Falls ein externer Reader übergeben wird, im Namespace registrieren/ersetzen
+        if (fileReader != null) {
+            namespaces.put(nsLower, fileReader);
+            fileReader.reload();
+        } else {
+            // Fallback: vorhandenen Reader verwenden
+            NexusFileReader fr = namespaces.get(nsLower);
+            if (fr == null) return;
+            fr.reload();
+        }
+
+        // Alle Registry-Einträge dieses Namespaces entfernen
+        registry.keySet().removeIf(k -> k != null && nsLower.equalsIgnoreCase(k.namespace()));
+
+        // Nur diesen Namespace erneut preloaden (verwendet den Reader aus 'namespaces')
+        preloadNamespace(namespace);
+
+        // Optionales Logging
+        NexusPlugin.nexusLogger.info("Reloaded inventories with namespace: " + namespace);
+    }
+
+
 
     // Reload: Reader neu einlesen; alte Views schließen; Registry neu aufbauen
     public void reload() {

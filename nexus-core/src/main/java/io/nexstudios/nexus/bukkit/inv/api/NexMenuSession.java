@@ -20,6 +20,8 @@ public class NexMenuSession {
     NexInventoryView view;
     final List<Runnable> preOpenTasks = new ArrayList<>();
     private boolean opened = false;
+    private TagResolver titleResolver;
+
 
     private NexMenuSession(InvHandle handle) {
         this.handle = handle;
@@ -52,6 +54,14 @@ public class NexMenuSession {
     public NexInventoryView openFor(Player player) {
         if (!opened) {
             this.view = handle.open(player);
+
+            // Den zuvor gesetzten Title-Resolver sofort auf die View anwenden
+            if (titleResolver != null) {
+                try {
+                    view.setTitleTagResolver(titleResolver);
+                } catch (Exception ignored) { /* falls View intern (noch) nicht bereit ist */ }
+            }
+
             for (Runnable r : preOpenTasks) {
                 try { r.run(); } catch (Exception ignored) { /* Pre-open task failed */ }
             }
@@ -61,6 +71,7 @@ public class NexMenuSession {
         return view;
     }
 
+
     void ensureView() {
         if (view == null) {
             throw new IllegalStateException("View is not initialized. Call openFor(player) before accessing the view.");
@@ -68,17 +79,23 @@ public class NexMenuSession {
     }
 
     public NexMenuSession withTitleTags(TagResolver... tags) {
+        // Resolver direkt in der Session speichern (ohne View-Zugriff)
+        this.titleResolver = (tags != null && tags.length > 0) ? TagResolver.resolver(tags) : null;
+
         Runnable task = () -> {
             ensureView();
-            view.setTitleTagResolver(tags != null && tags.length > 0 ? TagResolver.resolver(tags) : null);
+            // Bei bereits geöffneter View den Resolver setzen (Titeländerung ohne Refresh hängt von View-Implementierung ab)
+            view.setTitleTagResolver(titleResolver);
         };
         if (opened && view != null) {
             task.run();
         } else {
+            // Falls noch nicht geöffnet, reicht das Setzen des Session-Felds; Task bleibt für den Fall, dass die View sofort verfügbar ist
             preOpenTasks.add(task);
         }
         return this;
     }
+
 
 
     public NexMenuSession onRequireClick(NexOnClick handler) {
