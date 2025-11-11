@@ -66,40 +66,18 @@ public class ReloadCommand extends BaseCommand {
                 .speed(0.2)
                 .spawn(location, player);
 
-
-        Function<Player, List<Component>> perPlayer = p -> {
-            String name = p.getName();
-            return List.of(
-                    Component.text("Hi " + name),
-                    Component.text("Time: " + p.getWorld().getTime()) // <- p, nicht player
-            );
-        };
-
-
         NexHologramService.Handle papiHolo = NexusPlugin.getInstance().nexHoloService.register(
                 new NexHologramService.Spec()
                         .base(player.getLocation().add(0, 2.5, 0))
-                        .perPlayer(perPlayer)
-                        .refreshTicks(20) // 1s
-                        .attachTo(le) // optional mounten (dein Builder handhabt das)
+                        .perPlayer(p -> {
+                            String name = p.getName();
+                            return List.of(
+                                    Component.text("Hi " + name),
+                                    Component.text("Time: " + p.getWorld().getTime())
+                            );
+                        })
+                        .refreshTicks(20)
+                        .attachTo(le)
         );
-
-
-//        NexHologram holo = NexServices.newHoloBuilder()
-//                .location(location)
-//                .lines(List.of(
-//                        Component.text("Hallo, "),
-//                        Component.text(player.getName())
-//                ))
-//                .viewerOnly(player)         // nur dieser Spieler
-//                .seeThrough(true)           // Stil-Flag
-//                .shadow(true)               // Stil-Flag
-//                .backgroundColor(0x80000000) // halbtransparent (ARGB)
-//                .lineWidth(180)
-//                .billboard("center")         // "fixed", "vertical", "horizontal", "center"
-//                .lineSpacing(0.27)
-//                .attachToEntity(le)
-//                .build();
-
     }
 }
