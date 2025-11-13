@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * - Resolve a key (with or without Player context).
  * - Optionally define per-key fallback strings when the key is not known or cannot be resolved.
  * - Optionally influence caching by marking values as non-cacheable or by providing ttl overrides.
+ * - Optionally control PlaceholderAPI availability for the entire provider.
  *
  * Contract:
  * - Namespace and keys are lower-case.
@@ -61,6 +62,20 @@ public interface NexPlaceholderProvider {
      */
     default @Nullable Long ttlMillis(String key) {
         return null;
+    }
+
+    /**
+     * Optional: Control whether this provider should be available through PlaceholderAPI.
+     *
+     * If false, ALL keys in this provider will only work with NexusPlaceholder syntax (#namespace:key#)
+     * and will NOT be available through PlaceholderAPI (%namespace_key%).
+     *
+     * Default: true (provider is available in both systems)
+     *
+     * @return true if this provider should be exposed to PlaceholderAPI, false otherwise
+     */
+    default boolean papiSupport() {
+        return true;
     }
 
     /**

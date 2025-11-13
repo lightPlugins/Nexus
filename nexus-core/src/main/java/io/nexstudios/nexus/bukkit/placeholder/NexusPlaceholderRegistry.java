@@ -1,3 +1,4 @@
+
 package io.nexstudios.nexus.bukkit.placeholder;
 
 import net.kyori.adventure.text.Component;
@@ -38,33 +39,36 @@ public final class NexusPlaceholderRegistry {
      * @param perKeyTtlMillis  exact keys -> ttl (lowercase)
      */
     public record CachePolicy(long defaultTtlMillis, Set<String> nonCacheableKeys, Map<String, Long> perKeyTtlMillis) {
-            public CachePolicy(long defaultTtlMillis,
-                               Set<String> nonCacheableKeys,
-                               Map<String, Long> perKeyTtlMillis) {
-                this.defaultTtlMillis = Math.max(0L, defaultTtlMillis);
-                this.nonCacheableKeys = Objects.requireNonNullElse(nonCacheableKeys, Set.of());
-                this.perKeyTtlMillis = Objects.requireNonNullElse(perKeyTtlMillis, Map.of());
-            }
-
-            public boolean isNonCacheable(String key) {
-                return nonCacheableKeys.contains(key);
-            }
-
-            public @Nullable Long perKeyTtlMillis(String key) {
-                return perKeyTtlMillis.get(key);
-            }
-
-            public static CachePolicy of(long defaultTtlMillis) {
-                return new CachePolicy(defaultTtlMillis, Set.of(), Map.of());
-            }
+        public CachePolicy(long defaultTtlMillis,
+                           Set<String> nonCacheableKeys,
+                           Map<String, Long> perKeyTtlMillis) {
+            this.defaultTtlMillis = Math.max(0L, defaultTtlMillis);
+            this.nonCacheableKeys = Objects.requireNonNullElse(nonCacheableKeys, Set.of());
+            this.perKeyTtlMillis = Objects.requireNonNullElse(perKeyTtlMillis, Map.of());
         }
+
+        public boolean isNonCacheable(String key) {
+            return nonCacheableKeys.contains(key);
+        }
+
+        public @Nullable Long perKeyTtlMillis(String key) {
+            return perKeyTtlMillis.get(key);
+        }
+
+        public static CachePolicy of(long defaultTtlMillis) {
+            return new CachePolicy(defaultTtlMillis, Set.of(), Map.of());
+        }
+    }
 
     public record Registration(Plugin owner, String namespace, NexPlaceholderProvider provider, CachePolicy cachePolicy) { }
 
     private static final Map<String, Registration> PROVIDERS = new ConcurrentHashMap<>();
     private static final Map<CacheKey, CacheEntry> CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, NexusPAPIBridge> PAPI_BRIDGES = new ConcurrentHashMap<>();
 
     private static volatile boolean listenerRegistered = false;
+    private static volatile boolean papiIntegrationEnabled = false;
+
 
     private record CacheKey(String namespace, String key, @Nullable UUID playerId) {}
 
@@ -102,8 +106,15 @@ public final class NexusPlaceholderRegistry {
             // Intentionally quiet: allow caller to decide how to proceed.
             return false;
         }
+
+        // Auto-register with PlaceholderAPI if available AND provider supports it
+        if (papiIntegrationEnabled && provider.papiSupport()) {
+            registerWithPAPI(owner, ns);
+        }
+
         return true;
     }
+
 
     public static boolean unregister(String namespace) {
         if (namespace == null) return false;
@@ -111,10 +122,17 @@ public final class NexusPlaceholderRegistry {
         if (removed != null) {
             // remove all cache entries for that namespace
             CACHE.keySet().removeIf(k -> k.namespace.equals(removed.namespace));
+
+            // Unregister from PlaceholderAPI
+            if (papiIntegrationEnabled) {
+                unregisterFromPAPI(removed.namespace);
+            }
+
             return true;
         }
         return false;
     }
+
 
     public static void unregisterFor(Plugin owner) {
         if (owner == null) return;
@@ -123,9 +141,86 @@ public final class NexusPlaceholderRegistry {
             boolean remove = e.getValue().owner == owner || e.getKey().equals(pluginName);
             if (remove) {
                 CACHE.keySet().removeIf(k -> k.namespace.equals(e.getKey()));
+
+                // Unregister from PlaceholderAPI
+                if (papiIntegrationEnabled) {
+                    unregisterFromPAPI(e.getKey());
+                }
             }
             return remove;
         });
+    }
+
+    /**
+     * Enable PlaceholderAPI integration.
+     * When enabled, all NexusPlaceholder providers will automatically be registered with PlaceholderAPI.
+     *
+     *
+     * @return true if PlaceholderAPI is available and integration was enabled, false otherwise
+     */
+    public static boolean enablePAPIIntegration() {
+        if (papiIntegrationEnabled) {
+            return true;
+        }
+
+        try {
+            Class.forName("me.clip.placeholderapi.PlaceholderAPI");
+            papiIntegrationEnabled = true;
+
+            // Register all existing providers
+            for (var entry : PROVIDERS.entrySet()) {
+                registerWithPAPI(entry.getValue().owner(), entry.getKey());
+            }
+
+            return true;
+        } catch (ClassNotFoundException e) {
+            // PlaceholderAPI not available
+            return false;
+        }
+    }
+
+    /**
+     * Disable PlaceholderAPI integration and unregister all expansions.
+     */
+    public static void disablePAPIIntegration() {
+        if (!papiIntegrationEnabled) {
+            return;
+        }
+
+        for (String namespace : PROVIDERS.keySet()) {
+            unregisterFromPAPI(namespace);
+        }
+
+        papiIntegrationEnabled = false;
+    }
+
+    private static void registerWithPAPI(Plugin owner, String namespace) {
+        try {
+            NexusPAPIBridge bridge = new NexusPAPIBridge(
+                    namespace,
+                    owner.getDescription().getVersion(),
+                    owner.getDescription().getAuthors().isEmpty()
+                            ? "Unknown"
+                            : String.join(", ", owner.getDescription().getAuthors())
+            );
+
+            if (bridge.canRegister() && bridge.register()) {
+                PAPI_BRIDGES.put(namespace, bridge);
+            }
+        } catch (Exception e) {
+            // Silently ignore - PlaceholderAPI might not be available
+        }
+    }
+
+    private static void unregisterFromPAPI(String namespace) {
+        try {
+            NexusPAPIBridge bridge = PAPI_BRIDGES.remove(namespace);
+            if (bridge != null) {
+                bridge.unregister();
+            }
+        } catch (Exception e) {
+            // Silently ignore
+        }
     }
 
     private static void ensureDisableListenerInstalled() {
