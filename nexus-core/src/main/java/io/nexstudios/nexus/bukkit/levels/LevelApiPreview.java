@@ -83,6 +83,6 @@ public final class LevelApiPreview {
 
     // Small helper to format doubles
     private String fmt(double v) {
-        return String.format(Locale.US, "%.2f", v);
+        return String.format(Locale.ROOT, "%.2f", v);
     }
 }
