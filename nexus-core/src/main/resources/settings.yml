@@ -27,6 +27,56 @@ redis:
   password: YourSecretPassword
   ssl: false
 
+damage-indicator:
+  enable: true
+  conditions: []
+  fraction-digits: 2
+  life-time-ticks: 20
+  format:
+    normal: <red>#damage#
+    crit: <rainbow>#damage#
+  scale:
+    x: 2.0
+    y: 2.0
+    z: 2.0
+  offset:
+    x: 0.0
+    y: 1.5
+    z: 0.0
+  velocity:
+    in-x:
+      min: 0.1
+      max: 0.1
+    in-y:
+      min: 0.3
+      max: 0.3
+    in-z:
+      min: 0.1
+      max: 0.1
+  numbers:
+    normal:
+      '0': '0'
+      '1': '1'
+      '2': '2'
+      '3': '3'
+      '4': '4'
+      '5': '5'
+      '6': '6'
+      '7': '7'
+      '8': '8'
+      '9': '9'
+    crit:
+      '0': '0'
+      '1': '1'
+      '2': '2'
+      '3': '3'
+      '4': '4'
+      '5': '5'
+      '6': '6'
+      '7': '7'
+      '8': '8'
+      '9': '9'
+
 storage:
   # possible values:
   # - sqlite -> using SQLite (recommended for most users) (single server setup)

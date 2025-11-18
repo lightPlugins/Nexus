@@ -18,6 +18,7 @@ import org.bukkit.craftbukkit.entity.CraftLivingEntity;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.loot.Lootable;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public class PaperMobBuilder implements MobBuilder, MobBuilderFactory {
     private Integer noDamageTicks = 20;
     private Boolean aggressive = false;
     private Boolean baby = false;
+    private Boolean disableDrops = false;
     private ItemStack main;
     private ItemStack off;
     private ItemStack helm;
@@ -136,6 +138,12 @@ public class PaperMobBuilder implements MobBuilder, MobBuilderFactory {
     @Override
     public MobBuilder baby(boolean baby) {
         this.baby = baby;
+        return this;
+    }
+
+    @Override
+    public MobBuilder disableDrops(boolean disableDrops) {
+        this.disableDrops = disableDrops;
         return this;
     }
 
@@ -267,6 +275,11 @@ public class PaperMobBuilder implements MobBuilder, MobBuilderFactory {
             }
         }
 
+        if (livingEntity instanceof Lootable lootable) {
+            if(disableDrops) {
+                lootable.setLootTable(null);
+            }
+        }
 
         // Aggressive: for Mob types, toggle awareness
         if (aggressive && livingEntity instanceof Mob mob) {
@@ -289,6 +302,15 @@ public class PaperMobBuilder implements MobBuilder, MobBuilderFactory {
             if(chest != null) eq.setChestplate(chest);
             if(legs != null) eq.setLeggings(legs);
             if(boots != null) eq.setBoots(boots);
+
+            if(disableDrops) {
+                eq.setHelmetDropChance(0.0f);
+                eq.setChestplateDropChance(0.0f);
+                eq.setLeggingsDropChance(0.0f);
+                eq.setBootsDropChance(0.0f);
+                eq.setItemInMainHandDropChance(0.0f);
+                eq.setItemInOffHandDropChance(0.0f);
+            }
         }
 
 

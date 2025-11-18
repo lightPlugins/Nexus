@@ -17,4 +17,5 @@ public interface NexHologram {
     void updateLines(List<Component> newLines);
     void teleport(Location newBase);
     void destroy();
+
 }

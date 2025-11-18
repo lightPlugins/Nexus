@@ -2,10 +2,12 @@ package io.nexstudios.nexus.bukkit.hooks;
 
 import com.willfp.ecoskills.api.EcoSkillsAPI;
 import com.willfp.ecoskills.api.modifiers.StatModifier;
+import com.willfp.ecoskills.skills.SkillCritsKt;
 import com.willfp.ecoskills.stats.Stat;
 import com.willfp.ecoskills.stats.Stats;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -33,5 +35,9 @@ public class EcoSkillsHook {
 
         return stat.getActualLevel$core_plugin(player);
 
+    }
+
+    public boolean isCrit(EntityDamageByEntityEvent event) {
+        return SkillCritsKt.isSkillCrit(event);
     }
 }

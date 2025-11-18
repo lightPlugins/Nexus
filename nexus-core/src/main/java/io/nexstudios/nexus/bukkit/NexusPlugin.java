@@ -8,6 +8,7 @@ import io.nexstudios.nexus.bukkit.command.InvOpenCommand;
 import io.nexstudios.nexus.bukkit.command.ReloadCommand;
 import io.nexstudios.nexus.bukkit.command.StatCommand;
 import io.nexstudios.nexus.bukkit.command.SwitchLanguage;
+import io.nexstudios.nexus.bukkit.conditions.ConditionFactory;
 import io.nexstudios.nexus.bukkit.database.AbstractDatabase;
 import io.nexstudios.nexus.bukkit.database.PooledDatabase;
 import io.nexstudios.nexus.bukkit.database.api.DefaultNexusDatabaseService;
@@ -31,6 +32,7 @@ import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
 import io.nexstudios.nexus.bukkit.hooks.auroracollections.AuroraCollectionsHook;
 import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
 import io.nexstudios.nexus.bukkit.hooks.worldguard.WorldGuardHook;
+import io.nexstudios.nexus.bukkit.indicator.DamageIndicator;
 import io.nexstudios.nexus.bukkit.inv.api.InvService;
 import io.nexstudios.nexus.bukkit.inv.event.NexInventoryClickListener;
 import io.nexstudios.nexus.bukkit.inv.renderer.DefaultNexItemRenderer;
@@ -71,6 +73,7 @@ public final class NexusPlugin extends JavaPlugin {
     public NexusLanguage nexusLanguage;
     public EffectFactory effectFactory;
     public EffectBindingRegistry bindingRegistry;
+    private DamageIndicator damageIndicator;
     private InvService invService;
     @Getter
     public BlockUtil blockUtil;
@@ -78,6 +81,7 @@ public final class NexusPlugin extends JavaPlugin {
     // API Services
     public MessageSender messageSender;
     public ActionFactory actionFactory;
+    public ConditionFactory conditionFactory;
     public LevelService levelService;
     public NexHoloService nexHoloService;
 
@@ -93,6 +97,7 @@ public final class NexusPlugin extends JavaPlugin {
     public MMOItemsHook mmoItemsHook;
     public AuraSkillsHook auraSkillsHook;
     public AuroraCollectionsHook auroraCollectionsHook;
+    public WorldGuardHook worldGuardHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -108,6 +113,11 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger.info("Nexus is loading...");
         onReload();
         nexusLogger.info("Check for compatibility with other plugins...");
+        if(getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            worldGuardHook = new WorldGuardHook();
+            nexusLogger.info("<yellow>WorldGuard<reset> flag(s) registered successfully.");
+        }
+
         nexusLogger.info("Initializing database connection...");
         initDatabase();
     }
@@ -122,7 +132,9 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger.info("Registered <yellow>" + internalPlaceholders + "<reset> internal placeholders.");
         commandManager = new PaperCommandManager(this);
         actionFactory = new ActionFactory();
+        conditionFactory = new ConditionFactory();
         effectFactory = new EffectFactory(PlayerVariableResolver.ofStore());
+        damageIndicator = new DamageIndicator(this, new EcoSkillsHook());
         bindingRegistry = new EffectBindingRegistry();
         blockUtil = new BlockUtil(this);
         registerCommands();
@@ -198,6 +210,10 @@ public final class NexusPlugin extends JavaPlugin {
             nexusDatabaseService = null;
         }
 
+        if (damageIndicator != null) {
+            damageIndicator.shutdown();
+        }
+
         // DB sauber schließen
         if (abstractDatabase != null) {
             try {
@@ -219,6 +235,9 @@ public final class NexusPlugin extends JavaPlugin {
         messageSender = new MessageSender(nexusLanguage);
         //loadInventories();
         //PlayerVariables.set(UUID.randomUUID(), "stat-level", "50");
+        if (damageIndicator != null) {
+            damageIndicator.reloadFromConfig();
+        }
     }
 
     private void commandCompletions() {
@@ -230,7 +249,7 @@ public final class NexusPlugin extends JavaPlugin {
     }
 
     private void loadNexusFiles() {
-        settingsFile = new NexusFile(this, "settings.yml", nexusLogger, false);
+        settingsFile = new NexusFile(this, "settings.yml", nexusLogger, true);
         // preload the default english language file.
         new NexusFile(this, "languages/english.yml", nexusLogger, true);
         nexusLogger.setDebugEnabled(settingsFile.getBoolean("logging.debug.enable", true));
@@ -344,7 +363,7 @@ public final class NexusPlugin extends JavaPlugin {
         }
 
         if(getServer().getPluginManager().getPlugin("WorldGuard") != null) {
-            Bukkit.getPluginManager().registerEvents(new WorldGuardHook(), this);
+            worldGuardHook.registerEvents();
             nexusLogger.info("<yellow>WorldGuard<reset> hook registered successfully.");
         }
 

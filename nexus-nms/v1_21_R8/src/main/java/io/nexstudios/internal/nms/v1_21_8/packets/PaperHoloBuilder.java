@@ -30,6 +30,8 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.joml.Vector3f; // <-- NEU
+
 public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
 
     private enum ViewerMode { ONLY_PLAYER, EVERYONE }
@@ -41,6 +43,9 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
     private String billboard = "fixed";
     private boolean seeThrough = false;
     private boolean shadow = false;
+
+    // NEU: Scale (standard 1,1,1)
+    private Vector scale = new Vector(1, 1, 1);
 
     private ViewerMode viewerMode = ViewerMode.EVERYONE;
     private Player onlyViewer;
@@ -71,7 +76,18 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
     @Override public HoloBuilder seeThrough(boolean v) { this.seeThrough = v; return this; }
     @Override public HoloBuilder shadow(boolean v) { this.shadow = v; return this; }
     @Override public HoloBuilder textOpacity(byte opacity) { return this; }
-    @Override public HoloBuilder scale(Vector s) { return this; }
+
+    // NEU: Implementierung von scale(...)
+    @Override
+    public HoloBuilder scale(Vector s) {
+        if (s == null) {
+            this.scale = new Vector(1, 1, 1);
+        } else {
+            this.scale = s.clone();
+        }
+        return this;
+    }
+
     @Override public HoloBuilder viewRange(Integer blocks) { return this; }
 
     @Override
@@ -115,7 +131,8 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
                 backgroundArgb == null ? 0x00000000 : backgroundArgb,
                 lineWidth == null ? 200 : lineWidth,
                 billboard,
-                attachTo
+                attachTo,
+                scale // <-- NEU
         );
 
         if (viewerMode == ViewerMode.ONLY_PLAYER && onlyViewer != null && onlyViewer.isOnline()) {
@@ -142,6 +159,9 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
         private final String billboard;
         private final Entity attachTo;
 
+        // NEU: Scale pro Hologram
+        private Vector scale;
+
         private final Set<UUID> visibleFor = new HashSet<>();
         private final Accessors accessors;
 
@@ -153,7 +173,8 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
                               int backgroundArgb,
                               int lineWidth,
                               String billboard,
-                              Entity attachTo) {
+                              Entity attachTo,
+                              Vector scale) { // <-- NEU
             this.nmsLevel = nmsLevel;
             this.baseLoc = baseLoc;
             this.lines = lines;
@@ -163,6 +184,7 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
             this.lineWidth = lineWidth;
             this.billboard = billboard;
             this.attachTo = attachTo;
+            this.scale = (scale == null ? new Vector(1, 1, 1) : scale.clone());
             this.accessors = Accessors.resolve(nmsLevel);
         }
 
@@ -293,6 +315,17 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
                 values.add(SynchedEntityData.DataValue.create((EntityDataAccessor) accessors.textBackgroundColor, backgroundArgb));
             }
 
+            // NEU: Scale (Display.DATA_SCALE_ID – org.joml.Vector3f)
+            if (accessors.displayScale != null && scale != null) {
+                Vector s = this.scale;
+                Vector3f v = new Vector3f(
+                        (float) s.getX(),
+                        (float) s.getY(),
+                        (float) s.getZ()
+                );
+                values.add(SynchedEntityData.DataValue.create((EntityDataAccessor) accessors.displayScale, v));
+            }
+
             return new ClientboundSetEntityDataPacket(id, values);
         }
 
@@ -330,14 +363,19 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
         final EntityDataAccessor<?> textLineWidth;
         final EntityDataAccessor<?> textBackgroundColor;
 
+        // NEU: Scale-Accessor
+        final EntityDataAccessor<?> displayScale;
+
         private Accessors(EntityDataAccessor<?> displayBillboard,
                           EntityDataAccessor<?> textText,
                           EntityDataAccessor<?> textLineWidth,
-                          EntityDataAccessor<?> textBackgroundColor) {
+                          EntityDataAccessor<?> textBackgroundColor,
+                          EntityDataAccessor<?> displayScale) { // <-- NEU
             this.displayBillboard = displayBillboard;
             this.textText = textText;
             this.textLineWidth = textLineWidth;
             this.textBackgroundColor = textBackgroundColor;
+            this.displayScale = displayScale;
         }
 
         static Accessors resolve(Level level) {
@@ -347,6 +385,7 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
             EntityDataAccessor<?> txt = null;
             EntityDataAccessor<?> lw = null;
             EntityDataAccessor<?> bg = null;
+            EntityDataAccessor<?> sc = null; // <-- NEU
 
             if (sample != null) {
                 Class<?> current = sample.getClass();
@@ -373,6 +412,11 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
                             }
                             if (bg == null && name.contains("background")) {
                                 bg = (EntityDataAccessor<?>) v;
+                                continue;
+                            }
+                            // NEU: DATA_SCALE_ID o.Ä.
+                            if (sc == null && name.contains("scale")) {
+                                sc = (EntityDataAccessor<?>) v;
                             }
                         } catch (Throwable ignored) {}
                     }
@@ -384,7 +428,7 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
                 if (txt == null) txt = firstAccessorOf(sample, "text");
             }
 
-            return new Accessors(bill, txt, lw, bg);
+            return new Accessors(bill, txt, lw, bg, sc);
         }
 
         private static Display.TextDisplay newTextDisplay(Level level) {

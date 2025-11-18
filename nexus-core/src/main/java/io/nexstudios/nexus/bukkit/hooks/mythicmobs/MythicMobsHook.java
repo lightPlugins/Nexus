@@ -1,12 +1,8 @@
 package io.nexstudios.nexus.bukkit.hooks.mythicmobs;
 
-import io.lumine.mythic.api.MythicPlugin;
 import io.lumine.mythic.api.exceptions.InvalidMobTypeException;
-import io.lumine.mythic.api.mobs.MythicMob;
-import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import io.lumine.mythic.bukkit.events.MythicMobDeathEvent;
-import io.lumine.mythic.bukkit.events.MythicMobInteractEvent;
 import io.lumine.mythic.core.mobs.ActiveMob;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import org.bukkit.Location;

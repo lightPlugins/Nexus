@@ -32,6 +32,9 @@ dependencies {
     compileOnly("com.bgsoftware:SuperiorSkyblockAPI:2025.1")
     compileOnly("gg.auroramc:Aurora:2.3.4")
     compileOnly("gg.auroramc:AuroraCollections:1.5.1")
+    compileOnly("com.willfp:eco:6.77.2")
+    compileOnly("com.willfp:EcoSkills:3.67.0")
+    compileOnly("com.willfp:EcoItems:5.66.0")
 
     compileOnly("redis.clients:jedis:5.2.0")
     compileOnly("com.zaxxer:HikariCP:6.3.0")
@@ -41,8 +44,6 @@ dependencies {
     compileOnly(fileTree("${rootDir}/libs") {
         include("*.jar")
     })
-
-    compileOnly("com.willfp:eco:6.76.2")
 
 
 }

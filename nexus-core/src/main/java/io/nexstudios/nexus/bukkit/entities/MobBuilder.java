@@ -25,6 +25,7 @@ public interface MobBuilder {
     MobBuilder noDamageTicks(int noDamageTicks);
     MobBuilder aggressive(boolean aggressive);
     MobBuilder baby(boolean baby);
+    MobBuilder disableDrops(boolean disableDrops);
 
     MobBuilder main(ItemStack main);
     MobBuilder off(ItemStack main);
