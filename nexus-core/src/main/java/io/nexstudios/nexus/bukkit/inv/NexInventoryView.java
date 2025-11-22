@@ -212,6 +212,7 @@ public class NexInventoryView {
         NexItemConfig prev = nav.get("previous-page");
         NexItemConfig next = nav.get("next-page");
         NexItemConfig close = nav.get("close");
+        NexItemConfig back = nav.get("back");
 
         NexPageSource ps = inv.pageSourceFor(bodyModels.size());
         boolean hasPrev = pageIndex > 0;
@@ -233,6 +234,12 @@ public class NexInventoryView {
             placeStaticItem(close, "navigation:close", (e, ctx) -> {
                 player.closeInventory();
                 fireNavigationCustom("close", e, ctx);
+            });
+        }
+
+        if (back != null) {
+            placeStaticItem(back, "navigation:back", (e, ctx) -> {
+                fireNavigationCustom("back", e, ctx);
             });
         }
     }

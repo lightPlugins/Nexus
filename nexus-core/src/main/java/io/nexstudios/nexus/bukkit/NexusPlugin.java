@@ -4,10 +4,7 @@ import co.aikar.commands.PaperCommandManager;
 import com.google.common.collect.ImmutableList;
 import com.zaxxer.hikari.HikariDataSource;
 import io.nexstudios.nexus.bukkit.actions.ActionFactory;
-import io.nexstudios.nexus.bukkit.command.InvOpenCommand;
-import io.nexstudios.nexus.bukkit.command.ReloadCommand;
-import io.nexstudios.nexus.bukkit.command.StatCommand;
-import io.nexstudios.nexus.bukkit.command.SwitchLanguage;
+import io.nexstudios.nexus.bukkit.command.*;
 import io.nexstudios.nexus.bukkit.conditions.ConditionFactory;
 import io.nexstudios.nexus.bukkit.database.AbstractDatabase;
 import io.nexstudios.nexus.bukkit.database.PooledDatabase;
@@ -30,6 +27,7 @@ import io.nexstudios.nexus.bukkit.hologram.NexHoloService;
 import io.nexstudios.nexus.bukkit.hooks.*;
 import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
 import io.nexstudios.nexus.bukkit.hooks.auroracollections.AuroraCollectionsHook;
+import io.nexstudios.nexus.bukkit.hooks.itemsadder.ItemsAdderHook;
 import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
 import io.nexstudios.nexus.bukkit.hooks.worldguard.WorldGuardHook;
 import io.nexstudios.nexus.bukkit.indicator.DamageIndicator;
@@ -98,6 +96,7 @@ public final class NexusPlugin extends JavaPlugin {
     public AuraSkillsHook auraSkillsHook;
     public AuroraCollectionsHook auroraCollectionsHook;
     public WorldGuardHook worldGuardHook;
+    public ItemsAdderHook itemsAdderHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -372,6 +371,11 @@ public final class NexusPlugin extends JavaPlugin {
             nexusLogger.info("<yellow>AuroraCollections<reset> hook registered successfully.");
         }
 
+        if(getServer().getPluginManager().getPlugin("ItemsAdder") != null) {
+            itemsAdderHook = new ItemsAdderHook(this);
+            nexusLogger.info("<yellow>ItemsAdder<reset> hook registered successfully.");
+        }
+
         // Check if Vault is installed and register the hook mythicMobsHook
         if(getServer().getPluginManager().getPlugin("Vault") != null) {
             vaultHook = new VaultHook(this, nexusLogger);
@@ -404,6 +408,7 @@ public final class NexusPlugin extends JavaPlugin {
         commandManager.registerCommand(new SwitchLanguage());
         commandManager.registerCommand(new StatCommand());
         commandManager.registerCommand(new InvOpenCommand());
+        commandManager.registerCommand(new ItemsAdderCommand());
         int size = commandManager.getRegisteredRootCommands().size();
         nexusLogger.info("Successfully registered " + size  + " command(s).");
     }

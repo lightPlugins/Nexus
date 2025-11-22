@@ -23,7 +23,7 @@ public final class InvConfigLoader {
         Map<String, NexItemConfig> navigation = new HashMap<>();
         // Variante A: Liste unter content.navigation
         if (cfg.isList("content.navigation")) {
-            List<Map<?, ?>> navList = (List<Map<?, ?>>) cfg.getMapList("content.navigation");
+            List<Map<?, ?>> navList = cfg.getMapList("content.navigation");
             for (Map<?, ?> obj : navList) {
                 NexItemConfig item = parseItemConfigFromMap("navigation", obj);
                 if (item != null && item.id != null && !item.id.isBlank()) {
@@ -32,7 +32,7 @@ public final class InvConfigLoader {
             }
         } else {
             // Variante B: Schlüsselstruktur content.navigation.close / previous-page / next-page
-            for (String navId : List.of("close", "previous-page", "next-page")) {
+            for (String navId : List.of("close", "previous-page", "next-page", "back")) {
                 String base = "content.navigation." + navId;
                 if (cfg.contains(base)) {
                     NexItemConfig item = parseItemConfig(navId, "navigation", cfg, base);
