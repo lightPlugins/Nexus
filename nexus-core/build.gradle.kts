@@ -12,6 +12,7 @@ repositories {
     maven("https://repo.auxilor.io/repository/maven-public/")
     maven("https://maven.enginehub.org/repo/")
     maven("https://repo.bg-software.com/repository/api/")
+    maven("https://maven.devs.beer/")
     maven("https://repo.auroramc.gg/releases/")
 }
 
@@ -30,11 +31,12 @@ dependencies {
     compileOnly("dev.aurelium:auraskills-api-bukkit:2.3.6")
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.14")
     compileOnly("com.bgsoftware:SuperiorSkyblockAPI:2025.1")
-    compileOnly("gg.auroramc:Aurora:2.3.4")
-    compileOnly("gg.auroramc:AuroraCollections:1.5.1")
+    compileOnly("gg.auroramc:Aurora:2.4.2")
+    compileOnly("gg.auroramc:AuroraCollections:1.5.7")
     compileOnly("com.willfp:eco:6.77.2")
     compileOnly("com.willfp:EcoSkills:3.67.0")
     compileOnly("com.willfp:EcoItems:5.66.0")
+    compileOnly("dev.lone:api-itemsadder:4.0.10")
 
     compileOnly("redis.clients:jedis:5.2.0")
     compileOnly("com.zaxxer:HikariCP:6.3.0")
