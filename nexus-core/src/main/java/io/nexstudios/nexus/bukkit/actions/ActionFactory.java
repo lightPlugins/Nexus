@@ -3,6 +3,7 @@ package io.nexstudios.nexus.bukkit.actions;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.actions.handler.*;
 import lombok.Getter;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -73,6 +74,40 @@ public class ActionFactory {
             try {
                 // Führe die Aktion aus
                 action.execute(player, actionData, targetLocation);
+            } catch (Exception e) {
+                // Fehler beim Ausführen der Aktion abfangen und protokollieren
+                NexusPlugin.nexusLogger.error("Failed to execute action: " + actionId);
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void executeActions(Player player, @Nullable Location targetLocation, List<Map<String, Object>> actions, TagResolver tagResolver) {
+
+        if (actions == null || actions.isEmpty()) {
+            return;
+        }
+
+        // Hole die ActionFactory vom Plugin
+        ActionFactory actionFactory = NexusPlugin.getInstance().getActionFactory();
+
+        for (Map<String, Object> actionDataMap : actions) {
+            String actionId = (String) actionDataMap.get("id");
+            NexusAction action = actionFactory.getAction(actionId);
+
+            // Überprüfen, ob die Aktion registriert ist
+            if (action == null) {
+                NexusPlugin.nexusLogger.warning("Unknown action: " + actionId + " in Action Section");
+                continue;
+            }
+
+            // Erstelle ein ActionData-Objekt basierend auf den YAML-Daten
+            ActionData actionData = new ActionData();
+            actionData.getData().putAll(actionDataMap);
+
+            try {
+                // Führe die Aktion aus
+                action.execute(player, actionData, targetLocation, tagResolver);
             } catch (Exception e) {
                 // Fehler beim Ausführen der Aktion abfangen und protokollieren
                 NexusPlugin.nexusLogger.error("Failed to execute action: " + actionId);

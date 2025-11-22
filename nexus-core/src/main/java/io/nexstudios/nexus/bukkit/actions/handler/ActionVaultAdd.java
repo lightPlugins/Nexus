@@ -9,6 +9,7 @@ import io.nexstudios.nexus.bukkit.actions.NexusAction;
 import io.nexstudios.nexus.bukkit.hooks.EcoSkillsHook;
 import io.nexstudios.nexus.bukkit.utils.NexusStringMath;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Location;
@@ -113,7 +114,12 @@ public class ActionVaultAdd implements NexusAction {
 
     @Override
     public void execute(Player player, ActionData data, Location targetLocation, Map<String, Object> params) {
+        execute(player, data, targetLocation);
+    }
 
+    @Override
+    public void execute(Player player, ActionData data, Location location, TagResolver tagResolver) {
+        execute(player, data, location);
     }
 
     private int amountMultiplier(String expression, Player player) {
