@@ -43,53 +43,7 @@ public class SwitchLanguage extends BaseCommand {
     public void onLanguageSwitch(Player player, String language) {
 
         NexusPlugin.getInstance().getNexusLanguage().selectLanguage(player.getUniqueId(), language);
-
         TagResolver tagResolver = Placeholder.parsed("nex_language", language);
         NexusPlugin.getInstance().messageSender.send(player, "general.switch-language", tagResolver);
-
-        ItemStack item = NexServices.newItemBuilder()
-                .material(Material.DIAMOND_SWORD)
-                .stackSize(99)
-                .amount(1)
-                .displayName(Component.text("<red>Example Item"))
-                .lore(List.of(
-                        Component.text("This is an example item"),
-                        Component.text("PlaceholderAPI support %player_name%")
-                ))
-                .enchantments(Map.of(
-                        Enchantment.SHARPNESS, 5,
-                        Enchantment.UNBREAKING, 3
-                ))
-                .hideFlags(Set.of(
-                        ItemHideFlag.HIDE_ENCHANTS,
-                        ItemHideFlag.HIDE_ATTRIBUTES
-                ))
-                // Attribute: name, attributeKey, amount, operation, slot
-                .attributes(
-                        new ItemAttributeSpec(
-                                "custom_attack_speed",
-                                NamespacedKey.fromString("minecraft:attack_speed"),
-                                10.0,
-                                AttributeOperation.ADD_NUMBER,
-                                Set.of(EquipmentSlot.HAND, EquipmentSlot.OFF_HAND)
-                        ),
-                        new ItemAttributeSpec(
-                                "custom_attack_damage",
-                                NamespacedKey.fromString("minecraft:attack_damage"),
-                                20.0,
-                                AttributeOperation.ADD_NUMBER,
-                                Set.of(EquipmentSlot.HAND, EquipmentSlot.OFF_HAND)
-                        )
-                )
-
-                .modelData(1337)
-                //.tooltipStyle(NamespacedKey.fromString("minecraft:legendary"))
-                //.itemModel(NamespacedKey.fromString("my_pack:items/sword_01"))
-                .unbreakable(false)
-                .build();
-
-        player.getInventory().addItem(item);
-
     }
-
 }

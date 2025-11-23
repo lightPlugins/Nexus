@@ -1,4 +1,4 @@
-package io.nexstudios.nexus.bukkit.actions.handler;
+package io.nexstudios.nexus.bukkit.actions.impl;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.actions.ActionData;

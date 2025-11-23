@@ -20,7 +20,6 @@ public class ParticleBuilderImpl implements ParticleBuilder {
             return;
         }
 
-        // Erstelle ein neues `ClientboundLevelParticlesPacket`
         ClientboundLevelParticlesPacket packet = new ClientboundLevelParticlesPacket(
                 ParticleTypes.FLAME,  // Partikeltyp (Flamme)
                 true,                 // Override Partikel-Limiter (Clientseite)

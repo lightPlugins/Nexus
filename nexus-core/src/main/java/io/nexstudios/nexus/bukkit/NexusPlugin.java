@@ -105,7 +105,6 @@ public final class NexusPlugin extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        // Plugin startup logic
         instance = this;
         NexServices.init(this);
         nexusLogger = new NexusLogger("<reset>[<yellow>Nexus<reset>]", true, 99, "<yellow>");
@@ -128,7 +127,7 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger.info("Register internal and third party placeholders...");
         NexusPlaceholderBootstrap.registerNexusPlaceholders(this);
         int internalPlaceholders = NexusPlaceholderRegistry.countKeys("nexus");
-        nexusLogger.info("Registered <yellow>" + internalPlaceholders + "<reset> internal placeholders.");
+        nexusLogger.info("Registered <yellow>" + internalPlaceholders + "<reset> internal nexus placeholders.");
         commandManager = new PaperCommandManager(this);
         actionFactory = new ActionFactory();
         conditionFactory = new ConditionFactory();
@@ -142,8 +141,8 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger.info("Initiate Nexus effect system ...");
         nexusLogger.info("Register built-in trigger and filter types");
         registerBuiltInTriggerAndFilterTypes();
-        nexusLogger.warning("Register Nexus effect bindings from testing config. This should be removed in production!");
-        NexusEffectsApi.registerBindingsFromSection(this, settingsFile.getConfig());
+        //nexusLogger.warning("Register Nexus effect bindings from testing config. This should be removed in production!");
+        //NexusEffectsApi.registerBindingsFromSection(this, settingsFile.getConfig());
         logEffectSystemStats();
         registerDatabaseService();
 
@@ -162,9 +161,7 @@ public final class NexusPlugin extends JavaPlugin {
         }
 
         nexHoloService = new NexHoloService(this);
-
-
-        nexusLogger.info("Nexus is enabled");
+        nexusLogger.info("Nexus successfully enabled");
     }
 
     public void registerLevelService() {
@@ -197,7 +194,6 @@ public final class NexusPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
 
-        // Level-System geordnet stoppen
         nexusLogger.info("Write last backups in database ...");
         try {
             NexLevel.shutdown();
@@ -213,7 +209,6 @@ public final class NexusPlugin extends JavaPlugin {
             damageIndicator.shutdown();
         }
 
-        // DB sauber schließen
         if (abstractDatabase != null) {
             try {
                 abstractDatabase.close();
@@ -232,8 +227,6 @@ public final class NexusPlugin extends JavaPlugin {
     public void onReload() {
         loadNexusFiles();
         messageSender = new MessageSender(nexusLanguage);
-        //loadInventories();
-        //PlayerVariables.set(UUID.randomUUID(), "stat-level", "50");
         if (damageIndicator != null) {
             damageIndicator.reloadFromConfig();
         }
@@ -314,9 +307,7 @@ public final class NexusPlugin extends JavaPlugin {
     private void registerDatabaseService() {
         if (this.abstractDatabase instanceof PooledDatabase pooled) {
             try {
-                // DataSource referenzieren (optional lokal halten)
                 this.hikariDataSource = (HikariDataSource) pooled.getDataSource();
-                // Service erzeugen und registrieren
                 this.nexusDatabaseService = new DefaultNexusDatabaseService(pooled.getDataSource());
                 NexusDatabaseBukkitRegistrar.register(this, this.nexusDatabaseService);
                 nexusLogger.info("NexusDatabaseService registered successfully.");
@@ -376,17 +367,17 @@ public final class NexusPlugin extends JavaPlugin {
             nexusLogger.info("<yellow>ItemsAdder<reset> hook registered successfully.");
         }
 
-        // Check if Vault is installed and register the hook mythicMobsHook
-        if(getServer().getPluginManager().getPlugin("Vault") != null) {
-            vaultHook = new VaultHook(this, nexusLogger);
-            if (vaultHook.getEconomy() != null) {
-                nexusLogger.info("<yellow>Vault Economy<reset> hook registered successfully.");
-            } else {
-                nexusLogger.warning("Vault Economy hook could not be registered. Economy provider is null.");
-            }
-        } else {
-            nexusLogger.warning("Vault is not installed or enabled. Vault hook is not be available.");
-        }
+        // Check if Vault is installed and register
+//        if(getServer().getPluginManager().getPlugin("Vault") != null) {
+//            vaultHook = new VaultHook(this, nexusLogger);
+//            if (vaultHook.getEconomy() != null) {
+//                nexusLogger.info("<yellow>Vault Economy<reset> hook registered successfully.");
+//            } else {
+//                nexusLogger.warning("Vault Economy hook could not be registered. Economy provider is null.");
+//            }
+//        } else {
+//            nexusLogger.warning("Vault is not installed or enabled. Vault hook is not be available.");
+//        }
     }
 
     public FileConfiguration getInventoryFileByName(String name) {
@@ -406,9 +397,6 @@ public final class NexusPlugin extends JavaPlugin {
         commandCompletions();
         commandManager.registerCommand(new ReloadCommand());
         commandManager.registerCommand(new SwitchLanguage());
-        commandManager.registerCommand(new StatCommand());
-        commandManager.registerCommand(new InvOpenCommand());
-        commandManager.registerCommand(new ItemsAdderCommand());
         int size = commandManager.getRegisteredRootCommands().size();
         nexusLogger.info("Successfully registered " + size  + " command(s).");
     }
@@ -422,9 +410,9 @@ public final class NexusPlugin extends JavaPlugin {
     }
 
     private void registerBuiltInTriggerAndFilterTypes() {
-        // Trigger-Typen
+        // Trigger-Types
         NexusEffectsApi.registerTriggerType("entity-damage");
-        // NexusEffectsApi.registerTriggerType("kill-entity");
+        //NexusEffectsApi.registerTriggerType("kill-entity");
         NexusEffectsApi.registerFilterType("match-item-hand");
         NexusEffectsApi.registerFilterType("match-item-inventory");
         NexusEffectsApi.registerFilterType("has-permission");

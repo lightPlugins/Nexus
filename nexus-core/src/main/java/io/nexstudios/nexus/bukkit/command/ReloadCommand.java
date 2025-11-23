@@ -43,38 +43,4 @@ public class ReloadCommand extends BaseCommand {
         NexusPlugin.getInstance().messageSender.send(sender, "general.reload");
 
     }
-
-    // Just for testing !!!
-    // TODO -> Remove this command
-    @Subcommand("spawn")
-    @CommandCompletion("@inventories")
-    @CommandPermission("nexus.command.admin.spawn")
-    @Description("Reloads the plugin configuration and settings.")
-    public void onMobSpawn(CommandSender sender) {
-
-        Player player = (Player) sender;
-        Location location = player.getLocation();
-
-        LivingEntity le = NexServices.newMobBuilder()
-                .entity(EntityType.COW)
-                .damage(1)
-                .aggressive(true)
-                .baby(false)
-                .speed(0.2)
-                .spawn(location, player);
-
-        NexHologramService.Handle papiHolo = NexusPlugin.getInstance().nexHoloService.register(
-                new NexHologramService.Spec()
-                        .base(player.getLocation().add(0, 2.5, 0))
-                        .perPlayer(p -> {
-                            String name = p.getName();
-                            return List.of(
-                                    Component.text("Hi " + name),
-                                    Component.text("Time: " + p.getWorld().getTime())
-                            );
-                        })
-                        .refreshTicks(20)
-                        .attachTo(le)
-        );
-    }
 }

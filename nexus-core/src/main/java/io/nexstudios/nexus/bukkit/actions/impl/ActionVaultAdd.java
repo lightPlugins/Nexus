@@ -1,4 +1,4 @@
-package io.nexstudios.nexus.bukkit.actions.handler;
+package io.nexstudios.nexus.bukkit.actions.impl;
 
 import com.willfp.ecoskills.stats.Stat;
 import io.lumine.mythic.lib.api.player.MMOPlayerData;

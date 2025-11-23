@@ -1,4 +1,4 @@
-package io.nexstudios.internal.nms.v1_21_10.packets;
+package io.nexstudios.internal.nms.v1_21_9.packets;
 
 import io.nexstudios.nexus.bukkit.hologram.HoloBuilder;
 import io.nexstudios.nexus.bukkit.hologram.HoloBuilderFactory;
@@ -11,7 +11,6 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.Display.TextDisplay;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
@@ -129,7 +128,7 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
                 lineWidth == null ? 200 : lineWidth,
                 billboard,
                 attachTo,
-                scale 
+                scale
         );
 
         if (viewerMode == ViewerMode.ONLY_PLAYER && onlyViewer != null && onlyViewer.isOnline()) {
@@ -156,7 +155,6 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
         private final String billboard;
         private final Entity attachTo;
 
-        // NEU: Scale pro Hologram
         private Vector scale;
 
         private final Set<UUID> visibleFor = new HashSet<>();
@@ -171,7 +169,7 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
                               int lineWidth,
                               String billboard,
                               Entity attachTo,
-                              Vector scale) { 
+                              Vector scale) {
             this.nmsLevel = nmsLevel;
             this.baseLoc = baseLoc;
             this.lines = lines;
@@ -312,7 +310,7 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
                 values.add(SynchedEntityData.DataValue.create((EntityDataAccessor) accessors.textBackgroundColor, backgroundArgb));
             }
 
-            //  Scale (Display.DATA_SCALE_ID – org.joml.Vector3f)
+            // Scale (Display.DATA_SCALE_ID – org.joml.Vector3f)
             if (accessors.displayScale != null && scale != null) {
                 Vector s = this.scale;
                 Vector3f v = new Vector3f(
@@ -360,14 +358,14 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
         final EntityDataAccessor<?> textLineWidth;
         final EntityDataAccessor<?> textBackgroundColor;
 
-        // NEU: Scale-Accessor
+        // Scale-Accessor
         final EntityDataAccessor<?> displayScale;
 
         private Accessors(EntityDataAccessor<?> displayBillboard,
                           EntityDataAccessor<?> textText,
                           EntityDataAccessor<?> textLineWidth,
                           EntityDataAccessor<?> textBackgroundColor,
-                          EntityDataAccessor<?> displayScale) { 
+                          EntityDataAccessor<?> displayScale) {
             this.displayBillboard = displayBillboard;
             this.textText = textText;
             this.textLineWidth = textLineWidth;
@@ -376,13 +374,13 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
         }
 
         static Accessors resolve(Level level) {
-            Display.TextDisplay sample = newTextDisplay(level);
+            TextDisplay sample = newTextDisplay(level);
 
             EntityDataAccessor<?> bill = null;
             EntityDataAccessor<?> txt = null;
             EntityDataAccessor<?> lw = null;
             EntityDataAccessor<?> bg = null;
-            EntityDataAccessor<?> sc = null; 
+            EntityDataAccessor<?> sc = null;
 
             if (sample != null) {
                 Class<?> current = sample.getClass();
@@ -428,7 +426,7 @@ public final class PaperHoloBuilder implements HoloBuilder, HoloBuilderFactory {
             return new Accessors(bill, txt, lw, bg, sc);
         }
 
-        private static Display.TextDisplay newTextDisplay(Level level) {
+        private static TextDisplay newTextDisplay(Level level) {
             try {
                 Constructor<TextDisplay> c = TextDisplay.class.getDeclaredConstructor(EntityType.class, Level.class);
                 c.setAccessible(true);

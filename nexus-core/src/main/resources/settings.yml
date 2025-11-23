@@ -28,10 +28,10 @@ redis:
   ssl: false
 
 damage-indicator:
-  enable: true
+  enable: false
   conditions: []
-  fraction-digits: 2
-  life-time-ticks: 20
+  fraction-digits: 0
+  life-time-ticks: 15
   format:
     normal: <red>#damage#
     crit: <rainbow>#damage#

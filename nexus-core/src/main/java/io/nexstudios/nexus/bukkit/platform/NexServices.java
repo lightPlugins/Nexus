@@ -21,7 +21,7 @@ public final class NexServices {
     public static void init() {
         if (REGISTRY != null) return;
 
-        String mcVersion = Bukkit.getMinecraftVersion(); // zB. "1.21.8"
+        String mcVersion = Bukkit.getMinecraftVersion();
         String[] candidates = getCandidates(mcVersion);
 
         VersionedServiceRegistry reg = new VersionedServiceRegistry();
@@ -38,7 +38,7 @@ public final class NexServices {
                 REGISTRY = reg;
                 return;
             } catch (Throwable t) {
-                last = t; // weiter zum nächsten Kandidaten
+                last = t;
             }
         }
 
@@ -47,37 +47,26 @@ public final class NexServices {
                 last
         );
     }
-    // ... existing code ...
-    /**
-     * Bequeme Initialisierung inkl. versionsspezifischer Runtime-Hooks (z. B. für Hologram-Builder).
-     * Rufe diese Variante in deinem onEnable(plugin) auf.
-     */
+
     public static void init(Plugin plugin) {
         init();
         initRuntime(plugin);
     }
 
-    /**
-     * Führt optionale Runtime-Initialisierung in der jeweiligen NMS-Implementierung aus.
-     * Aktuell: versucht PaperHoloBuilder.initPlugin(plugin) aufzurufen (versionsneutral via Reflection).
-     */
     public static void initRuntime(Plugin plugin) {
         if (plugin == null) return;
         try {
-            // 1) Über die tatsächlich registrierte HoloBuilderFactory die Implementierung finden
             HoloBuilderFactory factory = get(HoloBuilderFactory.class);
             Class<?> impl = factory.getClass();
             try {
                 var m = impl.getDeclaredMethod("initPlugin", Plugin.class);
                 m.setAccessible(true);
-                m.invoke(null, plugin); // statische Methode
+                m.invoke(null, plugin);
                 return;
-            } catch (NoSuchMethodException ignored) {
-                // kein initPlugin in dieser Klasse -> weiter mit Fallback
-            }
+            } catch (NoSuchMethodException ignored) {}
 
-            // 2) Fallback: anhand der aktiven MC-Version Kandidatenpfade bilden und initPlugin suchen
-            String mcVersion = Bukkit.getMinecraftVersion(); // zB. "1.21.8"
+            // fallbock
+            String mcVersion = Bukkit.getMinecraftVersion();
             String[] parts = mcVersion.split("\\.");
             String major = parts.length > 0 ? parts[0] : "1";
             String minor = parts.length > 1 ? parts[1] : "21";
@@ -94,15 +83,10 @@ public final class NexServices {
                     m.setAccessible(true);
                     m.invoke(null, plugin);
                     return;
-                } catch (Throwable ignored) {
-                    // nächster Kandidat
-                }
+                } catch (Throwable ignored) { }
             }
-        } catch (Throwable ignored) {
-            // weich fehlschlagen: Features arbeiten weiter, ggf. ohne Scheduler-Fallbacks
-        }
+        } catch (Throwable ignored) { }
     }
-    // ... existing code ...
 
     private static String [] getCandidates(String mcVersion) {
         String[] parts = mcVersion.split("\\.");
@@ -110,7 +94,6 @@ public final class NexServices {
         String minor = parts.length > 1 ? parts[1] : "21";
         String patch = parts.length > 2 ? parts[2] : "0";
 
-        // Kandidaten: ohne Präfix, mit v-Präfix, mit R-Präfix
         String pkgPlain = "io.nexstudios.internal.nms." + major + "_" + minor + "_" + patch;
         String pkgV     = "io.nexstudios.internal.nms.v" + major + "_" + minor + "_" + patch;
         String pkgVR    = "io.nexstudios.internal.nms.v" + major + "_" + minor + "_R" + patch;
@@ -136,7 +119,6 @@ public final class NexServices {
         return instance;
     }
 
-    // Convenience: ItemBuilder
     public static ItemBuilder newItemBuilder() {
         ItemBuilderFactory factory = get(ItemBuilderFactory.class);
         ItemBuilder builder = factory.create();

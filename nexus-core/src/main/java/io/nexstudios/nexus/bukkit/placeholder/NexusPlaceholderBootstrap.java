@@ -13,7 +13,6 @@ import java.util.Set;
  * Convenience bootstrap to register example "nexus" placeholders.
  * Call this from your plugin's onEnable().
  *
- * Logging and comments are in English.
  */
 public final class NexusPlaceholderBootstrap {
 
