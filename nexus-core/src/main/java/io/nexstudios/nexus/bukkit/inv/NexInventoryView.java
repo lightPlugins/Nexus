@@ -34,6 +34,9 @@ public class NexInventoryView {
     private Inventory top; // not final: properly set during open
     private int pageIndex = 0;
 
+    @Setter
+    private String overrideTitleRaw;
+
     private List<Object> bodyModels = Collections.emptyList();
     private NexOnClick bodyClickHandler;
 
@@ -78,13 +81,48 @@ public class NexInventoryView {
     public Player player() { return player; }
 
     public void open() {
-        String rawTitle = inv.titleSupplier().apply(player);
+        String rawTitle;
+
+        // NEU: wenn ein Override gesetzt wurde, diesen verwenden
+        if (overrideTitleRaw != null && !overrideTitleRaw.isBlank()) {
+            rawTitle = overrideTitleRaw;
+        } else {
+            rawTitle = inv.titleSupplier().apply(player);
+        }
+
         Component titleComp = resolveTitle(rawTitle, inv.inventoryId(), player);
         this.top = Bukkit.createInventory(inv, inv.size(), titleComp);
         player.openInventory(this.top);
         NexInventoryManager.get().register(player.getUniqueId(), this);
         renderAll();
         startAutoUpdate();
+    }
+
+    public void applyTitleOverrideNow() {
+        String rawTitle;
+        if (overrideTitleRaw != null && !overrideTitleRaw.isBlank()) {
+            rawTitle = overrideTitleRaw;
+        } else {
+            rawTitle = inv.titleSupplier().apply(player);
+        }
+
+        Component titleComp = resolveTitle(rawTitle, inv.inventoryId(), player);
+
+        // Neues Top-Inventory mit gleichem Holder und Größe
+        Inventory newTop = Bukkit.createInventory(inv, inv.size(), titleComp);
+
+        // Inhalt übernehmen
+        if (this.top != null) {
+            for (int i = 0; i < inv.size(); i++) {
+                newTop.setItem(i, this.top.getItem(i));
+            }
+        }
+
+        this.top = newTop;
+        player.openInventory(this.top);
+
+        // View weiterhin beim Manager registriert lassen
+        NexInventoryManager.get().register(player.getUniqueId(), this);
     }
 
     private void startAutoUpdate() {
@@ -160,8 +198,14 @@ public class NexInventoryView {
     }
 
     public void nextPage() {
-        NexPageSource ps = inv.pageSourceFor(bodyModels.size());
-        int newIndex = ps.clampPage(pageIndex + 1);
+        // Aktive Body-Zone (Standard oder Override)
+        InvFillStrategy.BodyZone zone = (overrideZone != null ? overrideZone : inv.bodyZone());
+        int pageSize = Math.max(1, zone.slots.size());
+
+        int totalItems = bodyModels.size();
+        int totalPages = Math.max(1, (int) Math.ceil(totalItems / (double) pageSize));
+
+        int newIndex = Math.min(pageIndex + 1, totalPages - 1);
         if (newIndex != pageIndex) {
             pageIndex = newIndex;
             renderBodyOnly();
@@ -170,8 +214,13 @@ public class NexInventoryView {
     }
 
     public void prevPage() {
-        NexPageSource ps = inv.pageSourceFor(bodyModels.size());
-        int newIndex = ps.clampPage(pageIndex - 1);
+        InvFillStrategy.BodyZone zone = (overrideZone != null ? overrideZone : inv.bodyZone());
+        int pageSize = Math.max(1, zone.slots.size());
+
+        int totalItems = bodyModels.size();
+        int totalPages = Math.max(1, (int) Math.ceil(totalItems / (double) pageSize));
+
+        int newIndex = Math.max(pageIndex - 1, 0);
         if (newIndex != pageIndex) {
             pageIndex = newIndex;
             renderBodyOnly();
@@ -214,9 +263,32 @@ public class NexInventoryView {
         NexItemConfig close = nav.get("close");
         NexItemConfig back = nav.get("back");
 
-        NexPageSource ps = inv.pageSourceFor(bodyModels.size());
+        // Navigation-Slots komplett leeren (inkl. alter Deko)
+        for (NexItemConfig cfg : nav.values()) {
+            if (cfg == null || cfg.slots1b == null) continue;
+            for (Integer s1b : cfg.slots1b) {
+                int s0 = Math.max(0, s1b - 1);
+                if (s0 >= inv.size()) continue;
+
+                top.setItem(s0, null);
+                staticClickHandlers.remove(s0);
+                staticNamespaces.remove(s0);
+                staticPriorities.remove(s0);
+            }
+        }
+
+        // Aktive Body-Zone (Standard oder Override)
+        InvFillStrategy.BodyZone zone = (overrideZone != null ? overrideZone : inv.bodyZone());
+        int pageSize = Math.max(1, zone.slots.size());
+
+        int totalItems = bodyModels.size();
+        int totalPages = Math.max(1, (int) Math.ceil(totalItems / (double) pageSize));
+
+        if (pageIndex >= totalPages) pageIndex = totalPages - 1;
+        if (pageIndex < 0) pageIndex = 0;
+
         boolean hasPrev = pageIndex > 0;
-        boolean hasNext = pageIndex < (ps.totalPages() - 1);
+        boolean hasNext = pageIndex < (totalPages - 1);
 
         if (prev != null && hasPrev) {
             placeStaticItem(prev, "navigation:previous-page", (e, ctx) -> {
@@ -236,11 +308,27 @@ public class NexInventoryView {
                 fireNavigationCustom("close", e, ctx);
             });
         }
-
         if (back != null) {
             placeStaticItem(back, "navigation:back", (e, ctx) -> {
                 fireNavigationCustom("back", e, ctx);
             });
+        }
+
+        // Fehlt an einem Navigation-Slot ein Item, fülle ihn wieder mit der Deko
+        if (inv.decorationEnabled()) {
+            ItemStack deco = renderItemSpec(inv.decorationItemSpec(), null);
+            deco = NexServices.newItemBuilder().itemStack(deco).displayName(Component.text(" ")).build();
+
+            for (NexItemConfig cfg : nav.values()) {
+                if (cfg == null || cfg.slots1b == null) continue;
+                for (Integer s1b : cfg.slots1b) {
+                    int s0 = Math.max(0, s1b - 1);
+                    if (s0 >= inv.size()) continue;
+                    if (top.getItem(s0) == null) {
+                        top.setItem(s0, deco);
+                    }
+                }
+            }
         }
     }
 
@@ -406,12 +494,20 @@ public class NexInventoryView {
         int startRow = start0 / 9;
         int endRow   = end0   / 9;
 
-        int leftMargin = start0 % 9;
-        int rightCol   = 8 - leftMargin;
+        // KORRIGIERT: linke und rechte Spalte aus start-/end-Slot berechnen
+        int leftCol  = start0 % 9;
+        int rightCol = end0   % 9;
+
+        // Sicherstellen, dass leftCol <= rightCol
+        if (rightCol < leftCol) {
+            int tmp = leftCol;
+            leftCol = rightCol;
+            rightCol = tmp;
+        }
 
         List<Integer> slots0b = new ArrayList<>();
         for (int row = startRow; row <= endRow; row++) {
-            for (int col = leftMargin; col <= rightCol; col++) {
+            for (int col = leftCol; col <= rightCol; col++) {
                 int s0 = row * 9 + col;
                 if (s0 >= 0 && s0 < inv.size()) {
                     slots0b.add(s0);
@@ -421,7 +517,7 @@ public class NexInventoryView {
 
         this.overrideZone = new InvFillStrategy.BodyZone(
                 Math.max(1, endRow - startRow + 1),
-                Math.max(1, rightCol - leftMargin + 1),
+                Math.max(1, rightCol - leftCol + 1),
                 Collections.unmodifiableList(slots0b)
         );
         this.overrideAlignment = alignment;

@@ -71,6 +71,22 @@ public class NexMenuSession {
         return view;
     }
 
+    public NexMenuSession withRawTitle(String rawTitle) {
+        if (rawTitle == null || rawTitle.isBlank()) return this;
+
+        Runnable task = () -> {
+            ensureView();
+            view.setOverrideTitleRaw(rawTitle);
+            view.applyTitleOverrideNow();
+        };
+
+        if (opened && view != null) {
+            task.run();
+        } else {
+            preOpenTasks.add(task);
+        }
+        return this;
+    }
 
     void ensureView() {
         if (view == null) {
