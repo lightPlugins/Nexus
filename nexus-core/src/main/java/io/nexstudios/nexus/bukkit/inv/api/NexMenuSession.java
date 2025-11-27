@@ -100,13 +100,16 @@ public class NexMenuSession {
 
         Runnable task = () -> {
             ensureView();
-            // Bei bereits geöffneter View den Resolver setzen (Titeländerung ohne Refresh hängt von View-Implementierung ab)
+            // Resolver auf die View setzen
             view.setTitleTagResolver(titleResolver);
+            // NEU: Titel sofort mit Resolver neu anwenden
+            view.applyTitleOverrideNow();
         };
+
         if (opened && view != null) {
             task.run();
         } else {
-            // Falls noch nicht geöffnet, reicht das Setzen des Session-Felds; Task bleibt für den Fall, dass die View sofort verfügbar ist
+            // Falls noch nicht geöffnet, beim Open ausführen
             preOpenTasks.add(task);
         }
         return this;
@@ -148,6 +151,39 @@ public class NexMenuSession {
         preOpenTasks.add(() -> {
             ensureView();
             view.bindNavigation(idOrNull, handler);
+        });
+        return this;
+    }
+
+    public NexMenuSession updateRequiredItem(String id, TagResolver extraResolver) {
+        Objects.requireNonNull(id, "id");
+        Runnable task = () -> {
+            ensureView();
+            view.rerenderRequiredItem(id, extraResolver);
+        };
+
+        if (opened && view != null) {
+            task.run();
+        } else {
+            preOpenTasks.add(task);
+        }
+        return this;
+    }
+
+    public NexMenuSession updateSlotItem(int slot1b, UnaryOperator<ItemStack> transformer) {
+        Objects.requireNonNull(transformer, "transformer");
+        preOpenTasks.add(() -> {
+            ensureView();
+            view.updateSlotItem(slot1b, transformer);
+        });
+        return this;
+    }
+
+    public NexMenuSession setItem(int slot1b, ItemStack item, NexOnClick clickHandler) {
+        Objects.requireNonNull(item, "item");
+        preOpenTasks.add(() -> {
+            ensureView();
+            view.setExtraItem(slot1b, item, clickHandler);
         });
         return this;
     }

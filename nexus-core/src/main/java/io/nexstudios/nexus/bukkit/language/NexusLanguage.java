@@ -7,6 +7,7 @@ import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -99,6 +100,35 @@ public class NexusLanguage {
         return components;
     }
 
+    public List<Component> getTranslationList(UUID uuid, String path, boolean withPrefix, TagResolver extraResolver) {
+        String lang = getSelectedLanguage(uuid);
+        FileConfiguration languageConfig = loadedLanguages.get(lang);
+
+        if (languageConfig == null) {
+            NexusPlugin.nexusLogger.error(List.of(
+                    "Language configuration for " + lang + " not found.",
+                    "Using default language: english"
+            ));
+            languageConfig = loadedLanguages.get("english");
+        }
+
+        TagResolver resolver = (extraResolver != null) ? extraResolver : TagResolver.empty();
+        List<Component> components = new ArrayList<>();
+        if (languageConfig != null && languageConfig.contains(path)) {
+            List<String> translations = languageConfig.getStringList(path);
+            for (String translation : translations) {
+                String text = withPrefix ? (getPrefix(uuid) + " " + translation) : translation;
+                components.add(MiniMessage.miniMessage()
+                        .deserialize(text, resolver)
+                        .decoration(TextDecoration.ITALIC, false));
+            }
+        } else {
+            String fallback = withPrefix ? (getPrefix(uuid) + " " + path) : path;
+            components.add(Component.text(fallback).decoration(TextDecoration.ITALIC, false));
+        }
+        return components;
+    }
+
     public Component getTranslation(UUID uuid, String path, boolean withPrefix) {
         String lang = getSelectedLanguage(uuid);
 
@@ -155,6 +185,58 @@ public class NexusLanguage {
                     .decoration(TextDecoration.ITALIC, false);
         }
 
+    }
+
+    public Component getTranslation(UUID uuid, String path, boolean withPrefix, TagResolver extraResolver) {
+        String lang = getSelectedLanguage(uuid);
+
+        if (lang == null) {
+            NexusPlugin.nexusLogger.debug(List.of(
+                    "Language for UUID " + uuid + " not found.",
+                    "Using default language: english"
+            ), 3);
+            selectLanguage(uuid, "english");
+            lang = "english";
+        }
+
+        FileConfiguration languageConfig = loadedLanguages.get(lang);
+
+        if (languageConfig == null) {
+            NexusPlugin.nexusLogger.error(List.of(
+                    "Language configuration for " + lang + " not found.",
+                    "Using default language: english"
+            ));
+            languageConfig = loadedLanguages.get("english");
+
+            if (languageConfig == null) {
+                NexusPlugin.nexusLogger.error(List.of(
+                        "Default language configuration english.yml not found.",
+                        "This is a critical problem and should be reported",
+                        "to the developer: NexStudios"
+                ));
+                throw new IllegalArgumentException("english.yml -> language/configuration not found");
+            }
+        }
+
+        TagResolver resolver = (extraResolver != null) ? extraResolver : TagResolver.empty();
+
+        if (languageConfig.contains(path)) {
+            String translation = languageConfig.getString(path);
+            if (translation == null) {
+                NexusPlugin.nexusLogger.error(List.of(
+                        "Translation for path '" + path + "' in language '" + lang + "' is null.",
+                        "Using default translation: english.yml"
+                ));
+                return Component.text(path);
+            }
+            String text = withPrefix ? (getPrefix(uuid) + " " + translation) : translation;
+            return MiniMessage.miniMessage()
+                    .deserialize(text, resolver)
+                    .decoration(TextDecoration.ITALIC, false);
+        }
+
+        String fallback = withPrefix ? (getPrefix(uuid) + " " + path) : path;
+        return Component.text(fallback).decoration(TextDecoration.ITALIC, false);
     }
 
     public void selectLanguage(UUID uuid, String language) {

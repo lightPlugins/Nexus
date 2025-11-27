@@ -4,7 +4,6 @@ import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.inv.config.NexItemConfig;
 import io.nexstudios.nexus.bukkit.inv.fill.InvAlignment;
 import io.nexstudios.nexus.bukkit.inv.fill.InvFillStrategy;
-import io.nexstudios.nexus.bukkit.inv.pagination.NexPageSource;
 import io.nexstudios.nexus.bukkit.items.ItemBuilder;
 import io.nexstudios.nexus.bukkit.items.ItemHideFlag;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
@@ -26,6 +25,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import java.util.function.UnaryOperator;
 
 public class NexInventoryView {
 
@@ -40,7 +40,7 @@ public class NexInventoryView {
     private List<Object> bodyModels = Collections.emptyList();
     private NexOnClick bodyClickHandler;
 
-    // NEW: Per-model click handlers (absolute index -> handler)
+    // Per-model click handlers (absolute index -> handler)
     private List<NexOnClick> bodyHandlersByModelIndex = null;
 
     // Slot -> static click handler (navigation/required/custom/extra)
@@ -83,14 +83,13 @@ public class NexInventoryView {
     public void open() {
         String rawTitle;
 
-        // NEU: wenn ein Override gesetzt wurde, diesen verwenden
         if (overrideTitleRaw != null && !overrideTitleRaw.isBlank()) {
             rawTitle = overrideTitleRaw;
         } else {
             rawTitle = inv.titleSupplier().apply(player);
         }
 
-        Component titleComp = resolveTitle(rawTitle, inv.inventoryId(), player);
+        Component titleComp = resolveTitle(rawTitle, inv.inventoryId(), player, titleTagResolver);
         this.top = Bukkit.createInventory(inv, inv.size(), titleComp);
         player.openInventory(this.top);
         NexInventoryManager.get().register(player.getUniqueId(), this);
@@ -106,12 +105,9 @@ public class NexInventoryView {
             rawTitle = inv.titleSupplier().apply(player);
         }
 
-        Component titleComp = resolveTitle(rawTitle, inv.inventoryId(), player);
+        Component titleComp = resolveTitle(rawTitle, inv.inventoryId(), player, titleTagResolver);
 
-        // Neues Top-Inventory mit gleichem Holder und Größe
         Inventory newTop = Bukkit.createInventory(inv, inv.size(), titleComp);
-
-        // Inhalt übernehmen
         if (this.top != null) {
             for (int i = 0; i < inv.size(); i++) {
                 newTop.setItem(i, this.top.getItem(i));
@@ -120,9 +116,36 @@ public class NexInventoryView {
 
         this.top = newTop;
         player.openInventory(this.top);
-
-        // View weiterhin beim Manager registriert lassen
         NexInventoryManager.get().register(player.getUniqueId(), this);
+    }
+
+    private static Component resolveTitle(String raw,
+                                          String inventoryId,
+                                          Player player,
+                                          TagResolver resolver) {
+        if (raw == null || raw.isBlank()) {
+            return Component.text("Inventory");
+        }
+        String s = raw.trim();
+
+        // LANGUAGE-Titel
+        if (s.startsWith("#language:")) {
+            String path = languageTitlePath(s, inventoryId);
+            if (resolver != null) {
+                return nexusLanguage.getTranslation(player.getUniqueId(), path, false, resolver);
+            } else {
+                return nexusLanguage.getTranslation(player.getUniqueId(), path, false);
+            }
+        }
+
+        // Direkter Titel aus Inventar-Config
+        if (resolver != null) {
+            return NexusPlugin.getInstance().messageSender
+                    .stringToComponent(player, raw, resolver);
+        } else {
+            return NexusPlugin.getInstance().messageSender
+                    .stringToComponent(player, raw);
+        }
     }
 
     private void startAutoUpdate() {
@@ -130,7 +153,7 @@ public class NexInventoryView {
         if (period <= 0 || updateTaskId != -1) return;
 
         updateTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(
-                io.nexstudios.nexus.bukkit.NexusPlugin.getInstance(),
+                NexusPlugin.getInstance(),
                 () -> {
                     // Stop when player is no longer viewing this inventory or offline
                     if (!player.isOnline()) { stopAutoUpdate(); return; }
@@ -141,12 +164,10 @@ public class NexInventoryView {
                     }
 
                     // Lightweight refresh: body + navigation
-                    // Avoid full clear/render cycles unless necessary.
                     try {
                         renderBodyOnly();
                         renderNavigation();
                     } catch (Throwable t) {
-                        // Fail-safe: stop if something goes wrong to avoid spam
                         stopAutoUpdate();
                     }
                 },
@@ -163,20 +184,6 @@ public class NexInventoryView {
 
     public void dispose() {
         stopAutoUpdate();
-    }
-
-    private static Component resolveTitle(String raw, String inventoryId, Player player) {
-        if (raw == null || raw.isBlank()) {
-            return Component.text("Inventory");
-        }
-        String s = raw.trim();
-
-        if (s.startsWith("#language:")) {
-            String path = languageTitlePath(s, inventoryId);
-            return nexusLanguage.getTranslation(player.getUniqueId(), path, false);
-        }
-
-        return NexusPlugin.getInstance().messageSender.stringToComponent(player, raw);
     }
 
     private static String languageTitlePath(String raw, String invId) {
@@ -198,7 +205,6 @@ public class NexInventoryView {
     }
 
     public void nextPage() {
-        // Aktive Body-Zone (Standard oder Override)
         InvFillStrategy.BodyZone zone = (overrideZone != null ? overrideZone : inv.bodyZone());
         int pageSize = Math.max(1, zone.slots.size());
 
@@ -277,7 +283,6 @@ public class NexInventoryView {
             }
         }
 
-        // Aktive Body-Zone (Standard oder Override)
         InvFillStrategy.BodyZone zone = (overrideZone != null ? overrideZone : inv.bodyZone());
         int pageSize = Math.max(1, zone.slots.size());
 
@@ -360,7 +365,6 @@ public class NexInventoryView {
         InvFillStrategy.BodyZone zone = (overrideZone != null ? overrideZone : inv.bodyZone());
         InvAlignment align = (overrideAlignment != null ? overrideAlignment : inv.bodyAlignment());
 
-        // Local page computation based on active zone
         int pageSize = Math.max(1, zone.slots.size());
         int totalItems = bodyModels.size();
         int totalPages = Math.max(1, (int) Math.ceil(totalItems / (double) pageSize));
@@ -370,7 +374,6 @@ public class NexInventoryView {
         int pageOffset = pageIndex * pageSize;
         int itemsOnPage = Math.max(0, Math.min(pageSize, totalItems - pageOffset));
 
-        // Important: Only clear the body zone if we actually place items.
         if (itemsOnPage <= 0) {
             return;
         }
@@ -396,7 +399,6 @@ public class NexInventoryView {
             if (stack != null) {
                 top.setItem(slot, stack);
 
-                // Choose handler priority: per-entry handler > global body handler
                 NexOnClick handler = null;
                 if (bodyHandlersByModelIndex != null
                         && modelAbsIndex >= 0
@@ -435,10 +437,11 @@ public class NexInventoryView {
 
         for (Integer s1b : cfg.slots1b) {
             int s0 = Math.max(0, s1b - 1);
-            if (s0 < 0 || s0 >= inv.size()) continue;
+            if (s0 >= inv.size()) continue;
 
             Integer existingRank = staticPriorities.get(s0);
-            if (existingRank != null && existingRank >= newRank) {
+            // WICHTIG: Nur höhere Ranks blocken, gleicher Rank darf überschreiben
+            if (existingRank != null && existingRank > newRank) {
                 continue;
             }
 
@@ -457,6 +460,74 @@ public class NexInventoryView {
         if (ns.startsWith("custom:"))     return 1;
         if ("extra".equals(ns))           return 0;
         return -1;
+    }
+
+    public void setExtraItem(int slot1b, ItemStack stack, NexOnClick handler) {
+        if (stack == null) return;
+
+        int s0 = Math.max(0, slot1b - 1);
+        if (s0 >= inv.size()) return;
+
+        top.setItem(s0, stack);
+
+        if (handler != null) {
+            staticClickHandlers.put(s0, handler);
+            staticNamespaces.put(s0, "extra");
+            staticPriorities.put(s0, rankForNamespace("extra"));
+        } else {
+            // Kein Handler gewünscht -> ggf. alten "extra"-Handler entfernen
+            if ("extra".equals(staticNamespaces.get(s0))) {
+                staticClickHandlers.remove(s0);
+                staticNamespaces.remove(s0);
+                staticPriorities.remove(s0);
+            }
+        }
+    }
+
+    public void rerenderRequiredItem(String id, TagResolver extraResolver) {
+        if (id == null) return;
+
+        // passendes Config-Item suchen
+        NexItemConfig cfg = null;
+        for (NexItemConfig c : inv.required()) {
+            if (c != null && id.equalsIgnoreCase(c.id)) {
+                cfg = c;
+                break;
+            }
+        }
+        if (cfg == null) return;
+
+        // Basis-Stack + Sprache erneut anwenden
+        ItemStack base = inv.renderer().renderStatic(cfg, inv.inventoryId());
+        if (base == null) return;
+
+        ItemStack rendered = applyLanguageForPlayer(
+                base, cfg, inv.inventoryId(), player.getUniqueId(), extraResolver
+        );
+
+        // In alle Slots dieses Required-Items setzen
+        for (Integer s1b : cfg.slots1b) {
+            int s0 = Math.max(0, s1b - 1);
+            if (s0 < 0 || s0 >= inv.size()) continue;
+
+            top.setItem(s0, rendered);
+            // Handler/Namespaces/Prioritäten bleiben wie sie sind
+        }
+    }
+
+    public void updateSlotItem(int slot1b, UnaryOperator<ItemStack> transformer) {
+        if (transformer == null) return;
+
+        int s0 = Math.max(0, slot1b - 1);
+        if (s0 >= inv.size()) return;
+
+        ItemStack current = top.getItem(s0);
+        if (current == null) return;
+
+        ItemStack updated = transformer.apply(current);
+        if (updated == null) return;
+
+        top.setItem(s0, updated);
     }
 
     public void bindRequired(String idOrNull, NexOnClick handler) {
@@ -494,11 +565,9 @@ public class NexInventoryView {
         int startRow = start0 / 9;
         int endRow   = end0   / 9;
 
-        // KORRIGIERT: linke und rechte Spalte aus start-/end-Slot berechnen
         int leftCol  = start0 % 9;
         int rightCol = end0   % 9;
 
-        // Sicherstellen, dass leftCol <= rightCol
         if (rightCol < leftCol) {
             int tmp = leftCol;
             leftCol = rightCol;
@@ -524,35 +593,30 @@ public class NexInventoryView {
 
         this.bodyModels = new ArrayList<>(items);
         this.bodyClickHandler = clickHandler;
-        this.bodyHandlersByModelIndex = null; // ensure we don't mix per-model handlers
+        this.bodyHandlersByModelIndex = null;
 
         renderBodyOnly();
         renderNavigation();
     }
 
-    // NEW: Per-entry filler population with per-model handlers.
+    // Per-entry filler population with per-model handlers.
     public void populateFillerEntries(List<ItemStack> items, List<NexOnClick> handlers,
                                       int startSlot1b, int endSlot1b, InvAlignment alignment) {
         if (items == null) items = List.of();
         if (handlers == null) handlers = Collections.nCopies(items.size(), null);
         if (handlers.size() != items.size()) {
-            // Keep it strict to avoid mismatches.
             throw new IllegalArgumentException("handlers.size() must match items.size()");
         }
 
-        // Reuse common logic to set zone/alignment and models
         populateFillerStacks(items, startSlot1b, endSlot1b, alignment, null);
 
-        // Store per-model handlers so renderBodyOnly() can bind them page-wise
         this.bodyHandlersByModelIndex = new ArrayList<>(handlers);
 
-        // Re-render body to bind handlers immediately
         renderBodyOnly();
         renderNavigation();
     }
 
-    // NEW: Update a visible body item by its page-local index.
-    // Also updates the backing model list so the change survives re-renders.
+    // Update a visible body item by its page-local index.
     public void updateBodyItemAtVisibleIndex(int bodyIndexInPage, java.util.function.UnaryOperator<ItemStack> transformer) {
         if (transformer == null) return;
 
@@ -573,7 +637,6 @@ public class NexInventoryView {
                 zone, pageIndex, pageSize, pageOffset, itemsOnPage, align
         );
 
-        // Find the slot for the given body index in this page
         Integer targetSlot = null;
         for (Map.Entry<Integer, Integer> e : map.entrySet()) {
             if (e.getValue() == bodyIndexInPage) {
@@ -587,10 +650,8 @@ public class NexInventoryView {
         ItemStack updated = transformer.apply(current);
         if (updated == null) return;
 
-        // Update visible slot
         top.setItem(targetSlot, updated);
 
-        // Update backing model so it survives re-render
         int absIndex = pageOffset + bodyIndexInPage;
         if (absIndex >= 0 && absIndex < bodyModels.size()) {
             bodyModels.set(absIndex, updated);
@@ -622,6 +683,15 @@ public class NexInventoryView {
     }
 
     private ItemStack applyLanguageForPlayer(ItemStack stack, NexItemConfig cfg, String inventoryId, UUID playerId) {
+        // Standard: kein zusätzlicher Resolver
+        return applyLanguageForPlayer(stack, cfg, inventoryId, playerId, null);
+    }
+
+    private ItemStack applyLanguageForPlayer(ItemStack stack,
+                                             NexItemConfig cfg,
+                                             String inventoryId,
+                                             UUID playerId,
+                                             TagResolver extraResolver) {
         try {
             if (cfg == null) return stack;
 
@@ -639,25 +709,36 @@ public class NexInventoryView {
             }
             if (mat == null) mat = Material.STONE;
 
-            // displayname minimessage
             Component nameComp = null;
             if (cfg.name != null && cfg.name.startsWith("#language:")) {
                 String path = languagePath(cfg.name, inventoryId);
-                nameComp = nexusLanguage.getTranslation(playerId, path, false);
+                if (extraResolver != null) {
+                    nameComp = nexusLanguage.getTranslation(playerId, path, false, extraResolver);
+                } else {
+                    nameComp = nexusLanguage.getTranslation(playerId, path, false);
+                }
             }
 
-            // lore minimessage
             List<Component> loreComp = null;
             if (cfg.lore != null) {
                 if (cfg.lore instanceof String s && s.startsWith("#language:")) {
                     String path = languagePath(s, inventoryId);
-                    loreComp = nexusLanguage.getTranslationList(playerId, path, false);
+                    if (extraResolver != null) {
+                        loreComp = nexusLanguage.getTranslationList(playerId, path, false, extraResolver);
+                    } else {
+                        loreComp = nexusLanguage.getTranslationList(playerId, path, false);
+                    }
                 } else if (cfg.lore instanceof List<?> list) {
                     List<Component> out = new ArrayList<>();
                     for (Object o : list) {
                         if (o instanceof String ls && ls.startsWith("#language:")) {
                             String path = languagePath(ls, inventoryId);
-                            List<Component> parts = nexusLanguage.getTranslationList(playerId, path, false);
+                            List<Component> parts;
+                            if (extraResolver != null) {
+                                parts = nexusLanguage.getTranslationList(playerId, path, false, extraResolver);
+                            } else {
+                                parts = nexusLanguage.getTranslationList(playerId, path, false);
+                            }
                             if (parts != null && !parts.isEmpty()) out.addAll(parts);
                         }
                     }
@@ -692,13 +773,13 @@ public class NexInventoryView {
 
     private static String normalizeMinecraftSpec(String spec) {
         if (spec == null || spec.isBlank()) return "minecraft:stone";
-        if (!spec.contains(":")) return "minecraft:" + spec.toLowerCase(java.util.Locale.ROOT);
+        if (!spec.contains(":")) return "minecraft:" + spec.toLowerCase(Locale.ROOT);
         if (spec.startsWith("vanilla:")) return "minecraft:" + spec.substring("vanilla:".length());
-        return spec.toLowerCase(java.util.Locale.ROOT);
+        return spec.toLowerCase(Locale.ROOT);
     }
 
     private static NamespacedKey parseKey(String value) {
-        String v = value.toLowerCase(java.util.Locale.ROOT);
+        String v = value.toLowerCase(Locale.ROOT);
         NamespacedKey key = NamespacedKey.fromString(v);
         if (key == null) key = NamespacedKey.minecraft(v);
         return key;
@@ -713,7 +794,7 @@ public class NexInventoryView {
             Object valObj = e.get("value");
             if (idObj == null) continue;
 
-            String id = String.valueOf(idObj).toLowerCase(java.util.Locale.ROOT).trim();
+            String id = String.valueOf(idObj).toLowerCase(Locale.ROOT).trim();
             NamespacedKey key = NamespacedKey.fromString(id);
             if (key == null) key = NamespacedKey.minecraft(id);
             Enchantment ench = io.papermc.paper.registry.RegistryAccess.registryAccess()
@@ -736,7 +817,7 @@ public class NexInventoryView {
         Set<ItemHideFlag> out = EnumSet.noneOf(ItemHideFlag.class);
         for (String f : list) {
             if (f == null) continue;
-            String key = f.toLowerCase(java.util.Locale.ROOT).trim();
+            String key = f.toLowerCase(Locale.ROOT).trim();
             ItemHideFlag hiddenFlag = ItemHideFlag.fromString(key);
             if (hiddenFlag != null) out.add(hiddenFlag);
         }
@@ -816,7 +897,7 @@ public class NexInventoryView {
         final boolean keyboard = (ct == ClickType.NUMBER_KEY || ct == ClickType.DROP || ct == ClickType.CONTROL_DROP);
 
         return new NexClickContext() {
-            @Override public org.bukkit.entity.Player player() { return NexInventoryView.this.player; }
+            @Override public Player player() { return NexInventoryView.this.player; }
             @Override public String inventoryId() { return inv.inventoryId(); }
             @Override public int pageIndex() { return NexInventoryView.this.pageIndex; }
             @Override public int slot() { return slot; }
@@ -828,7 +909,6 @@ public class NexInventoryView {
             @Override public Integer bodyIndex() { return bodyIndex; }
             @Override public org.bukkit.configuration.ConfigurationSection extraSettings() { return inv.extraSettings(); }
 
-            // Neue Getter
             @Override public boolean isLeftClick() { return left; }
             @Override public boolean isRightClick() { return right; }
             @Override public boolean isMiddleClick() { return middle; }

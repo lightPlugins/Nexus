@@ -56,6 +56,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
+import java.util.Scanner;
 
 @Getter
 public final class NexusPlugin extends JavaPlugin {
@@ -367,17 +368,16 @@ public final class NexusPlugin extends JavaPlugin {
             nexusLogger.info("<yellow>ItemsAdder<reset> hook registered successfully.");
         }
 
-        // Check if Vault is installed and register
-//        if(getServer().getPluginManager().getPlugin("Vault") != null) {
-//            vaultHook = new VaultHook(this, nexusLogger);
-//            if (vaultHook.getEconomy() != null) {
-//                nexusLogger.info("<yellow>Vault Economy<reset> hook registered successfully.");
-//            } else {
-//                nexusLogger.warning("Vault Economy hook could not be registered. Economy provider is null.");
-//            }
-//        } else {
-//            nexusLogger.warning("Vault is not installed or enabled. Vault hook is not be available.");
-//        }
+        if(getServer().getPluginManager().getPlugin("Vault") != null) {
+            vaultHook = new VaultHook(this, nexusLogger);
+            if (vaultHook.getEconomy() != null) {
+                nexusLogger.info("<yellow>Vault Economy<reset> hook registered successfully.");
+            } else {
+                nexusLogger.warning("Vault Economy hook could not be registered. Economy provider is null.");
+            }
+        } else {
+            nexusLogger.warning("Vault is not installed or enabled. Vault hook is not be available.");
+        }
     }
 
     public FileConfiguration getInventoryFileByName(String name) {
@@ -443,5 +443,4 @@ public final class NexusPlugin extends JavaPlugin {
                 effectTypes, bindingCount, triggerCount, filterCount
         ));
     }
-
 }

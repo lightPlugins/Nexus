@@ -1,0 +1,174 @@
+dialog:
+  id: "example_all_features"        # interne ID, optional
+  title: "<gold>Example Dialog</gold>"
+  subtitle: "<gray>Zeigt alle möglichen Elemente.</gray>" # optional
+  icon: "DIAMOND"                   # falls du ein Icon im Header anzeigen willst
+
+  body:
+    - "<white>Dies ist ein <green>komplett konfigurierbarer</green> Dialog.</white>"
+    - "<gray>Unten siehst du Text-Input, Slider, Checkbox, Dropdown und Buttons.</gray>"
+
+  options:
+    type: "custom"                  # z. B. 'confirmation', 'custom', etc.
+    close-on-submit: true
+    close-on-cancel: true
+    # layout: "vertical"            # falls du Layouts unterscheiden willst
+    # width: 400                    # falls Paper/layout das später zulässt
+
+  # Alle UI-Elemente, von oben nach unten
+  content:
+
+    # 1) Reine Infozeile
+    - type: "info-text"
+      conditions: []
+      id: "intro_text"
+      text:
+        - "<yellow>Persönliche Einstellungen</yellow>"
+        - "<gray>Diese Optionen gelten nur für dich.</gray>"
+
+    # 2) Text-Eingabe
+    - type: "text-input"            # dein Typ-Name, z. B. -> DialogInput.text(...)
+      conditions: []
+      id: "username_input"
+      key: "username"               # Key für getText("username")
+      label: "<white>Dein Name:</white>"
+      placeholder: "Gib deinen Namen ein..."
+      width: 300
+      prefill: "Steve"
+      required: true
+      max-length: 32
+
+    # 3) Nummern-Eingabe
+    - type: "number-input"
+      conditions: []
+      id: "age_input"
+      key: "age"
+      label: "<white>Dein Alter:</white>"
+      min: 0
+      max: 120
+      step: 1
+      prefill: 18
+      required: true
+
+    # 4) Slider (konzeptionell: ist im Prinzip auch ein Number-Input mit Range)
+    - type: "slider"
+      conditions: []
+      id: "volume_slider"
+      key: "volume"
+      label: "<white>Lautstärke:</white>"
+      min: 0
+      max: 100
+      step: 5
+      prefill: 50
+      show-value: true              # ob du den aktuellen Wert als Text anzeigst
+
+    # 5) Checkbox
+    - type: "checkbox"
+      conditions: []
+      id: "enable_notifications"
+      key: "notifications"
+      label: "<white>Benachrichtigungen aktivieren</white>"
+      description: "<gray>Du erhältst Hinweise im Chat, wenn etwas passiert.</gray>"
+      default: true
+
+    # 6) Toggle (On/Off – visuell evtl. anders als Checkbox)
+    - type: "toggle"
+      conditions: []
+      id: "dark_mode"
+      key: "dark_mode"
+      label-on: "<green>Dark Mode: AN</green>"
+      label-off: "<red>Dark Mode: AUS</red>"
+      default: false
+
+    # 7) Dropdown (Single Choice)
+    - type: "dropdown"
+      conditions: []
+      id: "language_select"
+      key: "language"
+      label: "<white>Sprache auswählen:</white>"
+      options:
+        - key: "de"
+          label: "<gold>Deutsch</gold>"
+        - key: "en"
+          label: "<aqua>Englisch</aqua>"
+        - key: "fr"
+          label: "<light_purple>Französisch</light_purple>"
+      default: "de"
+
+    # 8) Multi-Select (Liste von Keys)
+    - type: "multi-select"
+      conditions: []
+      id: "categories_select"
+      key: "categories"
+      label: "<white>Kategorien abonnieren:</white>"
+      options:
+        - key: "news"
+          label: "<yellow>News</yellow>"
+        - key: "events"
+          label: "<green>Events</green>"
+        - key: "sales"
+          label: "<gold>Angebote</gold>"
+      default:
+        - "news"
+        - "events"
+      max-selected: 3
+
+    # 9) Visueller Separator
+    - type: "separator"
+      conditions: []
+      id: "separator_bottom"
+      style: "line"                  # z. B. 'line', 'space' …
+
+    # 10) Buttons
+    # Submit-Button
+    - type: "button"
+      conditions: []
+      id: "submit_button"
+      role: "submit"                 # submit / cancel / custom
+      label: "<green>Speichern</green>"
+      tooltip: "<gray>Einstellungen übernehmen und Dialog schließen.</gray>"
+      weight: 100
+      close-on-click: true
+      actions:
+        - type: "call-handler"       # ruft deinen eigenen Callback/Handler-Name
+          handler: "save_user_settings"
+          # Context-Werte, die du im Handler brauchst
+          pass-values:
+            - "username"
+            - "age"
+            - "volume"
+            - "notifications"
+            - "dark_mode"
+            - "language"
+            - "categories"
+
+    # Cancel-Button
+    - type: "button"
+      conditions: []
+      id: "cancel_button"
+      role: "cancel"
+      label: "<red>Abbrechen</red>"
+      tooltip: "<gray>Änderungen verwerfen.</gray>"
+      weight: 100
+      close-on-click: true
+      actions:
+        - type: "message"
+          message: "<yellow>Du hast den Dialog abgebrochen.</yellow>"
+
+    # Optional: weiterer Custom-Button
+    - type: "button"
+      conditions: []
+      id: "reset_button"
+      role: "custom"
+      label: "<gold>Zurücksetzen</gold>"
+      tooltip: "<gray>Setzt alle Eingaben auf Standardwerte.</gray>"
+      weight: 50
+      close-on-click: false          # Dialog bleibt offen
+      actions:
+        - type: "reset-fields"
+          fields:
+            - "volume"
+            - "notifications"
+            - "dark_mode"
+            - "language"
+            - "categories"

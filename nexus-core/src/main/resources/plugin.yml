@@ -16,8 +16,8 @@ softdepend:
   - Orestack
   - AuroraCollections
   - ItemsAdder
-depend:
   - Vault
+depend: [ ]
 libraries:
   - redis.clients:jedis:5.2.0
   - com.zaxxer:HikariCP:6.3.0

@@ -1,13 +1,10 @@
 package io.nexstudios.nexus.bukkit.actions.impl;
 
-import com.willfp.ecoskills.stats.Stat;
-import io.lumine.mythic.lib.api.player.MMOPlayerData;
-import io.lumine.mythic.lib.api.stat.modifier.StatModifier;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.actions.ActionData;
 import io.nexstudios.nexus.bukkit.actions.NexusAction;
-import io.nexstudios.nexus.bukkit.hooks.EcoSkillsHook;
 import io.nexstudios.nexus.bukkit.utils.NexusStringMath;
+import io.nexstudios.nexus.bukkit.utils.StringUtils;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.milkbowl.vault.economy.Economy;
@@ -16,7 +13,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -29,10 +25,6 @@ public class ActionVaultAdd implements NexusAction {
 
     @Override
     public void execute(Player player, ActionData data, Location targetLocation) {
-
-        StatModifier modifier = new StatModifier("test", "Test Stat", 1.0);
-        MMOPlayerData playerData = MMOPlayerData.get(player);
-        modifier.register(playerData);
 
         double amount;
         String expression;
@@ -128,12 +120,7 @@ public class ActionVaultAdd implements NexusAction {
             return 1;
         }
 
-        if (expression.contains("ecoskills:")) {
-            expression = processEcoSkillsExpression(expression, player);
-            if (expression == null) {
-                return 1;
-            }
-        }
+        expression = StringUtils.parsePlaceholderAPI(player, expression);
 
         double result = NexusStringMath.evaluateExpression(expression);
 
@@ -166,41 +153,5 @@ public class ActionVaultAdd implements NexusAction {
             throw new IllegalArgumentException("Chance must be between 0 and 100, inclusive. You gave " + chance);
         }
         return random.nextDouble() * 100 < chance;
-    }
-
-    private String processEcoSkillsExpression(String expression, Player player) {
-        EcoSkillsHook ecoSkillsHook = NexusPlugin.getInstance().getEcoSkillsHook();
-
-        if (ecoSkillsHook == null) {
-            NexusPlugin.nexusLogger.error(List.of(
-                    "You are trying to use ecoskills placeholder",
-                    "while EcoSkills is not installed!",
-                    "Failed Expression: " + expression
-            ));
-            return "1 + 0";
-        }
-
-        String[] split = expression.split(":");
-        if (split.length != 2) {
-            NexusPlugin.nexusLogger.error("EcoSkills stat expression is invalid: " + expression);
-            return "1 + 0";
-        }
-
-        String statName = split[1].split(" ")[0].replace("'", "").trim();
-        Stat stat = ecoSkillsHook.getStatByName(statName, player);
-
-        if (stat == null) {
-            NexusPlugin.nexusLogger.error(List.of(
-                    "You are trying to use EcoSkills placeholder",
-                    "while the provided stat does not exist!",
-                    "Failed stat name: " + statName
-            ));
-            return null;
-        }
-
-        int currentStatLevel = stat.getActualLevel$core_plugin(player);
-
-        // Ersetze den ecoskills-Teil in der ursprünglichen expression durch den aktuellen Level-Wert
-        return expression.replace("ecoskills:" + statName, String.valueOf(currentStatLevel));
     }
 }

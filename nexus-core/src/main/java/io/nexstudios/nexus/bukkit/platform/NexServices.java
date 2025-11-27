@@ -1,5 +1,7 @@
 package io.nexstudios.nexus.bukkit.platform;
 
+import io.nexstudios.nexus.bukkit.dialog.NexDialogBuilder;
+import io.nexstudios.nexus.bukkit.dialog.NexDialogBuilderFactory;
 import io.nexstudios.nexus.bukkit.entities.MobBuilder;
 import io.nexstudios.nexus.bukkit.entities.MobBuilderFactory;
 import io.nexstudios.nexus.bukkit.hologram.HoloBuilder;
@@ -142,6 +144,15 @@ public final class NexServices {
         HoloBuilder builder = factory.create();
         if (builder == null) {
             throw new IllegalStateException("HoloBuilderFactory#create() is null. Contact the developer");
+        }
+        return builder;
+    }
+
+    public static NexDialogBuilder newDialogBuilder() {
+        NexDialogBuilderFactory factory = get(NexDialogBuilderFactory.class);
+        NexDialogBuilder builder = factory.create();
+        if (builder == null) {
+            throw new IllegalStateException("NexDialogBuilderFactory#create() is null. Contact the developer");
         }
         return builder;
     }

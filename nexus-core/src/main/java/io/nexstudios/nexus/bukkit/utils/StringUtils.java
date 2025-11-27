@@ -117,6 +117,7 @@ public class StringUtils {
     }
 
     @SuppressWarnings("ApiStatus.Experimental")
+    @Deprecated(forRemoval = true, since = "1.0.0")
     public static ItemStack parseCustomItem(String itemParams) {
 
         String[] parts = itemParams.split(" ");

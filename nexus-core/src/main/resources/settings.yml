@@ -15,6 +15,59 @@ logging:
     enable: false
     level: 3
 
+dialog:
+  id: "account_settings"
+  title: "<gold>Account Settings</gold>"
+  subtitle: "<gray>Bitte aktualisiere deine Einstellungen.</gray>"
+
+  body:
+    - "<white>Gib deinen Namen ein, wähle eine Lautstärke und ob du Benachrichtigungen möchtest.</white>"
+
+  options:
+    button-columns: 1
+    close-on-submit: true
+    close-on-cancel: true
+
+  # Alles, was im Body / Input-Bereich steht
+  body-content:
+    - type: "text-input"
+      key: "username"
+      label: "<white>Dein Name:</white>"
+      width: 300
+      prefill: "Steve"
+
+    - type: "slider"
+      key: "volume"
+      label: "<white>Lautstärke</white>"
+      label-format: '%s: %s'
+      min: 0
+      max: 100
+      step: 5
+      width: 200
+      prefill: 50
+
+    - type: "checkbox"
+      key: "notifications"
+      label: "<white>Benachrichtigungen aktivieren</white>"
+      default: true
+
+  # Spezielle Exit-Buttons (unten, separate Reihe)
+  exit-content:
+    - type: button
+      role: SUBMIT
+      label: <green>Speichern</green>
+      tooltip: <gray>Einstellungen übernehmen.</gray>
+      close-on-click: true
+      actions:
+        - id: message
+          message: "Gespeichert: <username> <volume> <notifications>"
+    - type: button
+      role: CANCEL
+      label: <red>Abbrechen</red>
+      tooltip: <gray>Änderungen verwerfen.</gray>
+      close-on-click: true
+      actions: []
+
 # ######################################################  #
 #                       IO SYSTEM                         #
 # ######################################################  #
