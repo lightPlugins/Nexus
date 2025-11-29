@@ -256,10 +256,9 @@ public class DamageIndicator implements Listener {
         Location standLocation = start.clone().subtract(0, passengerYOffset, 0);
 
         // Velocity VOR dem Spawn berechnen
-        Vector velocity = velocityRange.randomVector();
 
         // 1) Unsichtbaren ArmorStand spawnen und direkt mit Velocity ausstatten
-        Vector finalVelocity = velocity;
+        Vector finalVelocity = velocityRange.randomVector();
         ArmorStand stand = start.getWorld().spawn(standLocation, ArmorStand.class, as -> {
             as.setInvisible(true);
             as.setMarker(false);
@@ -277,10 +276,10 @@ public class DamageIndicator implements Listener {
             activeStands.add(stand);
         }
 
-        // 2) Packet-Hologram an gewünschter Basis-Position erzeugen und an ArmorStand koppeln
+        // 2) Packet-Hologram
         HoloBuilder builder = NexServices.newHoloBuilder()
                 .location(holoBase)
-                .lines(java.util.List.of(line))
+                .lines(List.of(line))
                 .viewerOnly(viewer)
                 .billboard("center")
                 .lineWidth(200)
@@ -292,7 +291,7 @@ public class DamageIndicator implements Listener {
         NexHologram holo = builder.build();
 
 
-        // 3) Timer nur zum Aufräumen
+        // 3) Timer zum löschen
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             holo.destroy();
             synchronized (activeStands) {
@@ -317,7 +316,7 @@ public class DamageIndicator implements Listener {
         }
     }
 
-    // ----------------- Hilfs-Klasse für Velocity -----------------
+    // ----------------- Helpers -----------------
 
     private static final class VelocityRange {
         final double inXMin, inXMax;
