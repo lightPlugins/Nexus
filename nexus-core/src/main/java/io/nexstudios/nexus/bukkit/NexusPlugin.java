@@ -22,6 +22,7 @@ import io.nexstudios.nexus.bukkit.effects.NexusEffectsApi;
 import io.nexstudios.nexus.bukkit.effects.runtime.EffectBindingRegistry;
 import io.nexstudios.nexus.bukkit.effects.trigger.EntityDamageTriggerListener;
 import io.nexstudios.nexus.bukkit.effects.vars.PlayerVariableResolver;
+import io.nexstudios.nexus.bukkit.fakebreak.FakeBreakAllBlocksListener;
 import io.nexstudios.nexus.bukkit.handler.MessageSender;
 import io.nexstudios.nexus.bukkit.hologram.NexHoloService;
 import io.nexstudios.nexus.bukkit.hooks.*;
@@ -406,6 +407,7 @@ public final class NexusPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new NexInventoryClickListener(), this);
         Bukkit.getPluginManager().registerEvents(new LevelFlushListener(), this);
         Bukkit.getPluginManager().registerEvents(blockUtil, this);
+        Bukkit.getPluginManager().registerEvents(new FakeBreakAllBlocksListener(this), this);
 
     }
 

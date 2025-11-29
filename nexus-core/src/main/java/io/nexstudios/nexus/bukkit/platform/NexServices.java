@@ -4,6 +4,9 @@ import io.nexstudios.nexus.bukkit.dialog.NexDialogBuilder;
 import io.nexstudios.nexus.bukkit.dialog.NexDialogBuilderFactory;
 import io.nexstudios.nexus.bukkit.entities.MobBuilder;
 import io.nexstudios.nexus.bukkit.entities.MobBuilderFactory;
+import io.nexstudios.nexus.bukkit.fakebreak.FakeBlockBreakNms;
+import io.nexstudios.nexus.bukkit.fakebreak.FakeBlockBreakService;
+import io.nexstudios.nexus.bukkit.fakebreak.FakeBlockBreaks;
 import io.nexstudios.nexus.bukkit.hologram.HoloBuilder;
 import io.nexstudios.nexus.bukkit.hologram.HoloBuilderFactory;
 import io.nexstudios.nexus.bukkit.items.ItemBuilder;
@@ -155,6 +158,10 @@ public final class NexServices {
             throw new IllegalStateException("NexDialogBuilderFactory#create() is null. Contact the developer");
         }
         return builder;
+    }
+
+    public static FakeBlockBreakService fakeBlockBreak() {
+        return FakeBlockBreaks.service();
     }
 
 
