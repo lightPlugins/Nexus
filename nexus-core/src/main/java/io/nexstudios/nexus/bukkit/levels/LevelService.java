@@ -16,8 +16,8 @@ public interface LevelService {
     LevelProgress setXp(UUID playerId, String namespace, String key, double newXp);
 
     // Cache/Flush
-    void flushPlayer(UUID playerId);
-    void flushAll();
+    void safeToDatabase(UUID playerId);
+    void safeAllToDatabase();
     void invalidate(UUID playerId, String namespace, String key);
 
     void preloadAllAsync();

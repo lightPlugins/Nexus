@@ -1,87 +1,154 @@
-package io.nexstudios.nexus.bukkit.levels;// Java
+package io.nexstudios.nexus.bukkit.levels;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
 /**
- * Level API Preview:
- * - This class shows how you would use the LevelService from another plugin.
- * - Call LevelApiPreview.demo(player) from a command/listener to see it in action.
- * - All comments are written to explain the intended usage pattern.
+ * Preview / example class for using the Nexus Level API from another plugin.
+ * <p>
+ * This class is <b>not</b> part of the public API; it is only meant as
+ * documentation and reference code for plugin developers.
+ * <p>
+ * It demonstrates:
+ * <ul>
+ *     <li>How to obtain the {@link LevelService} from the Nexus core</li>
+ *     <li>How to read a "level definition" with {@code levels} and
+ *         {@code level-up-actions} from a {@link ConfigurationSection}</li>
+ *     <li>How to build a {@link LevelRewardConfig} from that section</li>
+ *     <li>How to register that config in the central {@link LevelRewardRegistry}</li>
+ *     <li>How to register the level-type itself in the {@link LevelService}</li>
+ *     <li>How XP operations automatically trigger level-up actions via
+ *         the central {@code LevelActionListener} + {@code ActionFactory}</li>
+ *     <li>How to explicitly persist a single player's level data to the database
+ *         using {@link LevelService#safeToDatabase(UUID)}</li>
+ * </ul>
+ *
+ * <h2>Expected configuration format</h2>
+ *
+ * The provided {@code levelRoot} section is expected to contain the following keys:
+ *
+ * <pre>{@code
+ * levels:
+ *   - 5
+ *   - 10
+ *   - 20
+ *
+ * level-up-actions:
+ *   - level: 1
+ *     actions:
+ *       - id: message
+ *         message: "<green>Level 1 reached!</green>"
+ *   - level: 2
+ *     actions:
+ *       - id: vault-add
+ *         amount: "2000"
+ *         multiplier: "1"
+ * }</pre>
+ *
+ * This is exactly the "standard" schema that {@link LevelRewardConfig#fromStandardSection(ConfigurationSection)}
+ * expects:
+ * <ul>
+ *     <li>{@code levels} – list of XP requirements per level (index 0 = level 1, index 1 = level 2, ...)</li>
+ *     <li>{@code level-up-actions} – list of entries:
+ *         <ul>
+ *             <li>{@code level}: target level (int)</li>
+ *             <li>{@code actions}: list of action-maps consumed by {@link io.nexstudios.nexus.bukkit.actions.ActionFactory}</li>
+ *         </ul>
+ *     </li>
+ * </ul>
+ *
+ * <h2>How to use this preview</h2>
+ *
+ * In your own plugin, you would typically:
+ * <ol>
+ *     <li>Load your own config file into a {@link org.bukkit.configuration.file.FileConfiguration}</li>
+ *     <li>Obtain a sub-section for your level-type, e.g. {@code config.getConfigurationSection("mining")}</li>
+ *     <li>Call {@code LevelApiPreview.demo(player, thatSection)} from a debug command or test listener</li>
+ * </ol>
  */
 public final class LevelApiPreview {
 
     private LevelApiPreview() {}
 
     /**
-     * Minimal end-to-end preview:
-     * - Registers a level type
-     * - Adds and removes XP
-     * - Sets level and XP
-     * - Reads back current progress
-     * - Flushes to the database (optional for tests)
+     * End-to-end demonstration for a single level-type.
+     * <p>
+     * Steps:
+     * <ol>
+     *     <li>Resolve the central {@link LevelService} from Nexus core</li>
+     *     <li>Build a {@link LevelRewardConfig} from the given config section</li>
+     *     <li>Register the reward-config in {@link LevelRewardRegistry}</li>
+     *     <li>Register the level-type in the {@link LevelService}</li>
+     *     <li>Perform some XP operations (add XP, set level)</li>
+     *     <li>Explicitly flush this player's changes to the database</li>
+     * </ol>
+     *
+     * @param player    the online player used for demonstration
+     * @param levelRoot configuration section for this level-type, containing
+     *                  {@code levels} and {@code level-up-actions} as described
+     *                  in the class-level JavaDoc.
      */
-    private void demo(Player player) {
-        // 1) Get the LevelService from the core
+    private void demo(Player player, ConfigurationSection levelRoot) {
+        // 1) Obtain LevelService from Nexus core
         LevelService levels = NexusPlugin.getInstance().getLevelService();
         if (levels == null) {
             player.sendMessage("LevelService not available. Is the core loaded?");
             return;
         }
 
-        // 2) Namespace: typically your plugin name (lowercase)
-        String ns = "demo"; // or: yourPlugin.getName().toLowerCase(Locale.ROOT)
+        // 2) Define namespace and key for this level-type.
+        //    In a real plugin, 'ns' should be your plugin name (lowercase),
+        //    and 'key' a stable identifier for the skill/type.
+        String ns = "demo";
         String key = "mining";
         UUID pid = player.getUniqueId();
 
-        // 3) Register a level type (cap = size of the list)
-        //    Requirement list means: Level 1 requires 5 XP, Level 2 requires 10 XP, and so on.
-        levels.registerLevel(ns, key, List.of(5d, 10d, 20d, 50d, 100d, 200d, 300d, 500d, 1000d));
+        // 3) Build a LevelRewardConfig from the provided configuration section.
+        //    This will:
+        //    - Read the XP requirements from "levels"
+        //    - Read level-up actions from "level-up-actions"
+        LevelRewardConfig rewardConfig = LevelRewardConfig.fromStandardSection(levelRoot);
 
-        // 4) Add XP (cache only; DB writes happen asynchronously)
+        // 4) Register the reward-config in the central registry.
+        //    From this point on, the central LevelActionListener will:
+        //    - Listen to NexLevelUpEvent
+        //    - Look up the LevelRewardConfig for (ns, key)
+        //    - Execute the configured actions via the ActionFactory / NexusAction system.
+        LevelRewardRegistry.register(ns, key, rewardConfig);
+
+        // 5) Register the level-type in the LevelService (XP requirements -> level cap).
+        levels.registerLevel(ns, key, rewardConfig.requiredXpPerLevel());
+
+        // 6) Demonstrate XP gain.
+        //    This will:
+        //    - Update the player's XP/level in the in-memory cache
+        //    - Potentially fire NexLevelUpEvent
+        //    - Trigger configured level-up actions for any reached levels.
         LevelProgress afterGain = levels.addXp(pid, ns, key, 42.5);
+        player.sendMessage("After gain: level=" + afterGain.getLevel() + ", xp=" + fmt(afterGain.getXp()));
 
-        // 5) Remove XP (can cause level down; never goes below level 0 / xp 0)
-        LevelProgress afterRemove = levels.removeXp(pid, ns, key, 10.0);
-
-        // 6) Set an absolute level (clamped to [0..cap], XP will be clamped accordingly)
+        // 7) Demonstrate setting an absolute level.
+        //    This may again cause level-up events (and level-down if you lower it),
+        //    which will also be handled by the central listener.
         LevelProgress afterSetLevel = levels.setLevel(pid, ns, key, 3);
+        player.sendMessage("After setLevel(3): level=" + afterSetLevel.getLevel() + ", xp=" + fmt(afterSetLevel.getXp()));
 
-        // 7) Set absolute XP (overflow will promote levels as needed)
-        LevelProgress afterSetXp = levels.setXp(pid, ns, key, 250.0);
-
-        // 8) Read current progress (fast; from cache)
-        LevelProgress current = levels.getProgress(pid, ns, key);
-
-        // 9) Optional: force a DB flush for this player (useful in tests)
-        levels.flushPlayer(pid);
+        // 8) Explicitly persist this player's level entries to the database.
+        //    Normally you can rely on the periodic/batch flush;
+        //    calling safeToDatabase is mainly useful for tests or "save now" commands.
+        levels.safeToDatabase(pid);
     }
 
     /**
-     * Preview for offline access:
-     * - Demonstrates how you would read/manipulate a player by UUID (even if they are offline).
-     * - Works because the core preloads all level progress entries on server start.
+     * Small helper to format XP values with a fixed locale.
+     *
+     * @param v numeric value to format
+     * @return string formatted as "%.2f" using {@link Locale#ROOT}
      */
-    private void demoOffline(UUID playerId) {
-        LevelService levels = NexusPlugin.getInstance().getLevelService();
-        if (levels == null) {
-            System.out.println("[LevelAPI] LevelService not available.");
-            return;
-        }
-
-        String ns = "plugin-name";
-        String key = "mining";
-
-        // Read without the player being online
-        LevelProgress p = levels.getProgress(playerId, ns, key);
-        System.out.println("[LevelAPI-Offline] level=" + p.getLevel() + ", xp=" + fmt(p.getXp()));
-    }
-
-    // Small helper to format doubles
     private String fmt(double v) {
         return String.format(Locale.ROOT, "%.2f", v);
     }

@@ -11,7 +11,7 @@ public class LevelFlushListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         LevelService svc = NexusPlugin.getInstance().getLevelService();
-        if (svc != null) svc.flushPlayer(e.getPlayer().getUniqueId());
+        if (svc != null) svc.safeToDatabase(e.getPlayer().getUniqueId());
     }
 
 }

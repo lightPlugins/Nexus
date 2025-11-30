@@ -51,12 +51,12 @@ public final class DefaultLevelService implements LevelService {
     }
 
     @Override
-    public void flushPlayer(UUID playerId) {
+    public void safeToDatabase(UUID playerId) {
         core.flushPlayer(playerId);
     }
 
     @Override
-    public void flushAll() {
+    public void safeAllToDatabase() {
         core.flushAll();
     }
 

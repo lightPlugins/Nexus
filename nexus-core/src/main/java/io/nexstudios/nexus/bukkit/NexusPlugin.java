@@ -40,6 +40,7 @@ import io.nexstudios.nexus.bukkit.levels.events.LevelFlushListener;
 import io.nexstudios.nexus.bukkit.levels.impl.DefaultLevelService;
 import io.nexstudios.nexus.bukkit.levels.LevelService;
 import io.nexstudios.nexus.bukkit.levels.NexLevel;
+import io.nexstudios.nexus.bukkit.levels.impl.LevelActionListener;
 import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderBootstrap;
 import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderRegistry;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
@@ -57,7 +58,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
-import java.util.Scanner;
 
 @Getter
 public final class NexusPlugin extends JavaPlugin {
@@ -198,8 +198,11 @@ public final class NexusPlugin extends JavaPlugin {
 
         nexusLogger.info("Write last backups in database ...");
         try {
+            nexusLogger.info("Saving NexLevel data ...");
             NexLevel.shutdown();
-        } catch (Throwable ignored) {}
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
 
         nexusLogger.info("Shutting down Database connection ...");
         if (nexusDatabaseService != null) {
@@ -408,6 +411,7 @@ public final class NexusPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new LevelFlushListener(), this);
         Bukkit.getPluginManager().registerEvents(blockUtil, this);
         Bukkit.getPluginManager().registerEvents(new FakeBreakAllBlocksListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new LevelActionListener(), this);
 
     }
 

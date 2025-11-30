@@ -94,9 +94,30 @@ public final class NexLevel {
 
     private void teardown() {
         shuttingDown.set(true);
-        if (flushTask != null) flushTask.cancel(false);
-        flushAllBlocking(); // vollständiger, blockierender Flush aller Dirty-Einträge
-        scheduler.shutdown();
+        if (flushTask != null) {
+            flushTask.cancel(false);
+        }
+
+        try {
+            plugin.getLogger().info("[NexLevel] Performing shutdown flush (full blocking flush on NexLevel scheduler) ...");
+
+            // Den vollständigen Flush auf dem eigenen Scheduler-Thread ausführen.
+            scheduler.execute(this::flushAllBlocking);
+
+            // Keine neuen Tasks mehr annehmen
+            scheduler.shutdown();
+
+            // Optional: Auf Abschluss warten (Timeout, damit Server nicht ewig hängt)
+            if (!scheduler.awaitTermination(10, TimeUnit.SECONDS)) {
+                plugin.getLogger().warning("[NexLevel] Scheduler did not terminate within 10 seconds during shutdown. Some level data might not be flushed.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            plugin.getLogger().severe("[NexLevel] Shutdown interrupted while waiting for scheduler termination: " + e.getMessage());
+        } catch (Throwable t) {
+            plugin.getLogger().severe("[NexLevel] Shutdown flush failed: " + t.getMessage());
+            t.printStackTrace();
+        }
     }
 
 
@@ -385,7 +406,6 @@ public final class NexLevel {
     }
 
     public void flushPlayer(UUID playerId) {
-        // Sammle alle Dirty-Einträge eines Spielers und flushe synchron im BG-Thread
         List<LevelProgress> list = new ArrayList<>();
         dirtyQueue.removeIf(p -> {
             if (p.getPlayerId().equals(playerId)) {
@@ -395,19 +415,37 @@ public final class NexLevel {
             }
             return false;
         });
-        if (list.isEmpty()) return;
 
-        CompletableFuture.runAsync(() -> flushBatch(list))
-                .exceptionally(ex -> {
-                    plugin.getLogger().severe("[NexLevel] FlushPlayer fehlgeschlagen: " + ex.getMessage());
-                    // Requeue bei Fehler
+        if (list.isEmpty()) {
+            plugin.getLogger().info("[NexLevel] flushPlayer(" + playerId + "): no dirty entries found.");
+            return;
+        }
+
+        plugin.getLogger().info("[NexLevel] flushPlayer(" + playerId + "): flushing " + list.size() + " entries...");
+
+        // NICHT mehr über CompletableFuture.runAsync auf dem CommonPool gehen,
+        // sondern über den eigenen NexLevel-Scheduler, damit der Lebenszyklus
+        // kontrollierbar ist und Shutdown darauf warten kann.
+        scheduler.execute(() -> {
+            try {
+                flushBatch(list);
+            } catch (Throwable ex) {
+                plugin.getLogger().severe("[NexLevel] FlushPlayer fehlgeschlagen: " + ex.getMessage());
+                ex.printStackTrace();
+                // Im Normalbetrieb wieder in die Dirty-Queue einreihen,
+                // damit der nächste Flush-Versuch es erneut probiert.
+                if (!shuttingDown.get()) {
                     list.forEach(this::markDirty);
-                    return null;
-                });
+                } else {
+                    plugin.getLogger().severe("[NexLevel] Shutdown in progress, will NOT requeue dirty entries for player " + playerId);
+                }
+            }
+        });
     }
 
     public void flushAll() {
-        flushOnceSafe();
+        // Vollständigen Flush der gesamten Dirty-Queue auf dem NexLevel-Scheduler.
+        scheduler.execute(this::flushAllBlocking);
     }
 
     public void invalidate(UUID playerId, String namespace, String key) {
@@ -529,20 +567,42 @@ public final class NexLevel {
 
     private void flushBatch(List<LevelProgress> batch) {
         try {
-            db.inTransaction(() -> {
-                db.withConnection(c -> {
+            // WICHTIG: keine verschachtelten Pool-Zugriffe mehr (inTransaction + withConnection),
+            // sondern genau EINE Connection holen und auf dieser Connection die Transaktion fahren.
+            db.withConnection(c -> {
+                boolean oldAutoCommit = true;
+                try {
+                    oldAutoCommit = c.getAutoCommit();
+                    c.setAutoCommit(false);
+
+                    dao.upsertBatch(c, batch);
+
+                    c.commit();
+                } catch (Exception e) {
                     try {
-                        dao.upsertBatch(c, batch);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        c.rollback();
+                    } catch (Exception rollbackEx) {
+                        plugin.getLogger().severe("[NexLevel] Rollback after flushBatch failed: " + rollbackEx.getMessage());
+                        rollbackEx.printStackTrace();
                     }
-                });
-                return null;
+                    throw new RuntimeException(e);
+                } finally {
+                    try {
+                        c.setAutoCommit(oldAutoCommit);
+                    } catch (Exception ignored) {
+                    }
+                }
             });
         } catch (Exception e) {
-            // bei Fehler: requeue
-            plugin.getLogger().severe("[NexLevel] Batch-Flush fehlgeschlagen, requeue: " + e.getMessage());
-            batch.forEach(this::markDirty);
+            plugin.getLogger().severe("[NexLevel] Batch-Flush failed: " + e.getMessage());
+            e.printStackTrace();
+            if (!shuttingDown.get()) {
+                // Nur im Normalbetrieb requeue
+                plugin.getLogger().severe("[NexLevel] Requeue dirty entries for next flush attempt.");
+                batch.forEach(this::markDirty);
+            } else {
+                plugin.getLogger().severe("[NexLevel] Shutdown in progress, will NOT requeue dirty entries.");
+            }
         }
     }
 }

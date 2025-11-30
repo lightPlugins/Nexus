@@ -1,5 +1,7 @@
 package io.nexstudios.nexus.bukkit.levels;
 
+import io.nexstudios.nexus.bukkit.NexusPlugin;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,6 +28,8 @@ record LevelDao(String tableName) {
     }
 
     public void upsertBatch(Connection c, List<LevelProgress> batch) throws Exception {
+        NexusPlugin.nexusLogger.info("[NexLevel] upsertBatch called with " + batch.size() + " entries");
+
         String update = "UPDATE " + tableName + " SET level=?, xp=?, updated_at=CURRENT_TIMESTAMP " +
                 "WHERE player_uuid=? AND namespace=? AND level_key=?";
         String insert = "INSERT INTO " + tableName + " (player_uuid, namespace, level_key, level, xp, updated_at) " +
@@ -54,6 +58,8 @@ record LevelDao(String tableName) {
             }
             in.executeBatch();
         }
+
+        NexusPlugin.nexusLogger.info("[NexLevel] upsertBatch finished");
     }
 
     public void streamAll(Connection c, Consumer<LevelProgress> consumer) throws Exception {
