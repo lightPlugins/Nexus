@@ -1,6 +1,7 @@
 package io.nexstudios.nexus.bukkit.utils;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
+import io.nexstudios.nexus.bukkit.actions.NexParams;
 import io.nexstudios.nexus.bukkit.items.AttributeOperation;
 import io.nexstudios.nexus.bukkit.items.ItemAttributeSpec;
 import io.nexstudios.nexus.bukkit.items.ItemBuilder;
@@ -16,7 +17,6 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
@@ -101,11 +101,23 @@ public class StringUtils {
         }
     }
 
-    public static String replaceInternalPlaceholders(String input, Map<String, Object> placeholders) {
+    public static String replaceKeyWithValue(String input, Map<String, Object> placeholders) {
         for(Map.Entry<String, Object> entry : placeholders.entrySet()) {
             input = input.replace("#" + entry.getKey() + "#", entry.getValue().toString());
         }
         return input;
+    }
+
+    public static String replaceKeyWithValue(String input, NexParams params) {
+        if (params == null || params.isEmpty() || input == null || input.isEmpty()) {
+            return input;
+        }
+        String result = input;
+        for (Map.Entry<String, String> entry : params.asMap().entrySet()) {
+            String value = entry.getValue();
+            result = result.replace("#" + entry.getKey() + "#", value == null ? "null" : value);
+        }
+        return result;
     }
 
     public static String parsePlaceholderAPI(OfflinePlayer offlinePlayer, String input) {

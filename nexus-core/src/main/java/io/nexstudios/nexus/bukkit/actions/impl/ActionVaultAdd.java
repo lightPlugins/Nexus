@@ -3,17 +3,15 @@ package io.nexstudios.nexus.bukkit.actions.impl;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.actions.ActionData;
 import io.nexstudios.nexus.bukkit.actions.NexusAction;
+import io.nexstudios.nexus.bukkit.actions.NexusActionContext;
 import io.nexstudios.nexus.bukkit.utils.NexusStringMath;
 import io.nexstudios.nexus.bukkit.utils.StringUtils;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Map;
 import java.util.Random;
 
 public class ActionVaultAdd implements NexusAction {
@@ -24,28 +22,27 @@ public class ActionVaultAdd implements NexusAction {
     }
 
     @Override
-    public void execute(Player player, ActionData data, Location targetLocation) {
+    public void execute(NexusActionContext context) {
+        ActionData data = context.data();
+        Player player = context.requirePlayer();
 
         double amount;
         String expression;
 
-        if(data.getData().get("multiplier") == null) {
+        Object multiplierObj = data.getData().get("multiplier");
+        if (multiplierObj == null) {
             expression = "1";
         } else {
-            expression = (String) data.getData().get("multiplier");
-        }
-
-        if(data.getData().get("amount") == null) {
-            NexusPlugin.nexusLogger.warning("Missing 'amount' parameter for drop table action 'vault_add'. " +
-                    "Please add it to your drop table action and try again.'");
+            expression = String.valueOf(multiplierObj);
         }
 
         Object amountObject = data.getData().get("amount");
+        if (amountObject == null) {
+            NexusPlugin.nexusLogger.warning("Missing 'amount' parameter for drop table action 'vault_add'. " +
+                    "Please add it to your drop table action and try again.");
+        }
 
-        if(data.validate(data.getData().get("amount"), String.class)) {
-
-            String amountString = (String) amountObject;
-
+        if (amountObject instanceof String amountString) {
             String[] rangeParts = amountString.split("-");
 
             if (amountString.contains("-")) {
@@ -62,56 +59,47 @@ public class ActionVaultAdd implements NexusAction {
 
                     amount = (minAmount + (Math.random() * ((maxAmount - minAmount) + 1)));
 
-
                 } catch (NumberFormatException e) {
                     NexusPlugin.nexusLogger.error("Invalid number format in amount-range: " + amountString);
                     e.printStackTrace();
-                    amount = 0.0; // Fallback value
+                    amount = 0.0;
                 }
             } else {
                 try {
-                    amount = Double.parseDouble(amountString); // Einzelwert aus String übernehmen
+                    amount = Double.parseDouble(amountString);
                 } catch (NumberFormatException e) {
-                    NexusPlugin.nexusLogger.warning("Could not parse " + amountString + " as an integer. Falling back to 1.");
+                    NexusPlugin.nexusLogger.warning("Could not parse " + amountString + " as a number. Falling back to 0.");
                     e.printStackTrace();
-                    amount = 0.0; // Fallback auf Standardwert
+                    amount = 0.0;
                 }
             }
 
-        } else if (data.validate(data.getData().get("amount"), Number.class)) {
-            amount = (double) data.getData().get("amount");
+        } else if (amountObject instanceof Number n) {
+            amount = n.doubleValue();
         } else {
-            NexusPlugin.nexusLogger.warning("Input" + amountObject + "is not an integer or a range. Falling back to 1. -> " + amountObject.getClass().getName());
-            amount = 1; // Fallback auf Standardwert
+            NexusPlugin.nexusLogger.warning("Input " + amountObject + " is not a number or range. Falling back to 1. -> " +
+                    (amountObject != null ? amountObject.getClass().getName() : "null"));
+            amount = 1;
         }
 
         double dropMultiplier = amountMultiplier(expression, player);
-
         amount *= dropMultiplier;
 
-        if(NexusPlugin.getInstance().vaultHook != null) {
+        if (NexusPlugin.getInstance().vaultHook != null) {
             Economy economy = NexusPlugin.getInstance().vaultHook.getEconomy();
             EconomyResponse response = economy.depositPlayer(player, amount);
 
-            if(!response.transactionSuccess()) {
-                player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Could not add money to your account. " +
-                        "Reason: <dark_red>" + response.errorMessage));
+            if (!response.transactionSuccess()) {
+                player.sendMessage(MiniMessage.miniMessage().deserialize(
+                        "<red>Could not add money to your account. Reason: <dark_red>" + response.errorMessage
+                ));
             }
             String currency = economy.currencyNamePlural();
-            NexusPlugin.nexusLogger.info("<white>Added <#ffdc73>" + amount + " <gray>" + currency + " <white>to <#ffdc73>" + player.getName() + "<white>'s account via drop table action.");
+            NexusPlugin.nexusLogger.info("<white>Added <#ffdc73>" + amount + " <gray>" + currency +
+                    " <white>to <#ffdc73>" + player.getName() + "<white>'s account via drop table action.");
         } else {
             NexusPlugin.nexusLogger.warning("You are trying to use Vault actions in drop table, but Vault was not found");
         }
-    }
-
-    @Override
-    public void execute(Player player, ActionData data, Location targetLocation, Map<String, Object> params) {
-        execute(player, data, targetLocation);
-    }
-
-    @Override
-    public void execute(Player player, ActionData data, Location location, TagResolver tagResolver) {
-        execute(player, data, location);
     }
 
     private int amountMultiplier(String expression, Player player) {
@@ -124,7 +112,7 @@ public class ActionVaultAdd implements NexusAction {
 
         double result = NexusStringMath.evaluateExpression(expression);
 
-        if(result == 0) {
+        if (result == 0) {
             return 1;
         }
 
@@ -132,19 +120,15 @@ public class ActionVaultAdd implements NexusAction {
     }
 
     private int calculateDropMultiplier(double result) {
-        // Der Ganzzahlanteil aus dem Ergebnis (z. B. 2 bei 2.6)
         int baseMultiplier = (int) result;
 
-        // Der Dezimalanteil als Wahrscheinlichkeit (z. B. 0.6 bei 2.6)
         double fractionalChance = result - baseMultiplier;
 
-        // Verwende checkChance, um zu entscheiden, ob der Dezimalanteil eine zusätzliche Multiplikation gibt
         if (checkChance(fractionalChance * 100)) {
-            // Drop zusätzlich um 1 erhöhen
             baseMultiplier++;
         }
 
-        return baseMultiplier; // Gesamter Multiplikator
+        return baseMultiplier;
     }
 
     private boolean checkChance(double chance) {

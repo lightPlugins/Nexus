@@ -1,6 +1,7 @@
 package io.nexstudios.internal.nms.v1_21_8.dialog;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
+import io.nexstudios.nexus.bukkit.actions.NexParams;
 import io.nexstudios.nexus.bukkit.dialog.NexDialogBuilder;
 import io.nexstudios.nexus.bukkit.dialog.NexDialogResult;
 import io.nexstudios.nexus.bukkit.utils.StringUtils;
@@ -818,10 +819,24 @@ public final class PaperDialogBuilder implements NexDialogBuilder {
             resolver = TagResolver.resolver(list);
         }
 
+        Map<String, String> paramMap = new HashMap<>();
+        for (Map.Entry<String, Object> entry : dialogValues.entrySet()) {
+            String key = entry.getKey();
+            if (key == null || key.isBlank()) continue;
+            paramMap.put(key, string(entry.getValue(), ""));
+        }
+
+        NexParams params = NexParams.of(paramMap, resolver);
+
         // 4) Actions mit TagResolver ausführen
         NexusPlugin.getInstance()
                 .getActionFactory()
-                .executeActions(player, null, actionData, resolver);
+                .newExecution()
+                .actor(player)
+                .targetLocation(player.getLocation())
+                .actions(actionData)
+                .params(params)
+                .execute();
     }
 
 
