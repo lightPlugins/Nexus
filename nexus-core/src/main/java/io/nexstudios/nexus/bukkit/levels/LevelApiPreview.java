@@ -20,78 +20,23 @@ import java.util.UUID;
  *         {@code level-up-actions} from a {@link ConfigurationSection}</li>
  *     <li>How to build a {@link LevelRewardConfig} from that section</li>
  *     <li>How to register that config in the central {@link LevelRewardRegistry}</li>
- *     <li>How to register the level-type itself in the {@link LevelService}</li>
+ *     <li>How to register the level-type in the {@link LevelService}</li>
  *     <li>How XP operations automatically trigger level-up actions via
  *         the central {@code LevelActionListener} + {@code ActionFactory}</li>
  *     <li>How to explicitly persist a single player's level data to the database
  *         using {@link LevelService#safeToDatabase(UUID)}</li>
+ *     <li>How to query required XP per level using
+ *         {@link LevelService#getRequiredXp(String, String, int)}</li>
  * </ul>
  *
- * <h2>Expected configuration format</h2>
  *
- * The provided {@code levelRoot} section is expected to contain the following keys:
- *
- * <pre>{@code
- * levels:
- *   - 5
- *   - 10
- *   - 20
- *
- * level-up-actions:
- *   - level: 1
- *     actions:
- *       - id: message
- *         message: "<green>Level 1 reached!</green>"
- *   - level: 2
- *     actions:
- *       - id: vault-add
- *         amount: "2000"
- *         multiplier: "1"
- * }</pre>
- *
- * This is exactly the "standard" schema that {@link LevelRewardConfig#fromStandardSection(ConfigurationSection)}
- * expects:
- * <ul>
- *     <li>{@code levels} – list of XP requirements per level (index 0 = level 1, index 1 = level 2, ...)</li>
- *     <li>{@code level-up-actions} – list of entries:
- *         <ul>
- *             <li>{@code level}: target level (int)</li>
- *             <li>{@code actions}: list of action-maps consumed by {@link io.nexstudios.nexus.bukkit.actions.ActionFactory}</li>
- *         </ul>
- *     </li>
- * </ul>
- *
- * <h2>How to use this preview</h2>
- *
- * In your own plugin, you would typically:
- * <ol>
- *     <li>Load your own config file into a {@link org.bukkit.configuration.file.FileConfiguration}</li>
- *     <li>Obtain a sub-section for your level-type, e.g. {@code config.getConfigurationSection("mining")}</li>
- *     <li>Call {@code LevelApiPreview.demo(player, thatSection)} from a debug command or test listener</li>
- * </ol>
  */
 public final class LevelApiPreview {
 
     private LevelApiPreview() {}
 
-    /**
-     * End-to-end demonstration for a single level-type.
-     * <p>
-     * Steps:
-     * <ol>
-     *     <li>Resolve the central {@link LevelService} from Nexus core</li>
-     *     <li>Build a {@link LevelRewardConfig} from the given config section</li>
-     *     <li>Register the reward-config in {@link LevelRewardRegistry}</li>
-     *     <li>Register the level-type in the {@link LevelService}</li>
-     *     <li>Perform some XP operations (add XP, set level)</li>
-     *     <li>Explicitly flush this player's changes to the database</li>
-     * </ol>
-     *
-     * @param player    the online player used for demonstration
-     * @param levelRoot configuration section for this level-type, containing
-     *                  {@code levels} and {@code level-up-actions} as described
-     *                  in the class-level JavaDoc.
-     */
+    // ... existing javadoc ...
+
     private void demo(Player player, ConfigurationSection levelRoot) {
         // 1) Obtain LevelService from Nexus core
         LevelService levels = NexusPlugin.getInstance().getLevelService();
@@ -129,13 +74,37 @@ public final class LevelApiPreview {
         //    - Potentially fire NexLevelUpEvent
         //    - Trigger configured level-up actions for any reached levels.
         LevelProgress afterGain = levels.addXp(pid, ns, key, 42.5);
-        player.sendMessage("After gain: level=" + afterGain.getLevel() + ", xp=" + fmt(afterGain.getXp()));
+        player.sendMessage("After gain: level=" + afterGain.getLevel()
+                + ", xpInLevel=" + fmt(afterGain.getXp())
+                + ", totalXp=" + fmt(afterGain.getTotalXp()));
+
+        // 6a) Show how to query required XP for current and next level.
+        int currentLevel = afterGain.getLevel();
+        double reqCurrent = levels.getRequiredXp(ns, key, Math.max(1, currentLevel == 0 ? 1 : currentLevel));
+        player.sendMessage("Required XP for current level " + currentLevel + ": " + fmt(reqCurrent));
+
+        if (currentLevel > 0) {
+            int nextLevel = currentLevel + 1;
+            double reqNext = levels.getRequiredXp(ns, key, nextLevel);
+            player.sendMessage("Required XP for level " + nextLevel + ": " + fmt(reqNext));
+        }
 
         // 7) Demonstrate setting an absolute level.
         //    This may again cause level-up events (and level-down if you lower it),
         //    which will also be handled by the central listener.
         LevelProgress afterSetLevel = levels.setLevel(pid, ns, key, 3);
-        player.sendMessage("After setLevel(3): level=" + afterSetLevel.getLevel() + ", xp=" + fmt(afterSetLevel.getXp()));
+        player.sendMessage("After setLevel(3): level=" + afterSetLevel.getLevel()
+                + ", xpInLevel=" + fmt(afterSetLevel.getXp())
+                + ", totalXp=" + fmt(afterSetLevel.getTotalXp()));
+
+        // 7a) Read back current progress explicitly via getProgress.
+        LevelProgress progressNow = levels.getProgress(pid, ns, key);
+        player.sendMessage("Current progress: level=" + progressNow.getLevel()
+                + ", xpInLevel=" + fmt(progressNow.getXp())
+                + ", totalXp=" + fmt(progressNow.getTotalXp()));
+
+        double reqForCurrent = levels.getRequiredXp(ns, key, Math.max(1, progressNow.getLevel() == 0 ? 1 : progressNow.getLevel()));
+        player.sendMessage("Current level requires " + fmt(reqForCurrent) + " XP (per level definition).");
 
         // 8) Explicitly persist this player's level entries to the database.
         //    Normally you can rely on the periodic/batch flush;

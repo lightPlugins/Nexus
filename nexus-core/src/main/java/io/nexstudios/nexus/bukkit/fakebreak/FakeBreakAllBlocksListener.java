@@ -45,19 +45,19 @@ public final class FakeBreakAllBlocksListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
+    //@EventHandler
     public void onBlockDamage(BlockDamageEvent event) {
         event.getPlayer().sendMessage("Block starting damage");
     }
 
-    @EventHandler
+    //@EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         player.getInventory().addItem(createCustomPickaxe(plugin));
     }
 
 
-    @EventHandler
+    //@EventHandler
     public void onBlockStopDamage(BlockDamageAbortEvent event) {
         event.getPlayer().sendMessage("Block stopped damage");
     }

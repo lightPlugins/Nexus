@@ -37,6 +37,8 @@ import io.nexstudios.nexus.bukkit.inv.event.NexInventoryClickListener;
 import io.nexstudios.nexus.bukkit.inv.renderer.DefaultNexItemRenderer;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import io.nexstudios.nexus.bukkit.levels.events.LevelFlushListener;
+import io.nexstudios.nexus.bukkit.levels.handler.LevelCheckOnJoinListener;
+import io.nexstudios.nexus.bukkit.levels.handler.LevelPreloadJoinListener;
 import io.nexstudios.nexus.bukkit.levels.impl.DefaultLevelService;
 import io.nexstudios.nexus.bukkit.levels.LevelService;
 import io.nexstudios.nexus.bukkit.levels.NexLevel;
@@ -411,7 +413,10 @@ public final class NexusPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new LevelFlushListener(), this);
         Bukkit.getPluginManager().registerEvents(blockUtil, this);
         Bukkit.getPluginManager().registerEvents(new FakeBreakAllBlocksListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new LevelCheckOnJoinListener(), this);
         Bukkit.getPluginManager().registerEvents(new LevelActionListener(), this);
+        Bukkit.getPluginManager().registerEvents(new LevelPreloadJoinListener(this), this);
+
 
     }
 
