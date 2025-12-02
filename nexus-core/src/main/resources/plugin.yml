@@ -19,7 +19,7 @@ softdepend:
   - Vault
 depend: [ ]
 libraries:
-  - redis.clients:jedis:5.2.0
+  - redis.clients:jedis:7.1.0
   - com.zaxxer:HikariCP:6.3.0
   - org.mariadb.jdbc:mariadb-java-client:3.5.3
   - commons-lang:commons-lang:2.6

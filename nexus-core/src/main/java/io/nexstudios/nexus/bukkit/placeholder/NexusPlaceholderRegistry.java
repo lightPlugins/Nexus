@@ -1,6 +1,7 @@
 
 package io.nexstudios.nexus.bukkit.placeholder;
 
+import io.nexstudios.nexus.bukkit.NexusPlugin;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -159,24 +160,16 @@ public final class NexusPlaceholderRegistry {
      * @return true if PlaceholderAPI is available and integration was enabled, false otherwise
      */
     public static boolean enablePAPIIntegration() {
-        if (papiIntegrationEnabled) {
-            return true;
-        }
 
-        try {
-            Class.forName("me.clip.placeholderapi.PlaceholderAPI");
+        if(NexusPlugin.getInstance().getPapiHook() != null) {
             papiIntegrationEnabled = true;
-
             // Register all existing providers
             for (var entry : PROVIDERS.entrySet()) {
                 registerWithPAPI(entry.getValue().owner(), entry.getKey());
             }
-
-            return true;
-        } catch (ClassNotFoundException e) {
-            // PlaceholderAPI not available
-            return false;
         }
+
+        return false;
     }
 
     /**

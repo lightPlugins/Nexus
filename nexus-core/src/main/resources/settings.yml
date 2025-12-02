@@ -15,59 +15,6 @@ logging:
     enable: false
     level: 3
 
-dialog:
-  id: "account_settings"
-  title: "<gold>Account Settings</gold>"
-  subtitle: "<gray>Bitte aktualisiere deine Einstellungen.</gray>"
-
-  body:
-    - "<white>Gib deinen Namen ein, wähle eine Lautstärke und ob du Benachrichtigungen möchtest.</white>"
-
-  options:
-    button-columns: 1
-    close-on-submit: true
-    close-on-cancel: true
-
-  # Alles, was im Body / Input-Bereich steht
-  body-content:
-    - type: "text-input"
-      key: "username"
-      label: "<white>Dein Name:</white>"
-      width: 300
-      prefill: "Steve"
-
-    - type: "slider"
-      key: "volume"
-      label: "<white>Lautstärke</white>"
-      label-format: '%s: %s'
-      min: 0
-      max: 100
-      step: 5
-      width: 200
-      prefill: 50
-
-    - type: "checkbox"
-      key: "notifications"
-      label: "<white>Benachrichtigungen aktivieren</white>"
-      default: true
-
-  # Spezielle Exit-Buttons (unten, separate Reihe)
-  exit-content:
-    - type: button
-      role: SUBMIT
-      label: <green>Speichern</green>
-      tooltip: <gray>Einstellungen übernehmen.</gray>
-      close-on-click: true
-      actions:
-        - id: message
-          message: "Gespeichert: <username> <volume> <notifications>"
-    - type: button
-      role: CANCEL
-      label: <red>Abbrechen</red>
-      tooltip: <gray>Änderungen verwerfen.</gray>
-      close-on-click: true
-      actions: []
-
 # ######################################################  #
 #                       IO SYSTEM                         #
 # ######################################################  #
@@ -75,10 +22,38 @@ dialog:
 # The Database and the Redis server.
 redis:
   enable: false
-  host: localhost
+  host: 'localhost'
   port: 6379
+  password: ""
+  database: 0
+
+storage:
+  # possible values:
+  # - sqlite -> using SQLite (recommended for most users) (single server setup)
+  # - mysql -> for a MySQL database (multi-server setup)
+  # - mariadb -> for a MariaDB database (recommended over MySQL) (multi-server setup)
+  type: sqlite
+  host: 127.0.0.1
+  port: 3306
+  database: databaseName
+  username: username
   password: YourSecretPassword
-  ssl: false
+  advanced:
+    # Don't change any values here if you don't know what you're doing.
+    connection-timeout: 60000
+    idle-timeout: 600000
+    keep-alive-time: 0
+    max-life-time: 1800000
+    minimum-idle: 10
+    # The maximum pool size of the connection pool for the database.
+    # Bigger pool size = more performance, but more RAM/CPU usage.
+    # If you installed more than 3 plugins from me, you should increase this value.
+    # For example: 3 plugins -> 15, 4 plugins -> 20, 5 plugins -> 25
+    # Default value is 10.
+    maximum-pool-size: 10
+    leak-detection-threshold: 0
+    connection-test-query: "SELECT 1"
+    character-encoding: "utf8"
 
 damage-indicator:
   enable: false
@@ -129,31 +104,3 @@ damage-indicator:
       '7': '7'
       '8': '8'
       '9': '9'
-
-storage:
-  # possible values:
-  # - sqlite -> using SQLite (recommended for most users) (single server setup)
-  # - mysql -> for a MySQL database (multi-server setup)
-  # - mariadb -> for a MariaDB database (recommended over MySQL) (multi-server setup)
-  type: sqlite
-  host: 127.0.0.1
-  port: 3306
-  database: databaseName
-  username: username
-  password: YourSecretPassword
-  advanced:
-    # Don't change any values here if you don't know what you're doing.
-    connection-timeout: 60000
-    idle-timeout: 600000
-    keep-alive-time: 0
-    max-life-time: 1800000
-    minimum-idle: 10
-    # The maximum pool size of the connection pool for the database.
-    # Bigger pool size = more performance, but more RAM/CPU usage.
-    # If you installed more than 3 plugins from me, you should increase this value.
-    # For example: 3 plugins -> 15, 4 plugins -> 20, 5 plugins -> 25
-    # Default value is 10.
-    maximum-pool-size: 10
-    leak-detection-threshold: 0
-    connection-test-query: "SELECT 1"
-    character-encoding: "utf8"

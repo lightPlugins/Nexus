@@ -47,6 +47,9 @@ import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderBootstrap;
 import io.nexstudios.nexus.bukkit.placeholder.NexusPlaceholderRegistry;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
 import io.nexstudios.nexus.bukkit.player.events.NoMoreFeed;
+import io.nexstudios.nexus.bukkit.redis.JedisNexusRedisService;
+import io.nexstudios.nexus.bukkit.redis.NexusRedisBukkitRegistrar;
+import io.nexstudios.nexus.bukkit.redis.NexusRedisService;
 import io.nexstudios.nexus.bukkit.utils.BlockUtil;
 import io.nexstudios.nexus.bukkit.utils.NexusLogger;
 import io.nexstudios.nexus.bukkit.files.NexusFile;
@@ -106,6 +109,7 @@ public final class NexusPlugin extends JavaPlugin {
     private AbstractDatabase abstractDatabase;
     public HikariDataSource hikariDataSource;
     private NexusDatabaseService nexusDatabaseService;
+    private NexusRedisService redisService;
 
     @Override
     public void onLoad() {
@@ -121,6 +125,7 @@ public final class NexusPlugin extends JavaPlugin {
         }
 
         nexusLogger.info("Initializing database connection...");
+        initRedis();
         initDatabase();
     }
 
@@ -204,6 +209,21 @@ public final class NexusPlugin extends JavaPlugin {
             NexLevel.shutdown();
         } catch (Throwable e) {
             e.printStackTrace();
+        }
+
+        // Shutdown Redis service
+        if (redisService != null) {
+            nexusLogger.info("Shutting down Redis connection ...");
+            try {
+                NexusRedisBukkitRegistrar.unregister(this, redisService);
+                redisService.shutdown();
+            } catch (Throwable t) {
+                nexusLogger.error(List.of(
+                        "Error while shutting down NexusRedisService.",
+                        "Error: " + t.getMessage()
+                ));
+            }
+            redisService = null;
         }
 
         nexusLogger.info("Shutting down Database connection ...");
@@ -453,5 +473,34 @@ public final class NexusPlugin extends JavaPlugin {
                 "Effect System: %d Effect(s), %d Binding(s), %d Trigger(s), %d Filter(s).",
                 effectTypes, bindingCount, triggerCount, filterCount
         ));
+    }
+
+    private void initRedis() {
+        try {
+            var cfg = settingsFile.getConfig();
+            if(cfg.getBoolean("redis.enabled", false)) {
+                String host = cfg.getString("redis.host", "localhost");
+                int port = cfg.getInt("redis.port", 6379);
+                String password = cfg.getString("redis.password", "");
+                int database = cfg.getInt("storage.redis.database", 0);
+
+                this.redisService = new JedisNexusRedisService(this, host, port, password, database);
+                ((JedisNexusRedisService) this.redisService).start();
+
+                if (!redisService.isConnected()) {
+                    nexusLogger.warning("NexusRedisService could not establish a connection to Redis. " +
+                            "Check your storage.redis.* configuration. Redis features will be disabled.");
+                    return;
+                }
+
+                NexusRedisBukkitRegistrar.register(this, redisService);
+                nexusLogger.info("NexusRedisService registered successfully and connected to Redis at " + host + ":" + port);
+            }
+        } catch (Throwable t) {
+            nexusLogger.error(List.of(
+                    "Failed to initialize NexusRedisService.",
+                    "Error: " + t.getMessage()
+            ));
+        }
     }
 }
