@@ -167,6 +167,7 @@ public final class NexusPlaceholderRegistry {
             for (var entry : PROVIDERS.entrySet()) {
                 registerWithPAPI(entry.getValue().owner(), entry.getKey());
             }
+            return true;
         }
 
         return false;

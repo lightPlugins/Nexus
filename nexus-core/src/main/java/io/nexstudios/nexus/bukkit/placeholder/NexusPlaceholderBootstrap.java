@@ -38,7 +38,7 @@ public final class NexusPlaceholderBootstrap {
         // Try to enable PlaceholderAPI integration once.
         boolean papiAvailable = NexusPlaceholderRegistry.enablePAPIIntegration();
         if (papiAvailable) {
-            nexusPlugin.getLogger().info("PlaceholderAPI integration enabled for NexusPlaceholders");
+            NexusPlugin.nexusLogger.info("PlaceholderAPI integration enabled for NexusPlaceholders");
         }
 
         // Default TTL: 1 second, can be tuned later (per key etc.).

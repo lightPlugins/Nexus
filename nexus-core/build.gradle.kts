@@ -38,7 +38,9 @@ dependencies {
     compileOnly("com.willfp:EcoItems:5.66.0")
     compileOnly("dev.lone:api-itemsadder:4.0.10")
 
-    compileOnly("redis.clients:jedis:7.1.0")
+    compileOnly("redis.clients:jedis:7.1.0") {
+        exclude(group = "com.google.code.gson", module = "gson")
+    }
     compileOnly("com.zaxxer:HikariCP:6.3.0")
     compileOnly ("org.mariadb.jdbc:mariadb-java-client:3.5.3")
     compileOnly("commons-lang:commons-lang:2.6")

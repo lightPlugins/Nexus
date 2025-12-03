@@ -1199,7 +1199,9 @@ public final class NexLevel {
                 }
             });
             NexusPlugin.nexusLogger.info("NexLevel system preloaded in " + (System.currentTimeMillis() - start) + "ms");
-            NexusPlugin.nexusLogger.info("Found <yellow>" + count[0] + "<reset> LevelProgress entries");
+            if(count[0] > 0) {
+                NexusPlugin.nexusLogger.info("Found <yellow>" + count[0] + "<reset> LevelProgress entries");
+            }
         } catch (Exception e) {
             NexusPlugin.nexusLogger.error("NexLevel system preload failed: " + e.getMessage());
         }

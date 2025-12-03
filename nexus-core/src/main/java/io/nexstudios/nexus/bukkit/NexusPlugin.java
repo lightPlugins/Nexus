@@ -118,20 +118,22 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger = new NexusLogger("<reset>[<yellow>Nexus<reset>]", true, 99, "<yellow>");
         nexusLogger.info("Nexus is loading...");
         onReload();
-        nexusLogger.info("Check for compatibility with other plugins...");
+        nexusLogger.info("Check for compatibility with other plugins ...");
         if(getServer().getPluginManager().getPlugin("WorldGuard") != null) {
             worldGuardHook = new WorldGuardHook();
             nexusLogger.info("<yellow>WorldGuard<reset> flag(s) registered successfully.");
         }
 
-        nexusLogger.info("Initializing database connection...");
+        nexusLogger.info("Initializing database connection ...");
         initRedis();
         initDatabase();
+        nexusLogger.info("Loading phase completed, waiting for enable phase...");
     }
 
     @Override
     public void onEnable() {
-        nexusLogger.info("Register Nexus commands...");
+        logAsciiLogo();
+        nexusLogger.info("Checking for third party hooks ...");
         checkForHooks();
         nexusLogger.info("Register internal and third party placeholders...");
         NexusPlaceholderBootstrap.registerNexusPlaceholders(this);
@@ -144,8 +146,9 @@ public final class NexusPlugin extends JavaPlugin {
         damageIndicator = new DamageIndicator(this, new EcoSkillsHook());
         bindingRegistry = new EffectBindingRegistry();
         blockUtil = new BlockUtil(this);
+        nexusLogger.info("Register Nexus commands ...");
         registerCommands();
-        nexusLogger.info("Register Nexus events...");
+        nexusLogger.info("Register Nexus events ...");
         registerEvents();
         nexusLogger.info("Initiate Nexus effect system ...");
         nexusLogger.info("Register built-in trigger and filter types");
@@ -396,13 +399,6 @@ public final class NexusPlugin extends JavaPlugin {
 
         if(getServer().getPluginManager().getPlugin("Vault") != null) {
             vaultHook = new VaultHook(this, nexusLogger);
-            if (vaultHook.getEconomy() != null) {
-                nexusLogger.info("<yellow>Vault Economy<reset> hook registered successfully.");
-            } else {
-                nexusLogger.warning("Vault Economy hook could not be registered. Economy provider is null.");
-            }
-        } else {
-            nexusLogger.warning("Vault is not installed or enabled. Vault hook is not be available.");
         }
     }
 
@@ -436,7 +432,6 @@ public final class NexusPlugin extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new LevelCheckOnJoinListener(), this);
         Bukkit.getPluginManager().registerEvents(new LevelActionListener(), this);
         Bukkit.getPluginManager().registerEvents(new LevelPreloadJoinListener(this), this);
-
 
     }
 
@@ -478,7 +473,7 @@ public final class NexusPlugin extends JavaPlugin {
     private void initRedis() {
         try {
             var cfg = settingsFile.getConfig();
-            if(cfg.getBoolean("redis.enabled", false)) {
+            if(cfg.getBoolean("redis.enable", false)) {
                 String host = cfg.getString("redis.host", "localhost");
                 int port = cfg.getInt("redis.port", 6379);
                 String password = cfg.getString("redis.password", "");
@@ -488,13 +483,19 @@ public final class NexusPlugin extends JavaPlugin {
                 ((JedisNexusRedisService) this.redisService).start();
 
                 if (!redisService.isConnected()) {
-                    nexusLogger.warning("NexusRedisService could not establish a connection to Redis. " +
-                            "Check your storage.redis.* configuration. Redis features will be disabled.");
+                    nexusLogger.error(List.of(
+                            "Redis connection could not be established.",
+                            "Please check your redis.* configuration.",
+                            "Error: Could not connect to Redis at " + host + ":" + port + "."
+                    ));
                     return;
                 }
 
                 NexusRedisBukkitRegistrar.register(this, redisService);
                 nexusLogger.info("NexusRedisService registered successfully and connected to Redis at " + host + ":" + port);
+            } else {
+                nexusLogger.info("Redis is currently not enabled.");
+                nexusLogger.info("If you want <yellow>cross server communication<reset>, enable Redis in your configuration.");
             }
         } catch (Throwable t) {
             nexusLogger.error(List.of(
@@ -502,5 +503,23 @@ public final class NexusPlugin extends JavaPlugin {
                     "Error: " + t.getMessage()
             ));
         }
+    }
+
+    private void logAsciiLogo() {
+        String version = getPluginMeta().getVersion();
+        String paperVersion = Bukkit.getServer().getVersion();
+        nexusLogger.info("""
+                     
+                     <gradient:yellow:white>▄▄▄    ▄▄▄  ▄▄▄▄▄▄▄ ▄▄▄   ▄▄▄ ▄▄▄  ▄▄▄  ▄▄▄▄▄▄▄</gradient>\s
+                     <gradient:yellow:white>████▄  ███ ███▀▀▀▀▀ ████▄████ ███  ███ █████▀▀▀</gradient>\s
+                     <gradient:yellow:white>███▀██▄███ ███▄▄     ▀█████▀  ███  ███  ▀████▄ </gradient>\s
+                     <gradient:yellow:white>███  ▀████ ███      ▄███████▄ ███▄▄███    ▀████</gradient>\s
+                     <gradient:yellow:white>███    ███ ▀███████ ███▀ ▀███ ▀██████▀ ███████▀</gradient>\s
+            
+               <gray>The most powerful core plugin that drives the entire <yellow>Nex</yellow><gray> series.</gray>
+               <gray>Version: <yellow>%s</yellow></gray><reset>
+               <gray>Author: <yellow>light (NexStudios)
+               <gray>Paper Version: %s</gray><reset>
+            """.formatted(version, paperVersion));
     }
 }

@@ -188,7 +188,7 @@ public class JedisNexusRedisService implements NexusRedisService, Closeable {
 
                 String payload = encodeMessage(message);
                 Long receivers = jedis.publish(channel, payload);
-                future.complete(receivers != null ? receivers : 0L);
+                future.complete(receivers);
             } catch (Exception e) {
                 future.completeExceptionally(e);
             }
@@ -210,7 +210,8 @@ public class JedisNexusRedisService implements NexusRedisService, Closeable {
         Jedis sj = this.subscriberJedis;
         if (sj != null) {
             try {
-                sj.unsubscribe();
+                // WICHTIG: unsubscriben macht man auf dem JedisPubSub, nicht auf dem Jedis.
+                pubSub.unsubscribe();
             } catch (Exception ignored) {
             }
         }
@@ -225,7 +226,8 @@ public class JedisNexusRedisService implements NexusRedisService, Closeable {
         Jedis sj = this.subscriberJedis;
         if (sj != null) {
             try {
-                sj.unsubscribe();
+                // ebenfalls: auf dem PubSub unsubscriben, damit subscribe() im Loop zurückkehrt
+                pubSub.unsubscribe();
             } catch (Exception ignored) {
             }
         }
@@ -313,18 +315,14 @@ public class JedisNexusRedisService implements NexusRedisService, Closeable {
 
     /**
      * Decodes a wire format string into NexusRedisMessage.
-     * This is a placeholder and expects the format produced by encodeMessage.
-     * For a robust API, switch to a real JSON library.
+     * This expects the format produced by encodeMessage.
+     * Für eine robuste API solltest du später auf eine echte JSON-Library wechseln.
      */
     private NexusRedisMessage decodeMessage(String raw) {
-        // For now, keep it very simple: not a full JSON parser.
-        // You can replace this with Jackson/Gson later.
-        // As a temporary implementation, treat everything as a simple map with "type" and "origin" only.
         String type = "unknown";
         String origin = null;
         Map<String, Object> payload = Collections.emptyMap();
 
-        // very naive parsing
         try {
             int typeIdx = raw.indexOf("\"type\"");
             if (typeIdx >= 0) {
@@ -344,10 +342,146 @@ public class JedisNexusRedisService implements NexusRedisService, Closeable {
                     origin = unescape(raw.substring(start, end));
                 }
             }
+
+            // payload parsen (erwartet {...} wie in encodeMessage)
+            int payloadIdx = raw.indexOf("\"payload\"");
+            if (payloadIdx >= 0) {
+                int colon = raw.indexOf(":", payloadIdx);
+                int startObj = raw.indexOf("{", colon + 1);
+                int endObj = raw.lastIndexOf("}");
+                if (startObj >= 0 && endObj > startObj) {
+                    String inner = raw.substring(startObj + 1, endObj).trim();
+                    payload = parsePayload(inner);
+                }
+            }
         } catch (Exception ignored) {
         }
 
         return new NexusRedisMessage(type, origin, payload);
+    }
+
+    /**
+     * Mini-Parser für das Payload-Object, das encodeMessage() produziert.
+     * Unterstützt:
+     * - Strings: "text"
+     * - Zahlen: 1, 1.23
+     * - Boolean: true/false
+     * - null
+     * KEINE verschachtelten Objekte/Arrays.
+     */
+    private Map<String, Object> parsePayload(String inner) {
+        Map<String, Object> result = new HashMap<>();
+        if (inner.isEmpty()) {
+            return result;
+        }
+
+        List<String> entries = splitTopLevel(inner);
+        for (String entry : entries) {
+            String trimmed = entry.trim();
+            if (trimmed.isEmpty()) continue;
+
+            int colonIdx = trimmed.indexOf(':');
+            if (colonIdx <= 0) continue;
+
+            String keyPart = trimmed.substring(0, colonIdx).trim();
+            String valuePart = trimmed.substring(colonIdx + 1).trim();
+
+            if (!keyPart.startsWith("\"") || !keyPart.endsWith("\"")) {
+                continue;
+            }
+
+            String key = unescape(keyPart.substring(1, keyPart.length() - 1));
+            Object value = parseJsonValue(valuePart);
+            result.put(key, value);
+        }
+        return result;
+    }
+
+    /**
+     * Splittet ein einfaches JSON-Objekt am Top-Level nach Kommas.
+     * Kommas innerhalb von Strings werden ignoriert.
+     */
+    private List<String> splitTopLevel(String s) {
+        List<String> parts = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inString = false;
+        boolean escaping = false;
+
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+
+            if (escaping) {
+                current.append(c);
+                escaping = false;
+                continue;
+            }
+
+            if (c == '\\') {
+                current.append(c);
+                escaping = true;
+                continue;
+            }
+
+            if (c == '"') {
+                inString = !inString;
+                current.append(c);
+                continue;
+            }
+
+            if (c == ',' && !inString) {
+                parts.add(current.toString());
+                current.setLength(0);
+                continue;
+            }
+
+            current.append(c);
+        }
+
+        if (!current.isEmpty()) {
+            parts.add(current.toString());
+        }
+
+        return parts;
+    }
+
+    /**
+     * Parsen eines sehr kleinen JSON-Werte-Sets: String, Number, Boolean, null.
+     */
+    private Object parseJsonValue(String valuePart) {
+        String v = valuePart.trim();
+        if (v.isEmpty()) return null;
+
+        // String
+        if (v.startsWith("\"") && v.endsWith("\"") && v.length() >= 2) {
+            String inner = v.substring(1, v.length() - 1);
+            return unescape(inner);
+        }
+
+        // null
+        if ("null".equalsIgnoreCase(v)) {
+            return null;
+        }
+
+        // boolean
+        if ("true".equalsIgnoreCase(v)) {
+            return Boolean.TRUE;
+        }
+        if ("false".equalsIgnoreCase(v)) {
+            return Boolean.FALSE;
+        }
+
+        // number (try long, then double)
+        try {
+            if (v.contains(".") || v.contains("e") || v.contains("E")) {
+                return Double.parseDouble(v);
+            } else {
+                return Long.parseLong(v);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+
+        // fallback: raw String
+        return v;
     }
 
     private String escape(String in) {
