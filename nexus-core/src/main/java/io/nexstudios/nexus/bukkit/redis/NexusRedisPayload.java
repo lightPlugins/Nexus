@@ -58,6 +58,26 @@ public final class NexusRedisPayload {
         return v != null ? v : defaultValue;
     }
 
+    public Long getLong(String key) {
+        Object v = values.get(key);
+        if (v instanceof Number n) {
+            return n.longValue();
+        }
+        if (v instanceof String s) {
+            try {
+                return Long.parseLong(s);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        // kein Wert oder nicht parsebar
+        return null;
+    }
+
+    public long getLong(String key, long defaultValue) {
+        Long v = getLong(key);
+        return v != null ? v : defaultValue;
+    }
+
     public Double getDouble(String key) {
         Object v = values.get(key);
         if (v instanceof Number n) {

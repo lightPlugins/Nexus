@@ -30,6 +30,17 @@ public final class NexusRedisApi {
     }
 
     /**
+     * @return true if a NexusRedisService is registered with Bukkit's ServicesManager,
+     *         regardless of its connection state.
+     *
+     * DISABLED in config  -> false (kein Service registriert)
+     * ENABLED but down    -> true  (Service vorhanden, aber evtl. isConnected() == false)
+     */
+    public static boolean isServicePresent() {
+        return getService().isPresent();
+    }
+
+    /**
      * Convenience wrapper around {@link NexusRedisService#publish(String, NexusRedisMessage)}.
      *
      * If the service is not available, the returned future completes exceptionally.

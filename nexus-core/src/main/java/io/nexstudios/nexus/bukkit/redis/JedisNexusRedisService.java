@@ -348,10 +348,27 @@ public class JedisNexusRedisService implements NexusRedisService, Closeable {
             if (payloadIdx >= 0) {
                 int colon = raw.indexOf(":", payloadIdx);
                 int startObj = raw.indexOf("{", colon + 1);
-                int endObj = raw.lastIndexOf("}");
-                if (startObj >= 0 && endObj > startObj) {
-                    String inner = raw.substring(startObj + 1, endObj).trim();
-                    payload = parsePayload(inner);
+                if (startObj >= 0) {
+                    // Ende des Payload-Objekts finden: passende schließende Klammer
+                    int depth = 0;
+                    int endObj = -1;
+                    for (int i = startObj; i < raw.length(); i++) {
+                        char c = raw.charAt(i);
+                        if (c == '{') {
+                            depth++;
+                        } else if (c == '}') {
+                            depth--;
+                            if (depth == 0) {
+                                endObj = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (endObj > startObj) {
+                        String inner = raw.substring(startObj + 1, endObj).trim();
+                        payload = parsePayload(inner);
+                    }
                 }
             }
         } catch (Exception ignored) {

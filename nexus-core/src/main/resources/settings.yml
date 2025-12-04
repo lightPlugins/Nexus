@@ -27,11 +27,16 @@ redis:
   password: ""
   database: 0
 
+cross-server:
+  enable: false
+  sync-type: 'redis'
+  server-name: 'default'
+
 storage:
   # possible values:
   # - sqlite -> using SQLite (recommended for most users) (single server setup)
-  # - mysql -> for a MySQL database (multi-server setup)
-  # - mariadb -> for a MariaDB database (recommended over MySQL) (multi-server setup)
+  # - mysql -> for a MySQL database
+  # - mariadb -> for a MariaDB database (recommended over MySQL)
   type: sqlite
   host: 127.0.0.1
   port: 3306

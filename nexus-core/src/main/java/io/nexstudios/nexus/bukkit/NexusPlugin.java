@@ -118,6 +118,7 @@ public final class NexusPlugin extends JavaPlugin {
         nexusLogger = new NexusLogger("<reset>[<yellow>Nexus<reset>]", true, 99, "<yellow>");
         nexusLogger.info("Nexus is loading...");
         onReload();
+        checkCrossServerConfig();
         nexusLogger.info("Check for compatibility with other plugins ...");
         if(getServer().getPluginManager().getPlugin("WorldGuard") != null) {
             worldGuardHook = new WorldGuardHook();
@@ -483,6 +484,14 @@ public final class NexusPlugin extends JavaPlugin {
                 ((JedisNexusRedisService) this.redisService).start();
 
                 if (!redisService.isConnected()) {
+                    if(isCrossServerEnabled()) {
+                        nexusLogger.warning(List.of(
+                                "Cross server communication is enabled, but Redis is required for cross server communication.",
+                                "Please ensure Redis is properly configured and running.",
+                                "If Redis is not required, disable cross server in your configuration."
+                        ));
+                        return;
+                    }
                     nexusLogger.error(List.of(
                             "Redis connection could not be established.",
                             "Please check your redis.* configuration.",
@@ -502,6 +511,28 @@ public final class NexusPlugin extends JavaPlugin {
                     "Failed to initialize NexusRedisService.",
                     "Error: " + t.getMessage()
             ));
+        }
+    }
+
+    public boolean isCrossServerEnabled() {
+        return settingsFile.getBoolean("cross-server.enable", false);
+    }
+
+    public String getCrossServerName() {
+        return settingsFile.getString("cross-server.server-name", "default");
+    }
+
+    private void checkCrossServerConfig() {
+        if(isCrossServerEnabled()) {
+            if(getCrossServerName().equalsIgnoreCase("default")) {
+                nexusLogger.error(List.of(
+                        "Cross server is enabled, but server name 'default' is specified in the configuration.",
+                        "Please specify a server name in the configuration wich is also set in your Velocity config",
+                        "Disabling cross server functionality."
+                ));
+                settingsFile.getConfig().set("cross-server.enable", false);
+                settingsFile.saveConfig();
+            }
         }
     }
 
