@@ -3,13 +3,13 @@ package io.nexstudios.nexus.bukkit.conditions.impl;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.conditions.ConditionData;
 import io.nexstudios.nexus.bukkit.conditions.NexusCondition;
+import io.nexstudios.nexus.bukkit.conditions.NexusConditionContext;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
-import java.util.Map;
 
 public class ConditionInRegion implements NexusCondition {
 
@@ -18,47 +18,45 @@ public class ConditionInRegion implements NexusCondition {
         return NexusPlugin.getInstance();
     }
 
+    /**
+     * Synchrone Prüfung:
+     * - verwendet bevorzugt die targetLocation aus dem Kontext
+     * - wenn keine targetLocation gesetzt ist, wird die Spieler-Position genutzt (falls online)
+     * - Regions-Konfiguration:
+     *   - "regions": List<String> → eine der Regionen muss matchen
+     *   - "region": String → einzelne Region
+     */
     @Override
-    public boolean checkCondition(Player player, ConditionData data) {
+    public boolean checkSync(NexusConditionContext context) {
+        ConditionData data = context.data();
 
-        List<String> regionsConfig = (List<String>) data.getData().getOrDefault("regions", List.of());
-        String regionConfig = (String) data.getData().getOrDefault("region", "no_region_found");
-
-        if (regionsConfig.isEmpty()) {
-            return NexusPlugin.getInstance()
-                    .getWorldGuardHook()
-                    .isInRegion(player.getLocation(), regionConfig);
-        }
-
-        for (String region : regionsConfig) {
-            if (NexusPlugin.getInstance().getWorldGuardHook().isInRegion(player.getLocation(), region)) {
-                return true;
+        // Zielposition: erst explizite Location, sonst Spielerposition
+        Location location = context.location();
+        if (location == null) {
+            Player p = context.player();
+            if (p != null) {
+                location = p.getLocation();
             }
         }
 
-        return false;
-    }
-
-    @Override
-    public boolean checkCondition(Player player, ConditionData data, Location targetLocation) {
-
-        List<String> regionsConfig = (List<String>) data.getData().getOrDefault("regions", List.of());
-        String regionConfig = (String) data.getData().getOrDefault("region", "no_region_found");
-
-        if (targetLocation == null) {
+        if (location == null) {
             return false;
         }
 
-        // Keine Region angegeben → irgendeine WG‑Region am Zielort reicht
+        @SuppressWarnings("unchecked")
+        List<String> regionsConfig = (List<String>) data.getData().getOrDefault("regions", List.of());
+        String regionConfig = (String) data.getData().getOrDefault("region", "no_region_found");
+
+        // Keine Regionen-Liste → einzelne Region / "irgendeine Region" am Ort
         if (regionsConfig.isEmpty()) {
             return NexusPlugin.getInstance()
                     .getWorldGuardHook()
-                    .isInRegion(targetLocation, regionConfig);
+                    .isInRegion(location, regionConfig);
         }
 
-        // Mindestens eine der angegebenen Regionen muss am Zielort zutreffen
+        // Mindestens eine der angegebenen Regionen muss zutreffen
         for (String region : regionsConfig) {
-            if (NexusPlugin.getInstance().getWorldGuardHook().isInRegion(targetLocation, region)) {
+            if (NexusPlugin.getInstance().getWorldGuardHook().isInRegion(location, region)) {
                 return true;
             }
         }
@@ -67,17 +65,21 @@ public class ConditionInRegion implements NexusCondition {
     }
 
     @Override
-    public boolean checkCondition(Player player, ConditionData data, Location targetLocation, Map<String, Object> params) {
-        return checkCondition(player, data, targetLocation);
-    }
+    public void sendMessage(NexusConditionContext context) {
+        ConditionData data = context.data();
 
-    @Override
-    public void sendMessage(Player player, ConditionData data) {
         boolean sendMessage = (boolean) data.getData().getOrDefault("send-message", true);
         boolean asActionBar = (boolean) data.getData().getOrDefault("as-actionbar", false);
 
-        if(!sendMessage) return;
-        if(asActionBar) {
+        if (!sendMessage) return;
+
+        Player player = context.player();
+        if (player == null) {
+            // kein Online-Player vorhanden
+            return;
+        }
+
+        if (asActionBar) {
             player.sendActionBar(Component.text("Condition not met"));
         } else {
             NexusPlugin.getInstance().getMessageSender().send(player, "general.condition-not-met");

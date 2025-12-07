@@ -36,6 +36,10 @@ public class NexusLanguage {
         nexusLogger.info("Loaded " + availableLanguages.size() + " languages.");
     }
 
+    public FileConfiguration getSelectedLanguageConfig(UUID uuid) {
+        return loadedLanguages.get(getSelectedLanguage(uuid));
+    }
+
     public String getSelectedLanguage(UUID uuid) {
         return userLanguage.getOrDefault(uuid, "english");
     }

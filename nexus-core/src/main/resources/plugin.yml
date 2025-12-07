@@ -17,6 +17,7 @@ softdepend:
   - AuroraCollections
   - ItemsAdder
   - Vault
+  - LuckPerms
 depend: [ ]
 libraries:
   - redis.clients:jedis:7.1.0

@@ -29,6 +29,7 @@ import io.nexstudios.nexus.bukkit.hooks.*;
 import io.nexstudios.nexus.bukkit.hooks.auraskills.AuraSkillsHook;
 import io.nexstudios.nexus.bukkit.hooks.auroracollections.AuroraCollectionsHook;
 import io.nexstudios.nexus.bukkit.hooks.itemsadder.ItemsAdderHook;
+import io.nexstudios.nexus.bukkit.hooks.luckperms.LuckPermsHook;
 import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
 import io.nexstudios.nexus.bukkit.hooks.worldguard.WorldGuardHook;
 import io.nexstudios.nexus.bukkit.indicator.DamageIndicator;
@@ -104,6 +105,7 @@ public final class NexusPlugin extends JavaPlugin {
     public AuroraCollectionsHook auroraCollectionsHook;
     public WorldGuardHook worldGuardHook;
     public ItemsAdderHook itemsAdderHook;
+    public LuckPermsHook luckPermsHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;
@@ -400,6 +402,10 @@ public final class NexusPlugin extends JavaPlugin {
 
         if(getServer().getPluginManager().getPlugin("Vault") != null) {
             vaultHook = new VaultHook(this, nexusLogger);
+        }
+
+        if(getServer().getPluginManager().getPlugin("LuckPerms") != null) {
+            luckPermsHook = new LuckPermsHook();
         }
     }
 

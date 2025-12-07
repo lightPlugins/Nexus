@@ -24,6 +24,7 @@ dependencies {
     }
 
     compileOnly("me.clip:placeholderapi:2.11.6")
+    compileOnly("net.luckperms:api:5.5")
     compileOnly("com.nexomc:nexo:0.7.0")
     compileOnly("io.lumine:Mythic-Dist:5.9.5")
     compileOnly("io.lumine:MythicLib-dist:1.7.1-SNAPSHOT")

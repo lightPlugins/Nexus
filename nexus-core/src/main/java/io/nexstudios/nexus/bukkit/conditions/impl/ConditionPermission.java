@@ -3,8 +3,8 @@ package io.nexstudios.nexus.bukkit.conditions.impl;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.conditions.ConditionData;
 import io.nexstudios.nexus.bukkit.conditions.NexusCondition;
+import io.nexstudios.nexus.bukkit.conditions.NexusConditionContext;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -18,36 +18,46 @@ public class ConditionPermission implements NexusCondition {
     }
 
     @Override
-    public boolean checkCondition(Player player, ConditionData data) {
-        if(!data.validate(data.getData().get("permission"), String.class)) {
+    public boolean checkSync(NexusConditionContext context) {
+        ConditionData data = context.data();
+        Object permObj = data.getData().get("permission");
+
+        if (permObj == null || !data.validate(permObj, String.class)) {
             NexusPlugin.nexusLogger.error("Invalid permission data.");
-            NexusPlugin.nexusLogger.error("Missing 'permission' parameter for action");
+            NexusPlugin.nexusLogger.error("Missing 'permission' parameter for condition");
             return false;
         }
 
-        String permission = (String) data.getData().getOrDefault("permission", "no.permission.found");
+        Player player = context.player();
+        if (player == null) {
+            // Subjekt ist nur OfflinePlayer (UUID), Bukkit-Permissions sind nur für Online-Player verfügbar
+            return false;
+        }
+
+        String permission = (String) permObj;
+        if (permission.isEmpty()) {
+            permission = "no.permission.found";
+        }
+
         return player.hasPermission(permission);
-
     }
 
     @Override
-    public boolean checkCondition(Player player, ConditionData data, Location targetLocation) {
-        return checkCondition(player, data);
-    }
-
-    @Override
-    public boolean checkCondition(Player player, ConditionData data, Location targetLocation, Map<String, Object> params) {
-        return checkCondition(player, data);
-    }
-
-    @Override
-    public void sendMessage(Player player, ConditionData data) {
+    public void sendMessage(NexusConditionContext context) {
+        ConditionData data = context.data();
 
         boolean sendMessage = (boolean) data.getData().getOrDefault("send-message", true);
         boolean asActionBar = (boolean) data.getData().getOrDefault("as-actionbar", false);
 
-        if(!sendMessage) return;
-        if(asActionBar) {
+        if (!sendMessage) return;
+
+        Player player = context.player();
+        if (player == null) {
+            // Niemand online, dem wir die Nachricht schicken können
+            return;
+        }
+
+        if (asActionBar) {
             player.sendActionBar(Component.text("Condition not met"));
         } else {
             NexusPlugin.getInstance().getMessageSender().send(player, "general.condition-not-met");
