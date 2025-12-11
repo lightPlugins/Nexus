@@ -1,8 +1,3 @@
-# custom internal placeholder for THIS item only
-# The value is the result of the expression (PlaceholderAPI support)
-placeholder:
-  - id: 'example-placeholder'
-    value: '100 / 10'
 # The base item, can be a custom item or a vanilla item
 # minecraft:diamond_sword <- a vanilla item
 # mmoitems:type:id <- MMOItems support
@@ -41,10 +36,9 @@ attributes:
 # (bonus stats are temporary bonus stats),
 # requires NexStats to be installed
 # values are expression compatible
-# values have internal placeholder support for e.g., -> '#example-placeholder#'
 effects:
   - id: strong_against_monsters
-    value: '#example-placeholder#'
+    value: '5'
     slots:
       - HAND
       - OFF_HAND
