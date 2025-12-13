@@ -33,6 +33,32 @@ public interface ItemPacketModifier {
      */
     void sendFakeItemName(Player player, int slot, ItemStack item, @Nullable Component displayName);
 
+
+    @FunctionalInterface
+    interface OutgoingItemTransformer {
+
+        enum Context {
+            SLOT,          // single slot update
+            CONTENT_SLOT,  // bulk content list entry
+            CURSOR         // carried/cursor item
+        }
+
+        /**
+         * IMPORTANT: may be called off-main-thread (network thread). Must be thread-safe.
+         *
+         * @param player   recipient
+         * @param context  where this item is used (slot/content/cursor)
+         * @param rawSlot  for SLOT/CONTENT_SLOT: packet index; for CURSOR: -1
+         * @param original original item (should not be mutated)
+         * @return null => keep original; otherwise return a new/clone ItemStack with modified visuals
+         */
+        @Nullable ItemStack transform(Player player, Context context, int rawSlot, ItemStack original);
+    }
+
+    void setOutgoingItemTransformer(@Nullable OutgoingItemTransformer transformer);
+
+    void installPacketRewriter(Player player);
+    void uninstallPacketRewriter(Player player);
     /**
      * Sends a fake item with both custom lore and display name
      *

@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
 
@@ -195,5 +196,17 @@ public final class NexServices {
 
     public static void resetFakeCursorItem(Player player) {
         newItemPacketModifier().resetCursorItem(player);
+    }
+
+    public static void setOutgoingItemTransformer(@Nullable ItemPacketModifier.OutgoingItemTransformer transformer) {
+        newItemPacketModifier().setOutgoingItemTransformer(transformer);
+    }
+
+    public static void installItemPacketRewriter(Player player) {
+        newItemPacketModifier().installPacketRewriter(player);
+    }
+
+    public static void uninstallItemPacketRewriter(Player player) {
+        newItemPacketModifier().uninstallPacketRewriter(player);
     }
 }
