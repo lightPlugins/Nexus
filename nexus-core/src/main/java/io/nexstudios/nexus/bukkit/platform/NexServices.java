@@ -12,9 +12,14 @@ import io.nexstudios.nexus.bukkit.hologram.HoloBuilderFactory;
 import io.nexstudios.nexus.bukkit.items.ItemBuilder;
 import io.nexstudios.nexus.bukkit.items.ItemBuilderFactory;
 import io.nexstudios.nexus.bukkit.items.ItemPacketModifier;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
+import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Objects;
 
 public final class NexServices {
@@ -167,5 +172,41 @@ public final class NexServices {
 
     public static ItemPacketModifier newItemPacketModifier() {
         return get(ItemPacketModifier.class);
+    }
+
+    public static void sendFakeLore(Player player, int slot, ItemStack baseItem, List<Component> lore) {
+        newItemPacketModifier().sendFakeItemLore(player, slot, baseItem, lore);
+    }
+    public static void resetAllFakeItems(Player player) {
+        newItemPacketModifier().resetAllItems(player);
+    }
+
+    public static void resetFakeItem(Player player, int slot) {
+        newItemPacketModifier().resetItemView(player, slot);
+    }
+
+    public static void sendFakeCursorLore(Player player, ItemStack baseItem, Component... lore) {
+        List<Component> list = (lore == null) ? null : List.of(lore);
+        newItemPacketModifier().sendFakeCursorLore(player, baseItem, list);
+    }
+
+    public static void sendFakeCursorLore(Player player, ItemStack baseItem, List<Component> lore) {
+        newItemPacketModifier().sendFakeCursorLore(player, baseItem, lore);
+    }
+
+    public static void resetFakeCursorItem(Player player) {
+        newItemPacketModifier().resetCursorItem(player);
+    }
+
+    public static void setOutgoingItemTransformer(@Nullable ItemPacketModifier.OutgoingItemTransformer transformer) {
+        newItemPacketModifier().setOutgoingItemTransformer(transformer);
+    }
+
+    public static void installItemPacketRewriter(Player player) {
+        newItemPacketModifier().installPacketRewriter(player);
+    }
+
+    public static void uninstallItemPacketRewriter(Player player) {
+        newItemPacketModifier().uninstallPacketRewriter(player);
     }
 }
