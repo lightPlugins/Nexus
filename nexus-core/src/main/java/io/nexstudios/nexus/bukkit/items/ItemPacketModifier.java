@@ -59,4 +59,44 @@ public interface ItemPacketModifier {
      * @param player Target player
      */
     void resetAllItems(Player player);
+
+    // -------------------------------------------------------------------------
+    // Cursor / Carried Item (Item am Mauszeiger)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Sends a fake item (cursor / carried item) to the player's client.
+     * This affects the item "on the mouse cursor" in the currently open container/menu.
+     *
+     * Default implementation: not supported (so other NMS modules don't break).
+     */
+    default void sendFakeCursorItem(Player player,
+                                    ItemStack item,
+                                    @Nullable Component displayName,
+                                    @Nullable List<Component> lore) {
+        throw new UnsupportedOperationException("Cursor item packets are not supported in this NMS version.");
+    }
+
+    /**
+     * Convenience: fake only cursor lore.
+     */
+    default void sendFakeCursorLore(Player player, ItemStack item, @Nullable List<Component> lore) {
+        sendFakeCursorItem(player, item, null, lore);
+    }
+
+    /**
+     * Convenience: fake only cursor name.
+     */
+    default void sendFakeCursorName(Player player, ItemStack item, @Nullable Component displayName) {
+        sendFakeCursorItem(player, item, displayName, null);
+    }
+
+    /**
+     * Resets the cursor item to show the server-side carried stack.
+     *
+     * Default implementation: not supported.
+     */
+    default void resetCursorItem(Player player) {
+        throw new UnsupportedOperationException("Cursor item packets are not supported in this NMS version.");
+    }
 }
