@@ -1,10 +1,11 @@
 package io.nexstudios.nexus.bukkit.effects.trigger;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
+import io.nexstudios.nexus.bukkit.effects.NexusDamageMultiplierEffect;
 import io.nexstudios.nexus.bukkit.effects.filters.DamageContext;
-import io.nexstudios.nexus.bukkit.effects.impl.MultiplyDamageEffect;
 import io.nexstudios.nexus.bukkit.effects.runtime.DamageBindingIndex;
 import io.nexstudios.nexus.bukkit.effects.runtime.EffectBindingRegistry;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,24 +22,45 @@ public record EntityDamageTriggerListener(EffectBindingRegistry registry) implem
     @EventHandler(ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
 
-        if (!(event.getDamager() instanceof Player)) {
-            return;
-        }
-
         if (registry.isEmpty()) return;
 
         DamageBindingIndex index = registry.getDamageIndex();
-        var type = event.getEntity().getType();
 
-        // Deduplizieren, falls ein Binding sowohl perType als auch generic matched
-        Set<DamageBindingIndex.CompiledBinding> seen = new HashSet<>();
-        apply(index.forType(type), event, seen);
-        apply(index.generic(), event, seen);
+        // OUTGOING: Damager muss Player sein (wie bisher)
+        if (event.getDamager() instanceof Player) {
+            EntityType targetType = event.getEntity().getType();
+            Set<DamageBindingIndex.CompiledBinding> seen = new HashSet<>();
+            applyOutgoing(index.outgoingForTargetType(targetType), event, seen);
+            applyOutgoing(index.outgoingGeneric(), event, seen);
+        }
+
+        // INCOMING: Target muss Player sein
+        if (event.getEntity() instanceof Player) {
+            EntityType damagerType = event.getDamager().getType();
+            Set<DamageBindingIndex.CompiledBinding> seen = new HashSet<>();
+            applyIncoming(index.incomingForDamagerType(damagerType), event, seen);
+            applyIncoming(index.incomingGeneric(), event, seen);
+        }
     }
+
+    private void applyOutgoing(List<DamageBindingIndex.CompiledBinding> list,
+                               EntityDamageByEntityEvent event,
+                               Set<DamageBindingIndex.CompiledBinding> seen) {
+        apply(list, event, seen, MatchSide.OUTGOING);
+    }
+
+    private void applyIncoming(List<DamageBindingIndex.CompiledBinding> list,
+                               EntityDamageByEntityEvent event,
+                               Set<DamageBindingIndex.CompiledBinding> seen) {
+        apply(list, event, seen, MatchSide.INCOMING);
+    }
+
+    private enum MatchSide { OUTGOING, INCOMING }
 
     private void apply(List<DamageBindingIndex.CompiledBinding> list,
                        EntityDamageByEntityEvent event,
-                       Set<DamageBindingIndex.CompiledBinding> seen) {
+                       Set<DamageBindingIndex.CompiledBinding> seen,
+                       MatchSide side) {
         if (list == null || list.isEmpty()) return;
 
         var hook = NexusPlugin.getInstance().getMythicMobsHook();
@@ -47,10 +69,9 @@ public record EntityDamageTriggerListener(EffectBindingRegistry registry) implem
         List<DamageBindingIndex.CompiledBinding> multipliers = new ArrayList<>();
 
         for (var cb : list) {
-            // Überspringen, wenn bereits eingeplant
             if (!seen.add(cb)) continue;
 
-            if (cb.effect instanceof MultiplyDamageEffect) {
+            if (cb.effect instanceof NexusDamageMultiplierEffect) {
                 multipliers.add(cb);
             } else {
                 nonMultipliers.add(cb);
@@ -60,14 +81,27 @@ public record EntityDamageTriggerListener(EffectBindingRegistry registry) implem
         DamageContext ctx = new DamageContext(event);
 
         Consumer<DamageBindingIndex.CompiledBinding> run = cb -> {
-            boolean mcMatch = !cb.mcTypes.isEmpty() && cb.mcTypes.contains(event.getEntity().getType());
+            boolean mcMatch;
             boolean mythicMatch = false;
 
-            if (!cb.mythicIds.isEmpty() && hook != null) {
-                for (String id : cb.mythicIds) {
-                    if (hook.isMythicMob(event.getEntity(), id)) {
-                        mythicMatch = true;
-                        break;
+            if (side == MatchSide.OUTGOING) {
+                mcMatch = !cb.mcTypes.isEmpty() && cb.mcTypes.contains(event.getEntity().getType());
+                if (!cb.mythicIds.isEmpty() && hook != null) {
+                    for (String id : cb.mythicIds) {
+                        if (hook.isMythicMob(event.getEntity(), id)) {
+                            mythicMatch = true;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                mcMatch = !cb.mcTypes.isEmpty() && cb.mcTypes.contains(event.getDamager().getType());
+                if (!cb.mythicIds.isEmpty() && hook != null) {
+                    for (String id : cb.mythicIds) {
+                        if (hook.isMythicMob(event.getDamager(), id)) {
+                            mythicMatch = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -75,7 +109,6 @@ public record EntityDamageTriggerListener(EffectBindingRegistry registry) implem
             boolean baseMatch = cb.matchAll || mcMatch || mythicMatch;
             if (!baseMatch) return;
 
-            // vorkompilierte Filter prüfen
             if (!cb.filters.isEmpty()) {
                 for (var f : cb.filters) {
                     if (!f.test(ctx)) return;
@@ -89,12 +122,3 @@ public record EntityDamageTriggerListener(EffectBindingRegistry registry) implem
         for (var cb : multipliers) run.accept(cb);
     }
 }
-
-
-
-
-
-
-
-
-

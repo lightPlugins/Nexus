@@ -2,6 +2,8 @@ package io.nexstudios.nexus.bukkit.effects;
 
 import io.nexstudios.nexus.bukkit.effects.impl.AddDamageEffect;
 import io.nexstudios.nexus.bukkit.effects.impl.MultiplyDamageEffect;
+import io.nexstudios.nexus.bukkit.effects.impl.MultiplyIncomingDamageEffect;
+import io.nexstudios.nexus.bukkit.effects.impl.ReduceIncomingDamageEffect;
 import io.nexstudios.nexus.bukkit.effects.load.EffectConfig;
 import io.nexstudios.nexus.bukkit.effects.vars.PlayerVariableResolver;
 
@@ -58,6 +60,20 @@ public class EffectFactory {
                 this.resolver,
                 this.effectContextKey
         ), Set.of("entity-damage"), null);
+
+        // reduce-incoming-damage
+        register("reduce-incoming-damage", cfg -> new ReduceIncomingDamageEffect(
+                cfg.getString("expression", "0"),
+                this.resolver,
+                this.effectContextKey
+        ), Set.of("incoming-damage"), null);
+
+        // multiply-incoming-damage 1.0 -> =100% income damage
+        register("multiply-incoming-damage", cfg -> new MultiplyIncomingDamageEffect(
+                cfg.getString("expression", "1"),
+                this.resolver,
+                this.effectContextKey
+        ), Set.of("incoming-damage"), null);
 
         // Weitere Effekte
     }

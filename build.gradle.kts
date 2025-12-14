@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":nexus-nms:v1_21_R8"))
     implementation(project(":nexus-nms:v1_21_R9"))
     implementation(project(":nexus-nms:v1_21_R10"))
+    implementation(project(":nexus-nms:v1_21_R11"))
 
 }
 

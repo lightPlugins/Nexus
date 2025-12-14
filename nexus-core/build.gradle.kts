@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     compileOnly(project(":nexus-nms"))
-    paperweight.paperDevBundle("1.21.7-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
         exclude(group = "org.bukkit", module = "bukkit")
     }
@@ -30,7 +30,10 @@ dependencies {
     compileOnly("io.lumine:MythicLib-dist:1.7.1-SNAPSHOT")
     compileOnly("net.Indyuce:MMOItems-API:6.10-SNAPSHOT")
     compileOnly("dev.aurelium:auraskills-api-bukkit:2.3.6")
-    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.14")
+    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.14") { isTransitive = false }
+    compileOnly("com.sk89q.worldguard:worldguard-core:7.0.14") { isTransitive = false }
+    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.9") { isTransitive = false }
+    compileOnly("com.sk89q.worldedit:worldedit-core:7.3.9") { isTransitive = false }
     compileOnly("com.bgsoftware:SuperiorSkyblockAPI:2025.1")
     compileOnly("gg.auroramc:Aurora:2.4.2")
     compileOnly("gg.auroramc:AuroraCollections:1.5.7")

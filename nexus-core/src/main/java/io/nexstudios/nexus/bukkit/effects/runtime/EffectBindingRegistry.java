@@ -8,7 +8,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class EffectBindingRegistry {
 
     private final AtomicReference<List<EffectBinding>> ref = new AtomicReference<>(List.of());
-    private final AtomicReference<DamageBindingIndex> damageIndexRef = new AtomicReference<>(new DamageBindingIndex(java.util.Map.of(), java.util.List.of()));
+    private final AtomicReference<DamageBindingIndex> damageIndexRef = new AtomicReference<>(
+            new DamageBindingIndex(java.util.Map.of(), java.util.List.of(), java.util.Map.of(), java.util.List.of())
+    );
 
     public List<EffectBinding> getBindings() {
         return ref.get(); // Snapshot
@@ -30,5 +32,3 @@ public class EffectBindingRegistry {
         return damageIndexRef.get();
     }
 }
-
-
