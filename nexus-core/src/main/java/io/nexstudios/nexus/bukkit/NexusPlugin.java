@@ -445,6 +445,7 @@ public final class NexusPlugin extends JavaPlugin {
     private void registerBuiltInTriggerAndFilterTypes() {
         // Trigger-Types
         NexusEffectsApi.registerTriggerType("entity-damage");
+        NexusEffectsApi.registerTriggerType("incoming-damage");
         //NexusEffectsApi.registerTriggerType("kill-entity");
         NexusEffectsApi.registerFilterType("match-item-hand");
         NexusEffectsApi.registerFilterType("match-item-inventory");

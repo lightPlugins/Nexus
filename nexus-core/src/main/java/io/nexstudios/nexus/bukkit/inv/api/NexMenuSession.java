@@ -179,6 +179,43 @@ public class NexMenuSession {
         return this;
     }
 
+    public NexMenuSession updateSlotDisplayName(int slot1b, UnaryOperator<Component> displayNameUpdater) {
+        Objects.requireNonNull(displayNameUpdater, "displayNameUpdater");
+        return updateSlotItem(slot1b, stack -> {
+            if (stack == null) return null;
+
+            var meta = stack.getItemMeta();
+            if (meta == null) return stack;
+
+            Component currentName = meta.displayName();
+            Component newName = displayNameUpdater.apply(currentName);
+            meta.displayName(newName);
+
+            stack.setItemMeta(meta);
+            return stack;
+        });
+    }
+
+    public NexMenuSession updateSlotLore(int slot, UnaryOperator<List<Component>> loreUpdater) {
+        Objects.requireNonNull(loreUpdater, "loreUpdater");
+        return updateSlotItem(slot, stack -> {
+            if (stack == null) return null;
+
+            var meta = stack.getItemMeta();
+            if (meta == null) return stack;
+
+            List<Component> currentLore = meta.lore();
+            // aktuelle Lore-Liste defensiv kopieren, damit der Updater sie gefahrlos verändern kann
+            List<Component> loreCopy = (currentLore == null) ? new ArrayList<>() : new ArrayList<>(currentLore);
+
+            List<Component> newLore = loreUpdater.apply(loreCopy);
+            meta.lore(newLore);
+
+            stack.setItemMeta(meta);
+            return stack;
+        });
+    }
+
     public NexMenuSession setItem(int slot1b, ItemStack item, NexOnClick clickHandler) {
         Objects.requireNonNull(item, "item");
         preOpenTasks.add(() -> {
