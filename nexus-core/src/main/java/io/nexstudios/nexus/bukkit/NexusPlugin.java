@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.nexstudios.nexus.bukkit.actions.ActionFactory;
 import io.nexstudios.nexus.bukkit.command.*;
 import io.nexstudios.nexus.bukkit.conditions.ConditionFactory;
+import io.nexstudios.nexus.bukkit.costs.CostFactory;
 import io.nexstudios.nexus.bukkit.database.AbstractDatabase;
 import io.nexstudios.nexus.bukkit.database.PooledDatabase;
 import io.nexstudios.nexus.bukkit.database.api.DefaultNexusDatabaseService;
@@ -88,6 +89,7 @@ public final class NexusPlugin extends JavaPlugin {
     public MessageSender messageSender;
     public ActionFactory actionFactory;
     public ConditionFactory conditionFactory;
+    private CostFactory costFactory;
     public LevelService levelService;
     public NexHoloService nexHoloService;
 
@@ -145,6 +147,7 @@ public final class NexusPlugin extends JavaPlugin {
         commandManager = new PaperCommandManager(this);
         actionFactory = new ActionFactory();
         conditionFactory = new ConditionFactory();
+        costFactory = new CostFactory();
         effectFactory = new EffectFactory(PlayerVariableResolver.ofStore());
         damageIndicator = new DamageIndicator(this, new EcoSkillsHook());
         bindingRegistry = new EffectBindingRegistry();

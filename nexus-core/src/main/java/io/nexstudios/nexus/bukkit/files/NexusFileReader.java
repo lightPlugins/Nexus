@@ -49,6 +49,45 @@ public class NexusFileReader {
     }
 
     /**
+     * Casts an arbitrary value (usually from ConfigurationSection#get(...))
+     * into a List<Map<String, Object>>.
+     *
+     * If the value is not a suitable list, an empty list is returned.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<Map<String, Object>> castListOfMap(Object value) {
+        if (value instanceof List<?> list) {
+            List<Map<String, Object>> out = new ArrayList<>();
+            for (Object element : list) {
+                if (element instanceof Map<?, ?> map) {
+                    out.add((Map<String, Object>) map);
+                }
+            }
+            return out;
+        }
+        return List.of();
+    }
+
+    /**
+     * Convenience: reads a List<Map<String, Object>> from a FileConfiguration path.
+     * <p>
+     * Typical use case:
+     * <pre>
+     *     List&lt;Map&lt;String, Object&gt;&gt; costs =
+     *         NexusFileReader.getMapList(config, "costs");
+     * </pre>
+     *
+     * If the path does not exist or is not a suitable list, an empty list is returned.
+     */
+    public static List<Map<String, Object>> getMapList(FileConfiguration config, String path) {
+        if (config == null || path == null || path.isEmpty()) {
+            return List.of();
+        }
+        Object raw = config.get(path);
+        return castListOfMap(raw);
+    }
+
+    /**
      * Load all yml files found in the specified directory
      * Save all found files in the "List<File> yamlFiles" field
      */
