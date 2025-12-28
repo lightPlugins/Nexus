@@ -4,6 +4,7 @@ import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.effects.*;
 import io.nexstudios.nexus.bukkit.effects.meta.FilterRegistry;
 import io.nexstudios.nexus.bukkit.effects.meta.TriggerRegistry;
+import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.*;
 
@@ -11,7 +12,7 @@ public final class EffectsLoader {
 
     private EffectsLoader(){}
 
-    public static List<EffectBinding> load(org.bukkit.configuration.ConfigurationSection root, EffectFactory factory) {
+    public static List<EffectBinding> load(ConfigurationSection root, EffectFactory factory) {
         if (root == null || !root.isList("effects")) return List.of();
 
         @SuppressWarnings("unchecked")
@@ -21,7 +22,7 @@ public final class EffectsLoader {
         return fromRawList(rawList, factory);
     }
 
-    public static List<EffectBinding> loadFromEffectsSection(org.bukkit.configuration.ConfigurationSection effectsSection, EffectFactory factory) {
+    public static List<EffectBinding> loadFromEffectsSection(ConfigurationSection effectsSection, EffectFactory factory) {
         if (effectsSection == null || !effectsSection.isList("")) return List.of();
 
         @SuppressWarnings("unchecked")

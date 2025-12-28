@@ -151,12 +151,30 @@ public class ActionFactory {
                     nonNullParams
             );
 
-            try {
-                action.execute(context);
-            } catch (Exception e) {
-                NexusPlugin.nexusLogger.error("Failed to execute action: " + actionId);
-                e.printStackTrace();
+            Object delayObj = actionDataMap.get("delay");
+            int delay = 0;
+            if (delayObj instanceof Number n) {
+                delay = n.intValue();
             }
+
+            if (delay > 0) {
+                NexusPlugin.getInstance().getServer().getScheduler().runTaskLater(
+                        NexusPlugin.getInstance(),
+                        () -> executeAction(action, context, actionId),
+                        delay
+                );
+            } else {
+                executeAction(action, context, actionId);
+            }
+        }
+    }
+
+    private void executeAction(NexusAction action, NexusActionContext context, String actionId) {
+        try {
+            action.execute(context);
+        } catch (Exception e) {
+            NexusPlugin.nexusLogger.error("Failed to execute action: " + actionId);
+            e.printStackTrace();
         }
     }
 

@@ -21,12 +21,12 @@ public final class FilterFactory {
     private static synchronized void initIfNeeded() {
         if (INITIALIZED) return;
 
-        // Player-basierte Filter
+        // Player-based filters
         registerPlayerFilter("match-item-hand", MatchItemFilter::fromConfig);
         registerPlayerFilter("match-item-inventory", InventoryContainsFilter::fromConfig);
         registerPlayerFilter("has-permission", HasPermissionFilter::fromConfig);
 
-        // World-basierte Filter
+        // World-based filters
         registerWorldFilter("in-world", InWorldFilter::fromConfig);
 
         INITIALIZED = true;

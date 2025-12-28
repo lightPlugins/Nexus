@@ -1,7 +1,7 @@
 package io.nexstudios.nexus.bukkit.effects;
 
-import io.nexstudios.nexus.bukkit.effects.impl.AddDamageEffect;
-import io.nexstudios.nexus.bukkit.effects.impl.MultiplyDamageEffect;
+import io.nexstudios.nexus.bukkit.effects.impl.AddOutgoingDamageEffect;
+import io.nexstudios.nexus.bukkit.effects.impl.MultiplyOutgoingDamageEffect;
 import io.nexstudios.nexus.bukkit.effects.impl.MultiplyIncomingDamageEffect;
 import io.nexstudios.nexus.bukkit.effects.impl.ReduceIncomingDamageEffect;
 import io.nexstudios.nexus.bukkit.effects.load.EffectConfig;
@@ -47,35 +47,35 @@ public class EffectFactory {
     }
 
     private void registerBuiltins() {
-        // add-damage
-        register("add-damage", cfg -> new AddDamageEffect(
+        // add-damage 50 =+50 flat damage
+        register("add-damage", cfg -> new AddOutgoingDamageEffect(
                 cfg.getString("expression", "0"),
                 this.resolver,
                 this.effectContextKey
         ), Set.of("entity-damage"), null);
 
-        // multiply-damage
-        register("multiply-damage", cfg -> new MultiplyDamageEffect(
+        // multiply-damage 1.2 -> =x1.2 damage
+        register("multiply-damage", cfg -> new MultiplyOutgoingDamageEffect(
                 cfg.getString("expression", "1"),
                 this.resolver,
                 this.effectContextKey
         ), Set.of("entity-damage"), null);
 
-        // reduce-incoming-damage
+        // reduce-incoming-damage 50 =-50 flat income damage from source
         register("reduce-incoming-damage", cfg -> new ReduceIncomingDamageEffect(
                 cfg.getString("expression", "0"),
                 this.resolver,
                 this.effectContextKey
         ), Set.of("incoming-damage"), null);
 
-        // multiply-incoming-damage 1.0 -> =100% income damage
+        // multiply-incoming-damage 1.2 -> =x1.2 income damage from source
         register("multiply-incoming-damage", cfg -> new MultiplyIncomingDamageEffect(
                 cfg.getString("expression", "1"),
                 this.resolver,
                 this.effectContextKey
         ), Set.of("incoming-damage"), null);
 
-        // Weitere Effekte
+        // more effects
     }
 
     public boolean register(String id, Function<EffectConfig, NexusEffect> builder) {

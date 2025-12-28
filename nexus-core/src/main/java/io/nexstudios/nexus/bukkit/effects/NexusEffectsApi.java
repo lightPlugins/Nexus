@@ -58,7 +58,7 @@ public final class NexusEffectsApi {
         return loaded;
     }
 
-    // NEU: Bereits geladene Bindings (z. B. via EffectsLoader mit eigener Factory) in einen Namespace hängen
+    // Bereits geladene Bindings (z. B. via EffectsLoader mit eigener Factory) in einen Namespace hängen
     public static void addBindings(Plugin owner, List<EffectBinding> toAdd) {
         if (owner == null || toAdd == null || toAdd.isEmpty()) return;
         String ns = owner.getName().toLowerCase(Locale.ROOT);
