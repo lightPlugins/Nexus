@@ -1,0 +1,181 @@
+#################################################################################
+#                          PLAYLEGEND QUEST SYSTEM                               #
+#                                                                                #
+# Quest-Konzept: Unendlich viele benutzerdefinierte Tasks/Quests über YAML.      #
+# Jede .yml Datei repräsentiert genau EINE Quest mit beliebig vielen Tasks.      #
+#                                                                                #
+# Technisches:                                                                   #
+# - Tasks können jederzeit hinzugefügt/geändert werden (ohne Code-Änderung).     #
+# - PlaceholderAPI support in allen Components                                   #
+# - Man kann Task Fortschritte mit Commands reseten oder setzten                 #
+# - Fortschritt wird in der Datenbank gespeichert und optional über Redis        #
+#   serverübergreifend synchronisiert (z. B. in Aincraft und der Farmwelt)       #
+#                                                                                #
+# Verfügbare Rewards (Actions) - erweiterbar:                                    #
+# - give-coins: gibt dem Spieler eine bestimmte Anzahl Coins                     #
+# - message: sendet dem Spieler eine Nachricht                                   #
+# - title: sendet dem Spieler ein Title                                          #
+# - ... kann jederzeit erweitert werden                                          #
+#                                                                                #
+# Verfügbare progress-tasks (Trigger) - erweiterbar:                             #
+# - cc-break-cactus: trackt mit der Hand abgebaute Kakteen                       #
+# - cc-start-cactus-upgrade: trackt, wenn ein Kaktus-Upgrade gestartet wurde     #
+# - cc-finished-cactus-upgrade: trackt, wenn ein Kaktus-Upgrade beendet wurde    #
+# - cc-place-cactus: trackt, wenn ein neues Kaktusfeld platziert wurde           #
+# - cc-go-to-aincraft: trackt, wenn der Spieler zu Aincraft wechselt             #
+# - cc-go-to-farmworld: trackt, wenn der Spieler zu Farmworld wechselt           #
+# - cc-go-to-city: trackt, wenn der Spieler zu der Stadt wechselt                #
+# - cc-reach-cactus-unit: trackt, wenn der Spieler eine bestimmte Zahleneinheit  #
+#                         erreicht hat                                           #
+# - cc-reach-cactus-amount: trackt, wenn der Spieler eine bestimmte Anzahl       #
+#                           an Kakteen besitzt                                   #
+# - ... kann jederzeit erweitert werden                                          #
+#################################################################################
+
+settings:
+  # Muss der Spieler die vorherige Task abgeschlossen haben?
+  need-previous-task: true
+
+  # Kann der Spieler diese Quest nach Abschluss erneut starten?
+  repeatable: false
+
+  # Wenn true, startet der nächste Task automatisch nach Abschluss der aktuellen.
+  auto-start: true
+
+  # Wenn der Spieler den Server wechselt oder neu joint, erhält er bei
+  # erfolgreichem Abschluss (completed) nachträglich die Rewards (claiming).
+  check-progress-on-join: true
+
+# Der Name der Quest im Quest-Overview GUI
+quest-name: 'Beginner Quest'
+
+# Sobald alle Tasks aus der Quest abgeschlossen sind, werden diese Rewards ausgeführt.
+# (Quest-Completion Rewards)
+# Alle Rewards sind optional. Das heißt, man kann diese Section leer lassen.
+# -> quest-complete-rewards: [ ]
+quest-complete-rewards:
+  - id: 'message'
+    message:
+      - 'Glückwunsch, du hast die Beginner Quest abgeschlossen!'
+      - 'Deine Belohnung: <green>1000000 <gray>Coins'
+  - id: 'give-coins'
+    amount: 1000000
+
+# Hier werden die einzelnen Tasks für die Quest definiert (Beliebig viele).
+tasks:
+  ###############################################################################
+  # Task 1 - hier werden alle Features eines Tasks dargestellt und beschrieben,
+  # wie oder was funktioniert.
+  ###############################################################################
+  - id: 1
+
+    # Das Item, welches dem Spieler im GUI angezeigt wird
+    item: 'minecraft:name_tag'
+
+    # Der Displayname im GUI
+    # <task> ist ein TagResolver/Placeholder, der die aktuelle Task-ID anzeigt (z. B. 1)
+    name: '<dark_gray>#<green><task> <gray>| <green>Erster Kaktus'
+
+    # Lore (Beschreibung) im GUI
+    # #progress# ist ein Platzhalter, der vom System durch die aktuellen
+    # Fortschrittszeilen ersetzt wird (siehe "progress-line").
+    description:
+      - '<gray>Gehe in die Mitte, stelle dich auf den Block'
+      - '<gray>und baue deine ersten <green>20 <gray>Kakteen ab.'
+      - ' '
+      - '<gray>Aktueller Fortschritt:'
+      - '#progress#'
+
+    progress:
+      # Wie soll der Fortschritt gemessen werden?
+      # ALL -> Alle Objectives müssen fertig sein, um den Task als fertig zu markieren
+      # ANY -> Ein einzelnes Objective muss fertig sein, um den Task als fertig zu markieren
+      mode: 'ALL' # ALL | ANY
+
+      # Objectives definiert, WAS der Spieler für diesen Task tun muss. (Trigger)
+      # Man kann hier beliebig viele progress-tasks (Objectives) einbauen.
+      objectives:
+        # In diesem Trigger wird getrackt, wenn ein Spieler Kakteen abbaut
+        - id: 'cc-break-cactus'
+
+          # "amount" = wie oft dieses Event passieren muss, bis dieses Objective fertig ist
+          amount: 20
+
+          # Darstellung des Fortschritts in der Lore:
+          # <current> = aktueller Zähler, <needed> = benötigter Zähler (amount)
+          # progress-line: 'none' = keine Fortschrittszeile (dummy Objective)
+          progress-line: '<green><current> <gray>/ <green><needed> <gray>Kakteen'
+
+          # Optional: Rewards, die ausgeführt werden, sobald GENAU dieses Objective fertig ist.
+          # (Hilfreich, wenn ein Task mehrere Objectives hat und man Zwischenbelohnungen will.)
+          rewards: [ ]
+
+    # Rewards, die ausgeführt werden, sobald die GESAMTE Task abgeschlossen ist
+    # (Kann leer bleiben, wenn keine rewards erwünscht sind)
+    rewards:
+      # Gibt dem Spieler eine definierte Menge Coins
+      - id: 'give-coins'
+        amount: 100
+
+      # Sendet dem Spieler eine Nachricht
+      # (message kann String oder Liste sein; beides wird unterstützt)
+      - id: 'message'
+        message: 'Du hast erfolgreich 20 Kakteen abgebaut!'
+
+  # Task 2
+  - id: 2
+    item: 'minecraft:name_tag'
+    name: '<dark_gray>#<green><task> <gray>| <green>Zeit für mehr!'
+    description:
+      - '<gray>Upgrade jetzt beim Forscher dein Kaktusfeld'
+      - '<gray>1 mal, um mehr Kakteen zu erhalten.'
+      - ' '
+      - '<green>TIPP: <gray>Upgrades bringen dir mehr Kakteen'
+      - '       <gray>pro abgebauten Kaktus.'
+      - ' '
+      - '<gray>Aktueller Fortschritt:'
+      - '#progress#'
+    progress:
+      mode: 'ALL' # ALL | ANY
+      objectives:
+        - id: 'cc-start-cactus-upgrade'
+          progress-line: 'none'
+          rewards:
+            - id: 'message'
+              message: 'Jetzt warte einen Moment, bis die Forschung abgeschlossen ist.'
+        - id: 'cc-finished-cactus-upgrade'
+          progress-line: '<green><timer> <gray>/ <green><time>'
+          rewards: [ ]
+    rewards:
+      - id: 'give-coins'
+        amount: 500
+      - id: 'message'
+        message: 'Du hast erfolgreich 1 mal deine Kakteen geupgraded'
+
+  # Task 3
+  - id: 3
+    item: 'minecraft:name_tag'
+    name: '<dark_gray>#<green><task> <gray>| <green>Mehr Kakteen!'
+    description:
+      - '<gray>Baue mehr Kaktusfelder in der mitte, um'
+      - '<gray>noch mehr Kakteen beim abbauen zu erhalten.'
+      - '<gray>Jedes weitere Kaktus Feld kostet mehr Kakteen'
+      - ' '
+      - '<green>TIPP: <gray>Du kannst auf den Boden'
+      - '       <green>Shift+Rechtsklicken<gray>, um einen'
+      - '       <gray>weiteren Kaktus zu platzieren.'
+      - ' '
+      - '<gray>Aktueller Fortschritt:'
+      - '#progress#'
+    progress:
+      mode: 'ALL' # ALL | ANY
+      objectives:
+        - id: 'cc-place-cactus'
+          amount: 1
+          progress-line: '<green><current> <gray>/ <green><needed> Kaktusfeld(er)'
+          rewards: [ ]
+    rewards:
+      - id: 'give-coins'
+        amount: 5000
+      - id: 'message'
+        message: 'Du hast erfolgreich ein neues Kaktusfeld gebaut!'

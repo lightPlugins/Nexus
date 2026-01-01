@@ -83,28 +83,39 @@ public class NexusLanguage {
         if (languageConfig != null && languageConfig.contains(path)) {
             List<String> translations = languageConfig.getStringList(path);
             for (String translation : translations) {
-                if(withPrefix) {
-                    components.add(MiniMessage.miniMessage().deserialize(getPrefix(uuid) + " " + translation)
+                if (translation == null || translation.trim().isEmpty()) {
+                    // Explizite Leerzeile erzwingen, statt eine "leere" Component zu erzeugen,
+                    // die später evtl. herausgefiltert wird.
+                    components.add(Component.text(" ").decoration(TextDecoration.ITALIC, false));
+                    continue;
+                }
+
+                if (withPrefix) {
+                    components.add(MiniMessage.miniMessage()
+                            .deserialize(getPrefix(uuid) + " " + translation)
                             .decoration(TextDecoration.ITALIC, false));
                 } else {
-                    components.add(MiniMessage.miniMessage().deserialize(translation)
+                    components.add(MiniMessage.miniMessage()
+                            .deserialize(translation)
                             .decoration(TextDecoration.ITALIC, false));
                 }
             }
         } else {
-            if(withPrefix) {
+            if (withPrefix) {
                 components.add(Component.text(getPrefix(uuid) + " " + path)
                         .decoration(TextDecoration.ITALIC, false));
             } else {
                 components.add(Component.text(path)
                         .decoration(TextDecoration.ITALIC, false));
             }
-
         }
         return components;
     }
 
-    public List<Component> getTranslationList(UUID uuid, String path, boolean withPrefix, TagResolver extraResolver) {
+    public List<Component> getTranslationList(UUID uuid,
+                                              String path,
+                                              boolean withPrefix,
+                                              TagResolver extraResolver) {
         String lang = getSelectedLanguage(uuid);
         FileConfiguration languageConfig = loadedLanguages.get(lang);
 
@@ -121,6 +132,11 @@ public class NexusLanguage {
         if (languageConfig != null && languageConfig.contains(path)) {
             List<String> translations = languageConfig.getStringList(path);
             for (String translation : translations) {
+                if (translation == null || translation.trim().isEmpty()) {
+                    components.add(Component.text(" ").decoration(TextDecoration.ITALIC, false));
+                    continue;
+                }
+
                 String text = withPrefix ? (getPrefix(uuid) + " " + translation) : translation;
                 components.add(MiniMessage.miniMessage()
                         .deserialize(text, resolver)
