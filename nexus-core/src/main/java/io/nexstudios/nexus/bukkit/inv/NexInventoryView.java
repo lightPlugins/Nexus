@@ -127,14 +127,15 @@ public class NexInventoryView {
             return Component.text("Inventory");
         }
         String s = raw.trim();
+        UUID uuid = (player != null) ? player.getUniqueId() : null;
 
         // LANGUAGE-Titel
         if (s.startsWith("#language:")) {
             String path = languageTitlePath(s, inventoryId);
             if (resolver != null) {
-                return nexusLanguage.getTranslation(player.getUniqueId(), path, false, resolver);
+                return nexusLanguage.getTranslation(uuid, path, false, resolver);
             } else {
-                return nexusLanguage.getTranslation(player.getUniqueId(), path, false);
+                return nexusLanguage.getTranslation(uuid, path, false);
             }
         }
 
@@ -530,6 +531,71 @@ public class NexInventoryView {
         top.setItem(s0, updated);
     }
 
+    private List<Component> sanitizeLore(List<Component> lore) {
+        if (lore == null) return new ArrayList<>();
+        return lore.stream()
+                .map(c -> {
+                    if (c == null || c.equals(Component.empty())) return Component.text(" ");
+                    // Wenn die Komponente Text-Inhalt hat, aber dieser leer/blank ist -> Leerzeichen erzwingen
+                    if (c instanceof net.kyori.adventure.text.TextComponent tc && tc.content().isBlank()) {
+                        return Component.text(" ");
+                    }
+                    return c;
+                })
+                .toList();
+    }
+
+    /**
+     * Löst ein Objekt (String oder List, evtl. mit #language:) zu einer Lore-Liste auf.
+     */
+    public List<Component> resolveDynamicLore(Object input, TagResolver extraResolver) {
+        if (input == null) return Collections.emptyList();
+        UUID pId = (player != null) ? player.getUniqueId() : null;
+        String invId = inv.inventoryId();
+
+        List<Component> result;
+        if (input instanceof String s) {
+            if (s.startsWith("#language:")) {
+                String path = languagePath(s, invId);
+                result = nexusLanguage.getTranslationList(pId, path, false, extraResolver);
+            } else {
+                result = List.of(resolveDynamicComponent(s, extraResolver));
+            }
+        } else if (input instanceof List<?> list) {
+            List<Component> out = new ArrayList<>();
+            for (Object o : list) {
+                if (o instanceof String ls) {
+                    if (ls.startsWith("#language:")) {
+                        String path = languagePath(ls, invId);
+                        List<Component> parts = nexusLanguage.getTranslationList(pId, path, false, extraResolver);
+                        if (parts != null && !parts.isEmpty()) out.addAll(parts);
+                        else out.add(Component.text(" "));
+                    } else {
+                        if (ls.isBlank()) out.add(Component.text(" "));
+                        else out.add(NexusPlugin.getInstance().messageSender.stringToComponent(player, ls, extraResolver));
+                    }
+                }
+            }
+            result = out;
+        } else {
+            result = Collections.emptyList();
+        }
+
+        return sanitizeLore(result);
+    }
+
+    /**
+     * Löst einen String (evtl. mit #language:) zu einem Component auf.
+     */
+    public Component resolveDynamicComponent(String input, TagResolver extraResolver) {
+        if (input == null) return Component.text("");
+        if (input.startsWith("#language:")) {
+            String path = languagePath(input, inv.inventoryId());
+            return nexusLanguage.getTranslation(player.getUniqueId(), path, false, extraResolver);
+        }
+        return NexusPlugin.getInstance().messageSender.stringToComponent(player, input, extraResolver);
+    }
+
     public void bindRequired(String idOrNull, NexOnClick handler) {
         if (handler == null) return;
         if (idOrNull == null) { requiredGlobal = handler; }
@@ -723,26 +789,40 @@ public class NexInventoryView {
             if (cfg.lore != null) {
                 if (cfg.lore instanceof String s && s.startsWith("#language:")) {
                     String path = languagePath(s, inventoryId);
+                    List<Component> translated;
                     if (extraResolver != null) {
-                        loreComp = nexusLanguage.getTranslationList(playerId, path, false, extraResolver);
+                        translated = nexusLanguage.getTranslationList(playerId, path, false, extraResolver);
                     } else {
-                        loreComp = nexusLanguage.getTranslationList(playerId, path, false);
+                        translated = nexusLanguage.getTranslationList(playerId, path, false);
                     }
+                    loreComp = sanitizeLore(translated);
                 } else if (cfg.lore instanceof List<?> list) {
                     List<Component> out = new ArrayList<>();
                     for (Object o : list) {
-                        if (o instanceof String ls && ls.startsWith("#language:")) {
-                            String path = languagePath(ls, inventoryId);
-                            List<Component> parts;
-                            if (extraResolver != null) {
-                                parts = nexusLanguage.getTranslationList(playerId, path, false, extraResolver);
+                        if (o instanceof String ls) {
+                            if (ls.startsWith("#language:")) {
+                                String path = languagePath(ls, inventoryId);
+                                List<Component> parts;
+                                if (extraResolver != null) {
+                                    parts = nexusLanguage.getTranslationList(playerId, path, false, extraResolver);
+                                } else {
+                                    parts = nexusLanguage.getTranslationList(playerId, path, false);
+                                }
+                                if (parts != null && !parts.isEmpty()) {
+                                    out.addAll(parts);
+                                } else {
+                                    out.add(Component.text(" "));
+                                }
                             } else {
-                                parts = nexusLanguage.getTranslationList(playerId, path, false);
+                                if (ls.isBlank()) {
+                                    out.add(Component.text(" "));
+                                } else {
+                                    out.add(NexusPlugin.getInstance().messageSender.stringToComponent(player, ls, extraResolver));
+                                }
                             }
-                            if (parts != null && !parts.isEmpty()) out.addAll(parts);
                         }
                     }
-                    if (!out.isEmpty()) loreComp = out;
+                    if (!out.isEmpty()) loreComp = sanitizeLore(out);
                 }
             }
 

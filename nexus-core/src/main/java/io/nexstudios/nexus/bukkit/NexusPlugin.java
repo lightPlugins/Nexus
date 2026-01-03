@@ -32,6 +32,7 @@ import io.nexstudios.nexus.bukkit.hooks.auroracollections.AuroraCollectionsHook;
 import io.nexstudios.nexus.bukkit.hooks.itemsadder.ItemsAdderHook;
 import io.nexstudios.nexus.bukkit.hooks.luckperms.LuckPermsHook;
 import io.nexstudios.nexus.bukkit.hooks.mythicmobs.MythicMobsHook;
+import io.nexstudios.nexus.bukkit.hooks.nexitems.NexItemsHook;
 import io.nexstudios.nexus.bukkit.hooks.worldguard.WorldGuardHook;
 import io.nexstudios.nexus.bukkit.indicator.DamageIndicator;
 import io.nexstudios.nexus.bukkit.inv.api.InvService;
@@ -57,6 +58,7 @@ import io.nexstudios.nexus.bukkit.utils.NexusLogger;
 import io.nexstudios.nexus.bukkit.files.NexusFile;
 import io.nexstudios.nexus.bukkit.files.NexusFileReader;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -108,6 +110,10 @@ public final class NexusPlugin extends JavaPlugin {
     public WorldGuardHook worldGuardHook;
     public ItemsAdderHook itemsAdderHook;
     public LuckPermsHook luckPermsHook;
+
+    //Nexus Serie Hooks
+    @Getter @Setter
+    private NexItemsHook nexItemsHook;
 
     // Database related fields
     private AbstractDatabase abstractDatabase;

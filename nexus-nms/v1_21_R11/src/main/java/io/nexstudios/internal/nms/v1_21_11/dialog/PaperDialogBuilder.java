@@ -251,6 +251,7 @@ public final class PaperDialogBuilder implements NexDialogBuilder {
 
         // raw content entries (getrennt: body-content / exit-content)
         this.inputs.clear();
+        this.inputKinds.clear();
         this.buttons.clear();
         this.bodyContentEntries.clear();
         this.exitContentEntries.clear();

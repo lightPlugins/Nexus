@@ -94,6 +94,31 @@ public class NexMenuSession {
         }
     }
 
+    public List<Component> resolveLore(Object input, TagResolver tags) {
+        return resolveLore(null, input, tags);
+    }
+
+    public List<Component> resolveLore(Player player, Object input, TagResolver tags) {
+        if (view != null) return view.resolveDynamicLore(input, tags);
+
+        // Manueller Fallback ohne View-Erzeugung (vermeidet NPE im Titel)
+        NexInventory inv = handle.inventory();
+        NexInventoryView tempView = new NexInventoryView(inv, player, inv.getNexusLanguage());
+        return tempView.resolveDynamicLore(input, tags);
+    }
+
+    public Component resolveComponent(String input, TagResolver tags) {
+        return resolveComponent(null, input, tags);
+    }
+
+    public Component resolveComponent(Player player, String input, TagResolver tags) {
+        if (view != null) return view.resolveDynamicComponent(input, tags);
+
+        NexInventory inv = handle.inventory();
+        NexInventoryView tempView = new NexInventoryView(inv, player, inv.getNexusLanguage());
+        return tempView.resolveDynamicComponent(input, tags);
+    }
+
     public NexMenuSession withTitleTags(TagResolver... tags) {
         // Resolver direkt in der Session speichern (ohne View-Zugriff)
         this.titleResolver = (tags != null && tags.length > 0) ? TagResolver.resolver(tags) : null;

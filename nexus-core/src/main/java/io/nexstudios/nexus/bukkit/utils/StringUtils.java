@@ -1,5 +1,8 @@
 package io.nexstudios.nexus.bukkit.utils;
 
+import com.willfp.eco.core.items.CustomItem;
+import com.willfp.eco.core.items.Items;
+import dev.lone.itemsadder.api.CustomStack;
 import io.nexstudios.nexus.bukkit.NexusPlugin;
 import io.nexstudios.nexus.bukkit.actions.NexParams;
 import io.nexstudios.nexus.bukkit.items.AttributeOperation;
@@ -11,6 +14,9 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
+import net.Indyuce.mmoitems.MMOItems;
+import net.Indyuce.mmoitems.api.Type;
+import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
@@ -22,6 +28,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 import java.util.*;
@@ -46,6 +53,24 @@ public class StringUtils {
         }
 
         switch (itemSplit[0]) {
+
+            case "nexitems": {
+
+                if(itemSplit.length != 2) {
+                    NexusPlugin.nexusLogger.error("Could not find item with id: " + item);
+                    NexusPlugin.nexusLogger.error("Please use the format: nexitems:templateid");
+                    return ItemStack.of(Material.COBBLESTONE);
+                }
+
+                if(NexusPlugin.getInstance().getNexItemsHook() != null) {
+                    String id = itemSplit[1];
+                    return NexusPlugin.getInstance().getNexItemsHook().getItemById(id);
+                } else {
+                    NexusPlugin.nexusLogger.error("Could not find item with id: " + item);
+                    NexusPlugin.nexusLogger.error("MMOItems is not installed on your Server!");
+                    return ItemStack.of(Material.DEEPSLATE);
+                }
+            }
 
             case "mmoitems": {
 
@@ -99,6 +124,99 @@ public class StringUtils {
                 return ItemStack.of(Material.DEEPSLATE);
             }
         }
+    }
+
+    /**
+     * Checks if the given ItemStack is a custom item from a supported plugin.
+     * Currently supports: EcoItems, MMOItems, ItemsAdder.
+     *
+     * @param itemStack the ItemStack to check
+     * @return true if the item is recognized as a custom item; false otherwise
+     */
+    public static boolean isCustomItem(ItemStack itemStack) {
+        if (itemStack == null || itemStack.getType().isAir()) {
+            return false;
+        }
+
+        NexusPlugin nexus = NexusPlugin.getInstance();
+
+        if(nexus.getNexItemsHook() != null) {
+            if(nexus.getNexItemsHook().isNexusItem(itemStack)) {
+                return true;
+            }
+        }
+
+        // Check EcoItems
+        if (nexus.getEcoItemsHook() != null) {
+            // EcoItems speichert die ID meist in einem speziellen NBT/DataContainer.
+            // Items.isCustomItem ist eine Methode in deren API.
+            if (Items.isCustomItem(itemStack)) {
+                return true;
+            }
+        }
+
+        // Check MMOItems
+        if (nexus.getMmoItemsHook() != null) {
+            if (Type.get(itemStack) != null) {
+                return true;
+            }
+        }
+
+        // Check ItemsAdder
+        if (nexus.getItemsAdderHook() != null) {
+            return CustomStack.byItemStack(itemStack) != null;
+        }
+
+        return false;
+    }
+
+    /**
+     * Retrieves a unique identifier for a custom item from supported plugins.
+     * Returns strings like "ecoitems:id", "mmoitems:type:id", or "itemsadder:id".
+     *
+     * @param itemStack the ItemStack to identify
+     * @return the custom ID string, or null if it's a vanilla item
+     */
+    @Nullable
+    public static String getCustomId(ItemStack itemStack) {
+        if (itemStack == null || itemStack.getType().isAir()) {
+            return null;
+        }
+
+        NexusPlugin nexus = NexusPlugin.getInstance();
+
+        // Check NexItems
+        if(nexus.getNexItemsHook() != null) {
+            if(nexus.getNexItemsHook().isNexusItem(itemStack)) {
+                return "nexitems:" + nexus.getNexItemsHook().getItemId(itemStack);
+            }
+        }
+
+        // Check EcoItems
+        if (nexus.getEcoItemsHook() != null) {
+            CustomItem ecoItem = Items.getCustomItem(itemStack);
+            if(ecoItem != null) {
+                return "ecoitems:" + ecoItem.getKey().value().toLowerCase(Locale.ROOT);
+            }
+        }
+
+        // Check MMOItems
+        if (nexus.getMmoItemsHook() != null) {
+            String type = MMOItems.getTypeName(itemStack);
+            String id = MMOItems.getID(itemStack);
+
+            if(type != null && id != null) {
+                return "mmoitems:" + type.toLowerCase(Locale.ROOT) + ":" + id.toLowerCase(Locale.ROOT);
+            }
+        }
+
+        // Check ItemsAdder
+        if (nexus.getItemsAdderHook() != null) {
+            CustomStack cs = CustomStack.byItemStack(itemStack);
+            if (cs != null) return "itemsadder:" + cs.getNamespacedID();
+        }
+
+        return null;
     }
 
     public static String replaceKeyWithValue(String input, Map<String, Object> placeholders) {

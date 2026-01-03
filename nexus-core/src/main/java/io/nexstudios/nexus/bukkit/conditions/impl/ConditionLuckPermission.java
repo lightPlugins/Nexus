@@ -91,7 +91,6 @@ public class ConditionLuckPermission implements NexusCondition {
 
         Player player = context.player();
         if (player == null) {
-            // Subjekt ist offline, wir können niemanden direkt ansprechen
             return;
         }
 

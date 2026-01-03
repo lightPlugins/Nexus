@@ -29,6 +29,7 @@ public class ConditionFactory {
         availableConditions.put("above-block", new ConditionAboveBlock());
         availableConditions.put("in-world", new ConditionInWorld());
         availableConditions.put("has-age", new ConditionHasAge());
+        availableConditions.put("need-tool", new ConditionNeedTool());
 
         if (NexusPlugin.getInstance().getWorldGuardHook() != null) {
             availableConditions.put("in-region", new ConditionInRegion());
