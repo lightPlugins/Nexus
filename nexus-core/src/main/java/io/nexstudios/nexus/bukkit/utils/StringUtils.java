@@ -172,7 +172,7 @@ public class StringUtils {
 
     /**
      * Retrieves a unique identifier for a custom item from supported plugins.
-     * Returns strings like "ecoitems:id", "mmoitems:type:id", or "itemsadder:id".
+     * Returns strings like "nexitems:templateid", "ecoitems:id", "mmoitems:type:id", or "itemsadder:id".
      *
      * @param itemStack the ItemStack to identify
      * @return the custom ID string, or null if it's a vanilla item
