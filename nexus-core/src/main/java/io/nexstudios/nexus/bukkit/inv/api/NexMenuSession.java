@@ -195,12 +195,70 @@ public class NexMenuSession {
         return this;
     }
 
+
+    /**
+     * Steuert, ob das Spieler-Inventar (unterer Teil) bei dieser Session gelockt ist.
+     * Default ist true (gelockt); hier kannst du es umstellen, bevor oder nachdem das
+     * Inventar geöffnet wurde.
+     */
+    public NexMenuSession withPlayerInventoryLocked(boolean locked) {
+        Runnable task = () -> {
+            ensureView();
+            view.setPlayerInventoryLocked(locked);
+        };
+
+        if (opened && view != null) {
+            task.run();
+        } else {
+            preOpenTasks.add(task);
+        }
+        return this;
+    }
+
+    /**
+     * Kurzform: Spieler-Inventar entsperren.
+     */
+    public NexMenuSession withUnlockedPlayerInventory() {
+        return withPlayerInventoryLocked(false);
+    }
+
+    /**
+     * Kombiniert Required-Item-Re-Render + Lore-Anpassung in EINEM Schritt.
+     * Dadurch wird nur die finale Lore an den Client gesendet (kein Flackern).
+     */
+    public NexMenuSession updateRequiredItemLore(String id,
+                                                 TagResolver extraResolver,
+                                                 UnaryOperator<List<Component>> loreUpdater) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(loreUpdater, "loreUpdater");
+
+        Runnable task = () -> {
+            ensureView();
+            view.rerenderRequiredItemWithLore(id, extraResolver, loreUpdater);
+        };
+
+        if (opened && view != null) {
+            task.run();
+        } else {
+            preOpenTasks.add(task);
+        }
+        return this;
+    }
+
     public NexMenuSession updateSlotItem(int slot1b, UnaryOperator<ItemStack> transformer) {
         Objects.requireNonNull(transformer, "transformer");
-        preOpenTasks.add(() -> {
+
+        Runnable task = () -> {
             ensureView();
             view.updateSlotItem(slot1b, transformer);
-        });
+        };
+
+        if (opened && view != null) {
+            task.run();
+        } else {
+            preOpenTasks.add(task);
+        }
+
         return this;
     }
 

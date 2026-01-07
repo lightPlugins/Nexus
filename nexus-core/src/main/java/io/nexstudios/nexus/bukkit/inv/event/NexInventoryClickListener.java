@@ -13,19 +13,41 @@ public class NexInventoryClickListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        Inventory clicked = event.getClickedInventory();
-        if (clicked == null) return;
-        if (!(clicked.getHolder(false) instanceof NexInventory)) return;
-        if (clicked != event.getView().getTopInventory()) return;
-        if (event.getRawSlot() < 0) return;
-
-        event.setCancelled(true);
+        Inventory top = event.getView().getTopInventory();
+        if (!(top.getHolder(false) instanceof NexInventory)) {
+            return; // kein Nexus-GUI
+        }
 
         Player player = (Player) event.getWhoClicked();
         NexInventoryView view = NexInventoryManager.get().viewOf(player.getUniqueId());
         if (view == null) return;
 
-        view.handleClick(event, event.getRawSlot());
+        Inventory clicked = event.getClickedInventory();
+        if (clicked == null) return;
+
+        int rawSlot = event.getRawSlot();
+        if (rawSlot < 0) return;
+
+        // Klick im Top-Inventory
+        if (clicked == top) {
+            event.setCancelled(true);
+
+            // Sicherheit: nur Slots im Top-Bereich an handleClick geben
+            if (rawSlot < top.getSize()) {
+                view.handleClick(event, rawSlot);
+            }
+            return;
+        }
+
+        // (unterer Teil)
+        if (clicked == event.getView().getBottomInventory()) {
+            if (view.isPlayerInventoryLocked()) {
+                event.setCancelled(true);
+            }
+        }
+
+        // Sonstige Inventare (selten, z.B. offhand) – je nach Bedarf:
+        // aktuell: nichts Besonderes, normal durchlaufen lassen.
     }
 }
 

@@ -8,6 +8,7 @@ import io.nexstudios.nexus.bukkit.items.ItemBuilder;
 import io.nexstudios.nexus.bukkit.items.ItemHideFlag;
 import io.nexstudios.nexus.bukkit.language.NexusLanguage;
 import io.nexstudios.nexus.bukkit.platform.NexServices;
+import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -36,6 +37,9 @@ public class NexInventoryView {
 
     @Setter
     private String overrideTitleRaw;
+
+    @Getter @Setter
+    private boolean playerInventoryLocked = true;
 
     private List<Object> bodyModels = Collections.emptyList();
     private NexOnClick bodyClickHandler;
@@ -509,10 +513,59 @@ public class NexInventoryView {
         // In alle Slots dieses Required-Items setzen
         for (Integer s1b : cfg.slots1b) {
             int s0 = Math.max(0, s1b - 1);
-            if (s0 < 0 || s0 >= inv.size()) continue;
+            if (s0 >= inv.size()) continue;
 
             top.setItem(s0, rendered);
             // Handler/Namespaces/Prioritäten bleiben wie sie sind
+        }
+    }
+
+    /**
+     * Wie rerenderRequiredItem, aber mit zusätzlichem Lore-Updater.
+     * Es wird nur EIN Stack mit bereits gepatchter Lore gesetzt, dadurch kein visuelles "Flackern".
+     */
+    public void rerenderRequiredItemWithLore(String id,
+                                             TagResolver extraResolver,
+                                             java.util.function.UnaryOperator<List<Component>> loreUpdater) {
+        if (id == null || loreUpdater == null) return;
+
+        // Config suchen
+        NexItemConfig cfg = null;
+        for (NexItemConfig c : inv.required()) {
+            if (c != null && id.equalsIgnoreCase(c.id)) {
+                cfg = c;
+                break;
+            }
+        }
+        if (cfg == null) return;
+
+        // Basis-Stack + Sprache
+        ItemStack base = inv.renderer().renderStatic(cfg, inv.inventoryId());
+        if (base == null) return;
+
+        ItemStack rendered = applyLanguageForPlayer(
+                base, cfg, inv.inventoryId(), player.getUniqueId(), extraResolver
+        );
+        if (rendered == null) return;
+
+        var meta = rendered.getItemMeta();
+        if (meta == null) return;
+
+        List<Component> currentLore = meta.lore();
+        List<Component> loreCopy = (currentLore == null)
+                ? new ArrayList<>()
+                : new ArrayList<>(currentLore);
+
+        List<Component> newLore = loreUpdater.apply(loreCopy);
+        meta.lore(newLore);
+        rendered.setItemMeta(meta);
+
+        // denselben fertigen Stack in alle Slots setzen
+        for (Integer s1b : cfg.slots1b) {
+            int s0 = Math.max(0, s1b - 1);
+            if (s0 < 0 || s0 >= inv.size()) continue;
+
+            top.setItem(s0, rendered);
         }
     }
 
