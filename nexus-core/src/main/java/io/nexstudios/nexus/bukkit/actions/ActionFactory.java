@@ -24,11 +24,11 @@ public class ActionFactory {
     }
 
     private void registerInternalActions() {
-        this.availableActions.put("message", new ActionSendMessage());
+        this.availableActions.put("send-message", new ActionSendMessage());
         this.availableActions.put("vault-add", new ActionVaultAdd());
         this.availableActions.put("command", new ActionCommand());
-        this.availableActions.put("sound", new ActionSound());
-        this.availableActions.put("exp", new ActionEXP());
+        this.availableActions.put("play-sound", new ActionSound());
+        this.availableActions.put("add-exp", new ActionEXP());
     }
 
     public boolean registerAction(String id, NexusAction action) {
