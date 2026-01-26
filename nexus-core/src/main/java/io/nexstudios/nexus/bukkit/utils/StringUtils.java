@@ -23,6 +23,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
@@ -299,6 +300,7 @@ public class StringUtils {
 
     }
 
+    @Deprecated(forRemoval = true, since = "1.0.0")
     public static ItemStack parseConfigItem(Map<String, Object> itemParams, TagResolver resolver, Player player) {
 
         if(itemParams == null) {
@@ -505,6 +507,69 @@ public class StringUtils {
             // TODO: remove stacktrace here later
             ex.printStackTrace();
             return new ItemStack(Material.COBBLESTONE);
+        }
+    }
+
+    /**
+     * Matches a Bukkit Block against a config id, using a prefix-based id system (similar to parseItem()).
+     *
+     * Supported formats:
+     * - "STONE" (plain Bukkit Material)
+     * - "minecraft:stone" / "vanilla:stone"
+     * - "itemsadder:namespace:block_id" (delegates to ItemsAdderHook; only matches already placed custom blocks)
+     *
+     * @param block the block at the target location
+     * @param blockId the config value
+     * @return true if the block matches the provided id
+     */
+    public static boolean matchesBlock(Block block, String blockId) {
+        if (block == null || blockId == null) return false;
+
+        String raw = blockId.trim();
+        if (raw.isEmpty()) return false;
+
+        String[] parts = raw.split(":");
+        if (parts.length < 2) {
+            // Allow plain materials like "STONE"
+            try {
+                Material mat = Material.valueOf(raw.toUpperCase(Locale.ROOT));
+                return block.getType() == mat;
+            } catch (IllegalArgumentException ignored) {
+                return false;
+            }
+        }
+
+        String prefix = parts[0].toLowerCase(Locale.ROOT);
+
+        switch (prefix) {
+            case "minecraft", "vanilla" -> {
+                if (parts.length != 2) {
+                    NexusPlugin.nexusLogger.error("Could not find block with id: " + blockId);
+                    NexusPlugin.nexusLogger.error("Please use the format: vanilla:id or minecraft:id");
+                    return false;
+                }
+                try {
+                    Material mat = Material.valueOf(parts[1].toUpperCase(Locale.ROOT));
+                    if(!mat.isBlock()) {
+                        NexusPlugin.nexusLogger.error("Block id " + blockId + " is not a block!");
+                        NexusPlugin.nexusLogger.error("Please use a valid block typ!");
+                        return false;
+                    }
+                    return block.getType() == mat;
+                } catch (IllegalArgumentException ignored) {
+                    return false;
+                }
+            }
+
+            case "itemsadder" -> {
+                var hook = NexusPlugin.getInstance().getItemsAdderHook();
+                if (hook == null) return false;
+                return hook.matchesBlock(block, raw);
+            }
+
+            default -> {
+                return false;
+            }
         }
     }
 
