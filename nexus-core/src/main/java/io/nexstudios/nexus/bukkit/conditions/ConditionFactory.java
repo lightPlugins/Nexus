@@ -37,9 +37,9 @@ public class ConditionFactory {
 
         // auto use 'permission' for bukkit or luckperms
         if (NexusPlugin.getInstance().getLuckPermsHook() != null) {
-            availableConditions.put("permission", new ConditionLuckPermission());
+            availableConditions.put("has-permission", new ConditionLuckPermission());
         } else {
-            availableConditions.put("permission", new ConditionPermission());
+            availableConditions.put("has-permission", new ConditionPermission());
         }
     }
 
