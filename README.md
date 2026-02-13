@@ -3,7 +3,7 @@
 **Nexus** is a modular Minecraft platform project that powers the **Nex** plugin series across multiple runtimes (**Paper** and proxy platforms).  
 It provides a shared, config-driven core with platform-specific adapters and optional integrations.
 
-**Runtime requirements:** Java 21
+> **Runtime requirements:** Java 21
 
 ---
 
