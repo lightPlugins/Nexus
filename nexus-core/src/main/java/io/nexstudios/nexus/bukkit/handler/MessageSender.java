@@ -1,4 +1,3 @@
-
 package io.nexstudios.nexus.bukkit.handler;
 
 import io.nexstudios.nexus.bukkit.NexusPlugin;
@@ -18,319 +17,128 @@ import java.util.UUID;
 
 public record MessageSender(NexusLanguage language) {
 
+    private static final MiniMessage MM = MiniMessage.miniMessage();
+    private static final PlainTextComponentSerializer PLAIN = PlainTextComponentSerializer.plainText();
+
     public void send(CommandSender sender, String path) {
-        if (sender == null) {
-            NexusPlugin.nexusLogger.warning(List.of(
-                    "Cannot send message: CommandSender or Component is null."
-            ));
-            return;
-        }
-
-        if (sender instanceof Player player) {
-            UUID playerUUID = player.getUniqueId();
-
-            if (isListPath(playerUUID, path)) {
-                List<Component> components = language.getTranslationList(playerUUID, path, true);
-                for (Component component : components) {
-                    // 1. NexusPlaceholders resolven
-                    component = NexusPlaceholders.resolveWithPlayer(component, player);
-
-                    // 2. PlaceholderAPI resolven (falls vorhanden)
-                    if (NexusPlugin.getInstance().papiHook != null) {
-                        String legacyText = MiniMessage.miniMessage().serialize(component);
-                        component = NexusPlugin.getInstance().papiHook.translate(player, legacyText);
-                    }
-                    player.sendMessage(component);
-                }
-            } else {
-                Component component = language.getTranslation(playerUUID, path, true);
-
-                // 1. NexusPlaceholders resolven
-                component = NexusPlaceholders.resolveWithPlayer(component, player);
-
-                // 2. PlaceholderAPI resolven (falls vorhanden)
-                if (NexusPlugin.getInstance().papiHook != null) {
-                    String legacyText = MiniMessage.miniMessage().serialize(component);
-                    component = NexusPlugin.getInstance().papiHook.translate(player, legacyText);
-                }
-                player.sendMessage(component);
-            }
-        } else {
-            UUID consoleUUID = NexusPlugin.getInstance().getNexusLanguage().getConsoleUUID();
-
-            if (isListPath(consoleUUID, path)) {
-                List<Component> components = language.getTranslationList(consoleUUID, path, true);
-                for (Component component : components) {
-                    // NexusPlaceholders resolven (ohne Player für Console)
-                    component = NexusPlaceholders.resolve(component);
-
-                    String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
-                    NexusPlugin.nexusLogger.info(legacyText);
-                }
-            } else {
-                Component component = language.getTranslation(consoleUUID, path, true);
-
-                // NexusPlaceholders resolven (ohne Player für Console)
-                component = NexusPlaceholders.resolve(component);
-
-                String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
-                NexusPlugin.nexusLogger.info(legacyText);
-            }
-        }
+        sendInternal(sender, path, null, true);
     }
 
     public void send(CommandSender sender, String path, boolean withPrefix) {
-        if (sender == null) {
-            NexusPlugin.nexusLogger.warning(List.of(
-                    "Cannot send message: CommandSender or Component is null."
-            ));
-            return;
-        }
-
-        if (sender instanceof Player player) {
-            UUID playerUUID = player.getUniqueId();
-
-            if (isListPath(playerUUID, path)) {
-                List<Component> components = language.getTranslationList(playerUUID, path, withPrefix);
-                for (Component component : components) {
-                    // 1. NexusPlaceholders resolven
-                    component = NexusPlaceholders.resolveWithPlayer(component, player);
-
-                    // 2. PlaceholderAPI resolven (falls vorhanden)
-                    if (NexusPlugin.getInstance().papiHook != null) {
-                        String legacyText = MiniMessage.miniMessage().serialize(component);
-                        component = NexusPlugin.getInstance().papiHook.translate(player, legacyText);
-                    }
-                    player.sendMessage(component);
-                }
-            } else {
-                Component component = language.getTranslation(playerUUID, path, withPrefix);
-
-                // 1. NexusPlaceholders resolven
-                component = NexusPlaceholders.resolveWithPlayer(component, player);
-
-                // 2. PlaceholderAPI resolven (falls vorhanden)
-                if (NexusPlugin.getInstance().papiHook != null) {
-                    String legacyText = MiniMessage.miniMessage().serialize(component);
-                    component = NexusPlugin.getInstance().papiHook.translate(player, legacyText);
-                }
-                player.sendMessage(component);
-            }
-        } else {
-            UUID consoleUUID = NexusPlugin.getInstance().getNexusLanguage().getConsoleUUID();
-
-            if (isListPath(consoleUUID, path)) {
-                List<Component> components = language.getTranslationList(consoleUUID, path, withPrefix);
-                for (Component component : components) {
-                    // NexusPlaceholders resolven (ohne Player für Console)
-                    component = NexusPlaceholders.resolve(component);
-
-                    String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
-                    NexusPlugin.nexusLogger.info(legacyText);
-                }
-            } else {
-                Component component = language.getTranslation(consoleUUID, path, withPrefix);
-
-                // NexusPlaceholders resolven (ohne Player für Console)
-                component = NexusPlaceholders.resolve(component);
-
-                String legacyText = PlainTextComponentSerializer.plainText().serialize(component);
-                NexusPlugin.nexusLogger.info(legacyText);
-            }
-        }
+        sendInternal(sender, path, null, withPrefix);
     }
 
     public void send(CommandSender sender, String path, TagResolver tagResolver) {
-        if (sender == null) {
-            NexusPlugin.nexusLogger.warning(List.of(
-                    "Cannot send message: CommandSender is null."
-            ));
-            return;
-        }
-
-        TagResolver safeResolver = tagResolver != null ? tagResolver : TagResolver.empty();
-        MiniMessage mm = MiniMessage.miniMessage();
-
-        if (sender instanceof Player player) {
-            UUID playerUUID = player.getUniqueId();
-
-            if (isListPath(playerUUID, path)) {
-                List<Component> components = language.getTranslationList(playerUUID, path, true);
-                for (Component component : components) {
-                    // 1. NexusPlaceholders resolven
-                    component = NexusPlaceholders.resolveWithPlayer(component, player);
-
-                    String miniMessageText = mm.serialize(component);
-
-                    // 2. PlaceholderAPI resolven (falls vorhanden)
-                    if (NexusPlugin.getInstance().papiHook != null) {
-                        miniMessageText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
-                    }
-
-                    // 3. Custom TagResolver anwenden
-                    String unescaped = miniMessageText.replace("\\", "");
-                    Component result = mm.deserialize(unescaped, safeResolver);
-                    player.sendMessage(result);
-                }
-            } else {
-                Component component = language.getTranslation(playerUUID, path, true);
-
-                // 1. NexusPlaceholders resolven
-                component = NexusPlaceholders.resolveWithPlayer(component, player);
-
-                String miniMessageText = mm.serialize(component);
-
-                // 2. PlaceholderAPI resolven (falls vorhanden)
-                if (NexusPlugin.getInstance().papiHook != null) {
-                    miniMessageText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
-                }
-
-                // 3. Custom TagResolver anwenden
-                String unescaped = miniMessageText.replace("\\", "");
-                Component result = mm.deserialize(unescaped, safeResolver);
-                player.sendMessage(result);
-            }
-            return;
-        }
-
-        // Console
-        UUID consoleUUID = language.getConsoleUUID();
-
-        if (isListPath(consoleUUID, path)) {
-            List<Component> components = language.getTranslationList(consoleUUID, path, true);
-            for (Component component : components) {
-                // 1. NexusPlaceholders resolven
-                component = NexusPlaceholders.resolve(component);
-
-                // 2. Custom TagResolver anwenden
-                String serialized = mm.serialize(component).replace("\\", "");
-                Component resolved = mm.deserialize(serialized, safeResolver);
-                NexusPlugin.nexusLogger.info(mm.serialize(resolved));
-            }
-        } else {
-            Component component = language.getTranslation(consoleUUID, path, true);
-
-            // 1. NexusPlaceholders resolven
-            component = NexusPlaceholders.resolve(component);
-
-            // 2. Custom TagResolver anwenden
-            String serialized = mm.serialize(component).replace("\\", "");
-            Component resolved = mm.deserialize(serialized, safeResolver);
-            NexusPlugin.nexusLogger.info(mm.serialize(resolved));
-        }
+        sendInternal(sender, path, tagResolver, true);
     }
 
     public void send(CommandSender sender, String path, TagResolver tagResolver, boolean withPrefix) {
+        sendInternal(sender, path, tagResolver, withPrefix);
+    }
+
+    private void sendInternal(CommandSender sender, String path, TagResolver tagResolver, boolean withPrefix) {
         if (sender == null) {
-            NexusPlugin.nexusLogger.warning(List.of(
-                    "Cannot send message: CommandSender is null."
-            ));
+            NexusPlugin.nexusLogger.warning(List.of("Cannot send message: CommandSender is null."));
             return;
         }
-
-        TagResolver safeResolver = tagResolver != null ? tagResolver : TagResolver.empty();
-        MiniMessage mm = MiniMessage.miniMessage();
 
         if (sender instanceof Player player) {
             UUID playerUUID = player.getUniqueId();
+            boolean isList = isListPath(playerUUID, path);
 
-            if (isListPath(playerUUID, path)) {
-                List<Component> components = language.getTranslationList(playerUUID, path, withPrefix);
+            // Prefix rule: only for players and only for non-list paths.
+            boolean effectiveWithPrefix = withPrefix && !isList;
+
+            if (isList) {
+                // For lists: never prefix
+                List<Component> components = language.getTranslationList(playerUUID, path, false);
                 for (Component component : components) {
-                    // 1. NexusPlaceholders resolven
-                    component = NexusPlaceholders.resolveWithPlayer(component, player);
-
-                    String miniMessageText = mm.serialize(component);
-
-                    // 2. PlaceholderAPI resolven (falls vorhanden)
-                    if (NexusPlugin.getInstance().papiHook != null) {
-                        miniMessageText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
-                    }
-
-                    // 3. Custom TagResolver anwenden
-                    String unescaped = miniMessageText.replace("\\", "");
-                    Component result = mm.deserialize(unescaped, safeResolver);
-                    player.sendMessage(result);
+                    player.sendMessage(resolveForPlayer(player, component, tagResolver));
                 }
             } else {
-                Component component = language.getTranslation(playerUUID, path, withPrefix);
-
-                // 1. NexusPlaceholders resolven
-                component = NexusPlaceholders.resolveWithPlayer(component, player);
-
-                String miniMessageText = mm.serialize(component);
-
-                // 2. PlaceholderAPI resolven (falls vorhanden)
-                if (NexusPlugin.getInstance().papiHook != null) {
-                    miniMessageText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
-                }
-
-                // 3. Custom TagResolver anwenden
-                String unescaped = miniMessageText.replace("\\", "");
-                Component result = mm.deserialize(unescaped, safeResolver);
-                player.sendMessage(result);
+                Component component = language.getTranslation(playerUUID, path, effectiveWithPrefix);
+                player.sendMessage(resolveForPlayer(player, component, tagResolver));
             }
             return;
         }
 
-        // Console
+        // Console: never send prefix (even if path is a list)
         UUID consoleUUID = language.getConsoleUUID();
+        boolean isList = isListPath(consoleUUID, path);
 
-        if (isListPath(consoleUUID, path)) {
-            List<Component> components = language.getTranslationList(consoleUUID, path, withPrefix);
+        if (isList) {
+            List<Component> components = language.getTranslationList(consoleUUID, path, false);
             for (Component component : components) {
-                // 1. NexusPlaceholders resolven
-                component = NexusPlaceholders.resolve(component);
-
-                // 2. Custom TagResolver anwenden
-                String serialized = mm.serialize(component).replace("\\", "");
-                Component resolved = mm.deserialize(serialized, safeResolver);
-                NexusPlugin.nexusLogger.info(mm.serialize(resolved));
+                logToConsole(resolveForConsole(component, tagResolver));
             }
         } else {
-            Component component = language.getTranslation(consoleUUID, path, withPrefix);
-
-            // 1. NexusPlaceholders resolven
-            component = NexusPlaceholders.resolve(component);
-
-            // 2. Custom TagResolver anwenden
-            String serialized = mm.serialize(component).replace("\\", "");
-            Component resolved = mm.deserialize(serialized, safeResolver);
-            NexusPlugin.nexusLogger.info(mm.serialize(resolved));
+            Component component = language.getTranslation(consoleUUID, path, false);
+            logToConsole(resolveForConsole(component, tagResolver));
         }
+    }
+
+    private Component resolveForPlayer(Player player, Component component, TagResolver tagResolver) {
+        Component resolved = NexusPlaceholders.resolveWithPlayer(component, player);
+
+        // If a TagResolver is provided, we must go through MiniMessage to apply it.
+        if (tagResolver != null) {
+            String miniMessageText = MM.serialize(resolved);
+
+            if (NexusPlugin.getInstance().papiHook != null) {
+                miniMessageText = PlaceholderAPI.setPlaceholders(player, miniMessageText);
+            }
+
+            String unescaped = miniMessageText.replace("\\", "");
+            return MM.deserialize(unescaped, tagResolver);
+        }
+
+        // No TagResolver: keep the component pipeline and use the plugin hook.
+        if (NexusPlugin.getInstance().papiHook != null) {
+            String legacyText = MM.serialize(resolved);
+            return NexusPlugin.getInstance().papiHook.translate(player, legacyText);
+        }
+
+        return resolved;
+    }
+
+    private Component resolveForConsole(Component component, TagResolver tagResolver) {
+        Component resolved = NexusPlaceholders.resolve(component);
+
+        if (tagResolver == null) {
+            return resolved;
+        }
+
+        String serialized = MM.serialize(resolved).replace("\\", "");
+        return MM.deserialize(serialized, tagResolver);
+    }
+
+    private void logToConsole(Component component) {
+        NexusPlugin.nexusLogger.info(PLAIN.serialize(component));
     }
 
     public Component stringToComponent(Player player, String legacyText) {
         String text = legacyText;
 
-        // 1. PlaceholderAPI resolven (falls vorhanden)
         if (NexusPlugin.getInstance().papiHook != null) {
             text = PlaceholderAPI.setPlaceholders(player, legacyText);
         }
 
-        // 2. Zu Component konvertieren und NexusPlaceholders resolven
-        Component component = MiniMessage.miniMessage()
-                .deserialize(text)
+        Component component = MM.deserialize(text)
                 .decoration(TextDecoration.ITALIC, false);
 
-        // 3. NexusPlaceholders resolven
         return NexusPlaceholders.resolveWithPlayer(component, player);
     }
 
     public Component stringToComponent(Player player, String legacyText, TagResolver resolver) {
         String text = legacyText;
 
-        // 1. PlaceholderAPI resolven (falls vorhanden)
         if (NexusPlugin.getInstance().papiHook != null) {
             text = PlaceholderAPI.setPlaceholders(player, legacyText).replace("\\", "");
         }
 
-        // 2. Zu Component konvertieren mit TagResolver
-        Component component = MiniMessage.miniMessage()
-                .deserialize(text, resolver)
+        Component component = MM.deserialize(text, resolver)
                 .decoration(TextDecoration.ITALIC, false);
 
-        // 3. NexusPlaceholders resolven
         return NexusPlaceholders.resolveWithPlayer(component, player);
     }
 
@@ -348,5 +156,4 @@ public record MessageSender(NexusLanguage language) {
 
         return false;
     }
-
 }
